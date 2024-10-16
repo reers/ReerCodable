@@ -9,7 +9,7 @@ import XCTest
 import ReerCodableMacros
 
 let testMacros: [String: Macro.Type] = [
-    "stringify": StringifyMacro.self,
+    "Codable": Codable.self,
 ]
 #endif
 
@@ -18,10 +18,14 @@ final class ReerCodableTests: XCTestCase {
         #if canImport(ReerCodableMacros)
         assertMacroExpansion(
             """
-            #stringify(a + b)
+            @Codable
+            struct Test {}
             """,
             expandedSource: """
-            (a + b, "a + b")
+            struct Test {}
+            
+            extension Test: Codable {
+            }
             """,
             macros: testMacros
         )
