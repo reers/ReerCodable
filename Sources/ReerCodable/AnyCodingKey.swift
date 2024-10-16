@@ -1,4 +1,5 @@
 //
+//  Copyright © 2024 Alamofire.
 //  Copyright © 2024 reers.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,6 +20,25 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+public struct AnyCodingKey: CodingKey, Hashable {
+    public let stringValue: String
+    public let intValue: Int?
 
-@attached(extension, conformances: Codable)
-public macro Codable() = #externalMacro(module: "ReerCodableMacros", type: "Codable")
+    public init?(stringValue: String) {
+        self.stringValue = stringValue
+        intValue = nil
+    }
+
+    public init?(intValue: Int) {
+        stringValue = "\(intValue)"
+        self.intValue = intValue
+    }
+
+    public init<Key>(_ base: Key) where Key: CodingKey {
+        if let intValue = base.intValue {
+            self.init(intValue: intValue)!
+        } else {
+            self.init(stringValue: base.stringValue)!
+        }
+    }
+}

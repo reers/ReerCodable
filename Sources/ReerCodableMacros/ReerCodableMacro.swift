@@ -3,31 +3,37 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// Implementation of the `stringify` macro, which takes an expression
-/// of any type and produces a tuple containing the value of that expression
-/// and the source code that produced the value. For example
-///
-///     #stringify(x + y)
-///
-///  will expand to
-///
-///     (x + y, "x + y")
-public struct StringifyMacro: ExpressionMacro {
+public struct Codable {}
+extension Codable: ExtensionMacro {
     public static func expansion(
-        of node: some FreestandingMacroExpansionSyntax,
-        in context: some MacroExpansionContext
-    ) -> ExprSyntax {
-        guard let argument = node.arguments.first?.expression else {
-            fatalError("compiler bug: the macro does not have any arguments")
+        of node: SwiftSyntax.AttributeSyntax,
+        attachedTo declaration: some SwiftSyntax.DeclGroupSyntax,
+        providingExtensionsOf type: some SwiftSyntax.TypeSyntaxProtocol,
+        conformingTo protocols: [SwiftSyntax.TypeSyntax],
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.ExtensionDeclSyntax] {
+        guard
+            declaration.as(StructDeclSyntax.self) != nil
+            || declaration.as(ClassDeclSyntax.self) !=  nil 
+        else {
+            throw MacroError.onlyForStructOrClass
         }
-
-        return "(\(argument), \(literal: argument.description))"
+        
+        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
+           inheritedType.contains(where: { $0.type.trimmedDescription == "Codable" }) {
+            return []
+        }
+        let extensionDecl: DeclSyntax =
+            """
+            extension \(type.trimmed): Codable {}
+            """
+        return [extensionDecl.cast(ExtensionDeclSyntax.self)]
     }
 }
 
 @main
 struct ReerCodablePlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
-        StringifyMacro.self,
+        Codable.self
     ]
 }

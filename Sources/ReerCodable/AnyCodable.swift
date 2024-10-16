@@ -1,4 +1,5 @@
 //
+//  Copyright © 2024 Flight-School.
 //  Copyright © 2024 reers.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
