@@ -14,12 +14,21 @@ let testMacros: [String: Macro.Type] = [
 #endif
 
 final class ReerCodableTests: XCTestCase {
+    
+    static let test = "abc"
     func testMacro() throws {
         #if canImport(ReerCodableMacros)
         assertMacroExpansion(
             """
             @Codable
-            struct Test {}
+            public struct Test {
+                fileprivate var name = ["1", ""] {
+                    didSet {
+                        print("newValue")
+                    }
+                }
+                
+            }
             """,
             expandedSource: """
             struct Test {}
@@ -34,19 +43,4 @@ final class ReerCodableTests: XCTestCase {
         #endif
     }
 
-    func testMacroWithStringLiteral() throws {
-        #if canImport(ReerCodableMacros)
-        assertMacroExpansion(
-            #"""
-            #stringify("Hello, \(name)")
-            """#,
-            expandedSource: #"""
-            ("Hello, \(name)", #""Hello, \(name)""#)
-            """#,
-            macros: testMacros
-        )
-        #else
-        throw XCTSkip("macros are only supported when running tests for the host platform")
-        #endif
-    }
 }

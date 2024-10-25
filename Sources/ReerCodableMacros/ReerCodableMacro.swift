@@ -1,9 +1,9 @@
-import SwiftCompilerPlugin
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
 public struct Codable {}
+
 extension Codable: ExtensionMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -31,9 +31,13 @@ extension Codable: ExtensionMacro {
     }
 }
 
-@main
-struct ReerCodablePlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
-        Codable.self
-    ]
+extension Codable: MemberMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingMembersOf declaration: some DeclGroupSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        let typeInfo = TypeInfo(decl: declaration, context: context)
+        return []
+    }
 }
