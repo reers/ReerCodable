@@ -21,4 +21,5 @@
 
 
 @attached(extension, conformances: Codable)
+@attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
 public macro Codable() = #externalMacro(module: "ReerCodableMacros", type: "Codable")
