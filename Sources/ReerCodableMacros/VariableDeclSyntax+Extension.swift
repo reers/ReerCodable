@@ -46,6 +46,14 @@ extension VariableDeclSyntax {
         return false
     }
     
+    var name: String? {
+        guard
+            let binding = bindings.first,
+            let pattern = binding.pattern.as(IdentifierPatternSyntax.self)
+        else { return nil }
+        return pattern.identifier.text
+    }
+    
     var type: String? {
         guard let binding = bindings.first else { return nil }
         if let typeSyntax = binding.typeAnnotation?.type {
