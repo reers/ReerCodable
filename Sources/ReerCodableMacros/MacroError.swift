@@ -10,4 +10,6 @@ import Foundation
 enum MacroError: Error {
     case onlyForStructOrClass
     case shouldUseCodableMacroImplementation
+    case propertyTypeCanNotBeInferred
+    case propertyHasNoName
 }

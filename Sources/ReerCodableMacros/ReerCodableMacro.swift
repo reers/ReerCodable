@@ -37,7 +37,7 @@ extension Codable: MemberMacro {
         providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        let typeInfo = TypeInfo(decl: declaration, context: context)
+        let typeInfo = try TypeInfo(decl: declaration, context: context)
         return []
     }
 }
