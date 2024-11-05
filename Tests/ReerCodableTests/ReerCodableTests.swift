@@ -27,6 +27,8 @@ final class ReerCodableTests: XCTestCase {
                         print("newValue")
                     }
                 }
+                var age: Int
+                var height: Float
                 
             }
             """,
