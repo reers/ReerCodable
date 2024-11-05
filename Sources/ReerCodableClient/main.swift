@@ -9,7 +9,6 @@ public final class Test {
     var age: Int = 18
     var name: String
     let height: Float?
-    
 
 }
 
