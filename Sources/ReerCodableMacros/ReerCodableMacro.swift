@@ -37,6 +37,25 @@ extension Codable: MemberMacro {
         providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
+        let members = declaration.memberBlock.members
+        
+        for member in members {
+            if let initDecl = member.decl.as(InitializerDeclSyntax.self),
+               initDecl.signature.parameterClause.parameters.count == 1,
+               initDecl.signature.parameterClause.parameters.first?.firstName.text == "from",
+               initDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Decoder" {
+                throw MacroError.shouldUseCodableMacroImplementation
+            }
+            
+            if let funcDecl = member.decl.as(FunctionDeclSyntax.self),
+               funcDecl.name.text == "encode" &&
+               funcDecl.signature.parameterClause.parameters.count == 1 &&
+               funcDecl.signature.parameterClause.parameters.first?.firstName.text == "to" &&
+               funcDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Encoder" {
+                throw MacroError.shouldUseCodableMacroImplementation
+            }
+        }
+        
         let typeInfo = try TypeInfo(decl: declaration, context: context)
         let decoder = try typeInfo.generateDecoderInit()
         let encoder = try typeInfo.generateEncoderFunc()

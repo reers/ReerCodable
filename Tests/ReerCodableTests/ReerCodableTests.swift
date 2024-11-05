@@ -30,6 +30,13 @@ final class ReerCodableTests: XCTestCase {
                 var age: Int
                 var height: Float
                 
+                public init(from decoder: any Decoder) throws {
+                        let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                        self.name = try container.decode(type: String?.self, keys: ["name"])
+                }
+                public func encode(to encoder: any Encoder) throws {
+                    
+                }
             }
             """,
             expandedSource: """
