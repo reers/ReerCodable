@@ -67,6 +67,29 @@ struct TypeInfo {
         """
         return encoder
     }
+    
+    func generateMemberwiseInit(isOverride: Bool = false) throws -> DeclSyntax {
+        let parameters = properties.map { property in
+            var text = property.name
+            text += ": \(property.type)"
+            if let initExpr = property.initExpr {
+                text += "= \(initExpr)"
+            } else if property.isOptional {
+                text += "= nil"
+            }
+            return text
+        }
+
+        let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
+        let overrideInit = isOverride ? "super.init()\n" : ""
+
+        let initializer: DeclSyntax = """
+        \(raw: needPublic ? "public " : "")init(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n")) {
+            \(raw: overrideInit)\(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n"))
+        }
+        """
+        return initializer
+    }
 }
 
 extension TypeInfo {

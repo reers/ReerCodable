@@ -40,6 +40,17 @@ extension Codable: MemberMacro {
         let typeInfo = try TypeInfo(decl: declaration, context: context)
         let decoder = try typeInfo.generateDecoderInit()
         let encoder = try typeInfo.generateEncoderFunc()
-        return [decoder, encoder]
+        
+        var hasMemberwiseInit = true
+        if case .argumentList(let list) = node.arguments,
+           let item = list.first(where: { $0.label?.text == "memberwiseInit" }),
+           item.expression.description == "false" {
+            hasMemberwiseInit = false
+        }
+        var decls = [decoder, encoder]
+        if hasMemberwiseInit {
+            decls.append(try typeInfo.generateMemberwiseInit())
+        }
+        return decls
     }
 }
