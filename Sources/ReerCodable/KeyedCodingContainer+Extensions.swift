@@ -1,5 +1,5 @@
 //
-//  KeyedCodingContainer+Exntesion.swift
+//  KeyedCodingContainer+Extensions.swift
 //  ReerCodable
 //
 //  Created by phoenix on 2024/11/4.
@@ -24,7 +24,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
             return valueType.init(nilLiteral: ()) as! Value
         }
-        throw ReerCodableError(text: "Keys not found: \(keys)")
+        throw ReerCodableError(text: "Keys not found or type not match: \(keys)")
     }
     
     private func tryDecodeWithNormalKey<Value: Decodable>(
@@ -71,7 +71,50 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     }
 }
 
+// MARK: - Encode
+
+extension KeyedEncodingContainer where K == AnyCodingKey {
+    public mutating func encode<Value: Encodable>(
+        value: Value,
+        key: String,
+        isNested: Bool
+    ) throws {
+        if case Optional<Any>.none = (value as Any) {
+            return
+        }
+        if isNested, key.maybeNested {
+            try encode(value, forNestedKey: key)
+        } else {
+            try encode(value, forNormalKey: key)
+        }
+    }
+    
+    private mutating func encode(_ value: Encodable, forNestedKey key: String) throws {
+        let keyPath = key.components(separatedBy: ".")
+        guard let lastKey = keyPath.last, !lastKey.isEmpty else {
+            throw ReerCodableError(text: "Nested key (\(key)) invalid.")
+        }
+        var container = try getNestedContainer(path: keyPath.dropLast())
+        try container.encode(value, forNormalKey: lastKey)
+    }
+    
+    private mutating func encode(_ value: Encodable, forNormalKey key: String) throws {
+        let codingKey = AnyCodingKey(stringValue: key)!
+        try encode(value, forKey: codingKey)
+    }
+    
+    private mutating func getNestedContainer(path: [String]) throws -> KeyedEncodingContainer<AnyCodingKey> {
+        var container = self
+        for pathKey in path {
+            let codingKey = AnyCodingKey(stringValue: pathKey)!
+            container = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: codingKey)
+        }
+        return container
+    }
+}
+
 // MARK: - Extensions
+
 extension String {
     var maybeNested: Bool {
         contains(".")

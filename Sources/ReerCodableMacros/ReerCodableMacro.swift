@@ -38,6 +38,8 @@ extension Codable: MemberMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         let typeInfo = try TypeInfo(decl: declaration, context: context)
-        return []
+        let decoder = try typeInfo.generateDecoderInit()
+        let encoder = try typeInfo.generateEncoderFunc()
+        return [decoder, encoder]
     }
 }

@@ -92,6 +92,10 @@ extension VariableDeclSyntax {
         return nil
     }
     
+    var initExpr: String? {
+        return bindings.first?.initializer?.value.trimmedDescription
+    }
+    
     func extractArrayType(from syntax: FunctionCallExprSyntax) -> String? {
         guard 
             let arrayExpr = syntax.calledExpression.as(ArrayExprSyntax.self),
