@@ -20,7 +20,7 @@ final class ReerCodableTests: XCTestCase {
         #if canImport(ReerCodableMacros)
         assertMacroExpansion(
             """
-            @Codable
+            @Codable(memberwiseInit: false)
             public struct Test {
                 fileprivate var name = ["1", ""] {
                     didSet {
