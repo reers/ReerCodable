@@ -7,9 +7,7 @@
 
 import Foundation
 
-enum MacroError: Error {
-    case onlyForStructOrClass
-    case shouldUseCodableMacroImplementation
-    case propertyTypeCanNotBeInferred
-    case propertyHasNoName
+struct MacroError: Error, CustomStringConvertible {
+    public let text: String
+    public var description: String { return text }
 }

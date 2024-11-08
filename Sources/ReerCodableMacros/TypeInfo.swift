@@ -106,14 +106,33 @@ extension TypeInfo {
                 if variable.isLazy { continue }
                 
                 guard let type = variable.type else {
-                    throw MacroError.propertyTypeCanNotBeInferred
+                    throw MacroError(text: "Unable to infer the property type. Specify the type explicitly.")
                 }
                 guard let name = variable.name else {
-                    throw MacroError.propertyHasNoName
+                    throw MacroError(text: "Macro expansion failed: property requires a name.")
                 }
                 
                 var property = Property(name: name, type: type)
                 property.isOptional = variable.isOptional
+                
+                let codingKey = variable.attributes.first(where: {
+                    let attribute = $0.as(AttributeSyntax.self)?
+                        .attributeName.as(IdentifierTypeSyntax.self)?
+                        .trimmedDescription
+                    return attribute == "CodingKey"
+                })
+                if let codingKey {
+                    let inputKeys = codingKey.as(AttributeSyntax.self)?
+                        .arguments?.as(LabeledExprListSyntax.self)?
+                        .compactMap { $0.expression.trimmedDescription } ?? []
+                    if inputKeys.isEmpty {
+                        throw MacroError(text: "Property `\(name)` requires at least one key.")
+                    }
+                    try inputKeys.forEach {
+                        if $0 == "\"\"" { throw MacroError(text: "Empty key detected of property `\(name)`.") }
+                    }
+                    property.keys = inputKeys
+                }
                 
                 property.initExpr = variable.initExpr
                 properties.append(property)
