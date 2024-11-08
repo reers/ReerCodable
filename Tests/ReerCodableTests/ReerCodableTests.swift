@@ -20,23 +20,12 @@ final class ReerCodableTests: XCTestCase {
         #if canImport(ReerCodableMacros)
         assertMacroExpansion(
             """
-            @Codable(memberwiseInit: false)
-            public struct Test {
-                fileprivate var name = ["1", ""] {
-                    didSet {
-                        print("newValue")
-                    }
-                }
-                var age: Int
-                var height: Float
-                
-                public init(from decoder: any Decoder) throws {
-                        let container = try decoder.container(keyedBy: AnyCodingKey.self)
-                        self.name = try container.decode(type: String?.self, keys: ["name"])
-                }
-                public func encode(to encoder: any Encoder) throws {
-                    
-                }
+            @Codable
+            public final class Test {
+                @CodingKey("age__", "")
+                var age: Int = 18
+                var name: String
+                let height: Float?
             }
             """,
             expandedSource: """

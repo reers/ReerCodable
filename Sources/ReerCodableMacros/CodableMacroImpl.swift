@@ -16,7 +16,7 @@ extension Codable: ExtensionMacro {
             declaration.as(StructDeclSyntax.self) != nil
             || declaration.as(ClassDeclSyntax.self) !=  nil 
         else {
-            throw MacroError.onlyForStructOrClass
+            throw MacroError(text: "Codable macro is only for `struct` or `class`")
         }
         
         if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
@@ -44,7 +44,7 @@ extension Codable: MemberMacro {
                initDecl.signature.parameterClause.parameters.count == 1,
                initDecl.signature.parameterClause.parameters.first?.firstName.text == "from",
                initDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Decoder" {
-                throw MacroError.shouldUseCodableMacroImplementation
+                throw MacroError(text: "Please use the `@Codable` macro-generated implementation instead of manually implementing `init(from:)`.")
             }
             
             if let funcDecl = member.decl.as(FunctionDeclSyntax.self),
@@ -52,7 +52,7 @@ extension Codable: MemberMacro {
                funcDecl.signature.parameterClause.parameters.count == 1 &&
                funcDecl.signature.parameterClause.parameters.first?.firstName.text == "to" &&
                funcDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Encoder" {
-                throw MacroError.shouldUseCodableMacroImplementation
+                throw MacroError(text: "Please use the `@Codable` macro-generated implementation instead of manually implementing `encode(to:)`.")
             }
         }
         

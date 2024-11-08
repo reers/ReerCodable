@@ -6,6 +6,7 @@ let b = 25
 
 @Codable
 public final class Test {
+    @CodingKey("age__", "a.b")
     var age: Int = 18
     var name: String
     let height: Float?
@@ -33,6 +34,10 @@ open class Person: Codable {
 
 let ss = """
 {"age": 22,
+"as": {
+    "b": 33
+},
+"a.b": 44,
 "name": "phoenix",
 "height": 180,
 "tag": {
