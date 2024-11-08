@@ -55,9 +55,9 @@ let dict = try! JSONSerialization.jsonObject(with: data);
 let ret = try! JSONDecoder().decode(Test.self, from: data)
 print(ret)
 
-//let modelData = try! JSONEncoder().encode(ret)
-//let str = String(data: modelData, encoding: .utf8)
-//print(str)
+let modelData = try! JSONEncoder().encode(ret)
+let str = String(data: modelData, encoding: .utf8)
+print(str)
 
 @Codable
 public class Model: Codable {
@@ -79,3 +79,26 @@ let jsonData = """
 
 let model = try! JSONDecoder().decode(SubModel.self, from: jsonData)
 print(model.subValue)
+
+//@Codable
+//public class Model: Codable {
+//    var value: String
+//}
+//
+////@CodableSubclass
+//public final class SubModel: Model {
+////    @CodingKey("sub")
+//    var subValue: String?
+//    
+//    public init(from decoder: Decoder) throws {
+//        let container = try decoder.container(keyedBy: AnyCodingKey.self)
+//        self.subValue = try container.decode(type: String?.self, keys: ["sub", "subValue"])
+//        try super.init(from: decoder)
+//    }
+//
+//    public override func encode(to encoder: Encoder) throws {
+//        try super.encode(to: encoder)
+//        var container = encoder.container(keyedBy: AnyCodingKey.self)
+//        try container.encode(value: self.subValue, key: "sub", isNested: false)
+//    }
+//}
