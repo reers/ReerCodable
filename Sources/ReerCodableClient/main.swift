@@ -58,3 +58,24 @@ print(ret)
 //let modelData = try! JSONEncoder().encode(ret)
 //let str = String(data: modelData, encoding: .utf8)
 //print(str)
+
+@Codable
+public class Model: Codable {
+    var value: String
+}
+
+@CodableSubclass
+public final class SubModel: Model {
+    @CodingKey("sub")
+    var subValue: String?
+}
+
+let jsonData = """
+{
+    "value": "super",
+    "subValue": "sub"
+}
+""".data(using: .utf8)!
+
+let model = try! JSONDecoder().decode(SubModel.self, from: jsonData)
+print(model.subValue)

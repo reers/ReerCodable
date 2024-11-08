@@ -24,5 +24,8 @@
 @attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
 public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "Codable")
 
+@attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
+public macro CodableSubclass() = #externalMacro(module: "ReerCodableMacros", type: "CodableSubclass")
+
 @attached(peer)
 public macro CodingKey(_ key: String ...) = #externalMacro(module: "ReerCodableMacros", type: "CodingKey")
