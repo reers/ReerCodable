@@ -23,14 +23,14 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            class Model: Codable {
-                var value: String
+            public final class Test {
+                @CodingKey("age__", "a.b")
+                var age: Int = 18
+                var name: String
+                let height: Float?
+
             }
-            
-            @CodableSubclass
-            class SubModel: Model {
-                var subValue: String?
-            }
+
             """,
             expandedSource: """
             struct Test {}

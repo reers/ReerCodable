@@ -6,11 +6,10 @@ let b = 25
 
 @Codable
 public final class Test {
-    @CodingKey("age__", "a.b")
+    @CodingKey("age", "a.b")
     var age: Int = 18
     var name: String
     let height: Float?
-
 }
 
 

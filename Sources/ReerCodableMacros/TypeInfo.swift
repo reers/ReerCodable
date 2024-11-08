@@ -125,16 +125,9 @@ extension TypeInfo {
                     return attribute == "CodingKey"
                 })
                 if let codingKey {
-                    let inputKeys = codingKey.as(AttributeSyntax.self)?
+                    property.keys = codingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?
                         .compactMap { $0.expression.trimmedDescription } ?? []
-                    if inputKeys.isEmpty {
-                        throw MacroError(text: "Property `\(name)` requires at least one key.")
-                    }
-                    try inputKeys.forEach {
-                        if $0 == "\"\"" { throw MacroError(text: "Empty key detected of property `\(name)`.") }
-                    }
-                    property.keys = inputKeys
                 }
                 
                 property.initExpr = variable.initExpr
