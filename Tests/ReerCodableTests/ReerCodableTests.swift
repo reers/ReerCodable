@@ -10,6 +10,8 @@ import ReerCodableMacros
 
 let testMacros: [String: Macro.Type] = [
     "Codable": Codable.self,
+    "CodableSubclass": CodableSubclass.self,
+    "CodingKey": CodingKey.self
 ]
 #endif
 
@@ -21,11 +23,13 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            public final class Test {
-                @CodingKey("age__", "")
-                var age: Int = 18
-                var name: String
-                let height: Float?
+            class Model: Codable {
+                var value: String
+            }
+            
+            @CodableSubclass
+            class SubModel: Model {
+                var subValue: String?
             }
             """,
             expandedSource: """
