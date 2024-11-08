@@ -41,7 +41,10 @@ struct TypeInfo {
             }
             .joined(separator: "\n")
         let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
-        let needRequired = isClass && !isFinal
+        var needRequired = isClass && !isFinal
+        if isOverride {
+            needRequired = true
+        }
         let decoder: DeclSyntax = """
         \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: AnyCodingKey.self)
