@@ -40,6 +40,10 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             if let targetTypeValue = anyValue as? Value {
                 return targetTypeValue
             }
+            if let converted = (Value.self as? TypeConvertible.Type)?.convert(from: anyValue),
+               let convertedValue = converted as? Value {
+                return convertedValue
+            }
         }
         return nil
     }
