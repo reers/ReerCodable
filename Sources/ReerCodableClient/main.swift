@@ -6,7 +6,7 @@ let b = 25
 
 @Codable
 public final class Test {
-    @CodingKey("a.b", "age__")
+    @CodingKey("a.b")
     @EncodingKey("abccccc.sssss", treatDotAsNested: false)
     var age: Int = 18
     var name: String
@@ -44,9 +44,9 @@ let ss = """
 "as": {
     "b": 33
 },
-"a.b": 44,
+"a.b": "44",
 "name": "phoenix",
-"height": 180,
+"height": "180",
 "tag": {
     "ed": "3333"
 },
