@@ -7,6 +7,8 @@ struct Property {
     var type: String
     var isOptional = false
     var keys: [String] = []
+    var encodingKey: String?
+    var treatDotAsNestedWhenEncoding: Bool = true
     var initExpr: String?
     
     var codingKeys: [String] {
@@ -57,7 +59,12 @@ struct TypeInfo {
     func generateEncoderFunc(isOverride: Bool = false) throws -> DeclSyntax {
         let encoding = properties
             .map { property in
-                return "try container.encode(value: self.\(property.name), key: \(property.codingKeys.first!), isNested: false)"
+                let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
+                    (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
+                } else {
+                    (property.codingKeys.first!, true)
+                }
+                return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
             }
             .joined(separator: "\n")
         
@@ -128,6 +135,26 @@ extension TypeInfo {
                     property.keys = codingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?
                         .compactMap { $0.expression.trimmedDescription } ?? []
+                }
+                
+                let encodingKey = variable.attributes.first(where: {
+                    let attribute = $0.as(AttributeSyntax.self)?
+                        .attributeName.as(IdentifierTypeSyntax.self)?
+                        .trimmedDescription
+                    return attribute == "EncodingKey"
+                })
+                if let encodingKey {
+                    property.encodingKey = encodingKey.as(AttributeSyntax.self)?
+                        .arguments?.as(LabeledExprListSyntax.self)?
+                        .first?.expression.trimmedDescription
+                    
+                    if let treatDotAsNested = encodingKey.as(AttributeSyntax.self)?
+                           .arguments?.as(LabeledExprListSyntax.self)?
+                           .first(where: { $0.label?.trimmedDescription == "treatDotAsNested" })?
+                           .expression.trimmedDescription,
+                       treatDotAsNested == "false" {
+                        property.treatDotAsNestedWhenEncoding = false
+                    }
                 }
                 
                 property.initExpr = variable.initExpr

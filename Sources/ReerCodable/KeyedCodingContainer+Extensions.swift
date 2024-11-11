@@ -77,12 +77,12 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
     public mutating func encode<Value: Encodable>(
         value: Value,
         key: String,
-        isNested: Bool
+        treatDotAsNested: Bool = true
     ) throws {
         if case Optional<Any>.none = (value as Any) {
             return
         }
-        if isNested, key.maybeNested {
+        if treatDotAsNested, key.maybeNested {
             try encode(value, forNestedKey: key)
         } else {
             try encode(value, forNormalKey: key)

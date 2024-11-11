@@ -13,6 +13,7 @@ struct ReerCodablePlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         Codable.self,
         CodableSubclass.self,
-        CodingKey.self
+        CodingKey.self,
+        EncodingKey.self
     ]
 }

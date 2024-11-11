@@ -29,3 +29,9 @@ public macro CodableSubclass() = #externalMacro(module: "ReerCodableMacros", typ
 
 @attached(peer)
 public macro CodingKey(_ key: String ...) = #externalMacro(module: "ReerCodableMacros", type: "CodingKey")
+
+@attached(peer)
+public macro EncodingKey(
+    _ key: String,
+    treatDotAsNested: Bool = true
+) = #externalMacro(module: "ReerCodableMacros", type: "EncodingKey")

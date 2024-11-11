@@ -11,7 +11,8 @@ import ReerCodableMacros
 let testMacros: [String: Macro.Type] = [
     "Codable": Codable.self,
     "CodableSubclass": CodableSubclass.self,
-    "CodingKey": CodingKey.self
+    "CodingKey": CodingKey.self,
+    "EncodingKey": EncodingKey.self
 ]
 #endif
 
@@ -25,6 +26,7 @@ final class ReerCodableTests: XCTestCase {
             @Codable
             public final class Test {
                 @CodingKey("age__", "a.b")
+                @EncodingKey("a.b", treatDotAsNested: false)
                 var age: Int = 18
                 var name: String
                 let height: Float?
