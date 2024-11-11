@@ -6,7 +6,8 @@ let b = 25
 
 @Codable
 public final class Test {
-    @CodingKey("age", "a.b")
+    @CodingKey("a.b", "age__")
+    @EncodingKey("abccccc.sssss", treatDotAsNested: false)
     var age: Int = 18
     var name: String
     let height: Float?
@@ -26,7 +27,7 @@ open class Person: Codable {
     open func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: AnyCodingKey.self)
 //        try container.encodeIfPresent(self.name, forKey: .init(stringValue: "name")!)
-        try container.encode(value: self.name, key: "a.b.c", isNested: true)
+        try container.encode(value: self.name, key: "a.b.c", treatDotAsNested: true)
     }
 }
 
@@ -101,3 +102,4 @@ print(model.subValue)
 //        try container.encode(value: self.subValue, key: "sub", isNested: false)
 //    }
 //}
+
