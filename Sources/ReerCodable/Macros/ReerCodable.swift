@@ -35,3 +35,6 @@ public macro EncodingKey(
     _ key: String,
     treatDotAsNested: Bool = true
 ) = #externalMacro(module: "ReerCodableMacros", type: "EncodingKey")
+
+@attached(peer)
+public macro IgnoreCoding() = #externalMacro(module: "ReerCodableMacros", type: "IgnoreCoding")
