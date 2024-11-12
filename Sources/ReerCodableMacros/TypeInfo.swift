@@ -11,11 +11,19 @@ struct Property {
     var encodingKey: String?
     var treatDotAsNestedWhenEncoding: Bool = true
     var initExpr: String?
+    var snakeCase = false
     
     var codingKeys: [String] {
-        return keys.isEmpty
-        ? ["\"\(name)\""]
-        : keys + ["\"\(name)\""]
+        var result: [String] = keys
+        if snakeCase {
+            // FIXME: - maybe not from camel case
+            result.append("\"\(name.camelToSnake())\"")
+        }
+        let defaultKey = "\"\(name)\""
+        if defaultKey != result.last {
+            result.append(defaultKey)
+        }
+        return result
     }
     
     var defaultValue: String? {
@@ -50,11 +58,21 @@ struct Property {
 struct TypeInfo {
     let context: MacroExpansionContext
     let decl: DeclGroupSyntax
+    var haveSnakeCase = false
     var properties: [Property] = []
     
     init(decl: DeclGroupSyntax, context: some MacroExpansionContext) throws {
         self.decl = decl
         self.context = context
+        // TODO: - extend for AttributeListSyntax
+        if decl.attributes.first(where: {
+            let attribute = $0.as(AttributeSyntax.self)?
+                .attributeName.as(IdentifierTypeSyntax.self)?
+                .trimmedDescription
+            return attribute == "SnakeCase"
+        }) != nil {
+            haveSnakeCase = true
+        }
         properties = try parseProperties()
     }
     
@@ -167,6 +185,7 @@ extension TypeInfo {
                 
                 var property = Property(name: name, type: type)
                 property.isOptional = variable.isOptional
+                property.snakeCase = haveSnakeCase
                 
                 if variable.firstAttribute(named: "IgnoreCoding") != nil {
                     property.isIgnored = true

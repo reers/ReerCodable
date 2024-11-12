@@ -13,11 +13,9 @@ let b = 25
 //    }
 //}
 
-@Codable
+@Codable @SnakeCase
 public final class Test {
-    @CodingKey("age__")
-    @EncodingKey("abccccc.sssss", treatDotAsNested: false)
-    var age: Int = 18
+    var userAge: Int = 18
     var name: String
     let height: Float?
     
@@ -26,13 +24,13 @@ public final class Test {
     
     public func didDecode() throws {
         print("laall")
-        if age < 0 {
+        if userAge < 0 {
             throw ReerCodableError(text: "这是一个测试错误")
         }
     }
     
     public func willEncode() throws {
-        age = 100
+        userAge = 100
     }
 }
 
@@ -79,6 +77,8 @@ let ss = """
 let data = ss.data(using: .utf8)!
 let dict = try! JSONSerialization.jsonObject(with: data);
 
+let decoder = JSONEncoder()
+decoder.keyEncodingStrategy
 let ret = try! JSONDecoder().decode(Test.self, from: data)
 print(ret)
 
