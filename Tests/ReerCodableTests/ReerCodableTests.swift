@@ -12,7 +12,8 @@ let testMacros: [String: Macro.Type] = [
     "Codable": Codable.self,
     "CodableSubclass": CodableSubclass.self,
     "CodingKey": CodingKey.self,
-    "EncodingKey": EncodingKey.self
+    "EncodingKey": EncodingKey.self,
+    "IgnoreCoding": IgnoreCoding.self
 ]
 #endif
 
@@ -31,6 +32,8 @@ final class ReerCodableTests: XCTestCase {
                 var name: String
                 let height: Float?
 
+                @IgnoreCoding
+                var ignore: [Int]
             }
 
             """,

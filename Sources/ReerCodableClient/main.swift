@@ -13,7 +13,7 @@ public final class Test {
     let height: Float?
     
     @IgnoreCoding
-    var ignore: IgnoreModel?
+    var ignore: [String: Int]?
 }
 
 public struct IgnoreModel: Codable {
