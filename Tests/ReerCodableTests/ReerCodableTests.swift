@@ -13,7 +13,8 @@ let testMacros: [String: Macro.Type] = [
     "CodableSubclass": CodableSubclass.self,
     "CodingKey": CodingKey.self,
     "EncodingKey": EncodingKey.self,
-    "IgnoreCoding": IgnoreCoding.self
+    "IgnoreCoding": IgnoreCoding.self,
+    "SnakeCase": SnakeCase.self
 ]
 #endif
 
@@ -25,10 +26,11 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
+            @SnakeCase
             public final class Test {
                 @CodingKey("age__", "a.b")
                 @EncodingKey("a.b", treatDotAsNested: false)
-                var age: Int = 18
+                var userAge: Int = 18
                 var name: String
                 let height: Float?
 
