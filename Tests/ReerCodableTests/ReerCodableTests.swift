@@ -25,15 +25,23 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            public final class Test {
-                @CodingKey("age__", "a.b")
-                @EncodingKey("a.b", treatDotAsNested: false)
+            public final class Test: CodableDelegate {
+                public func didDecodeModel() {
+                    
+                }
+                
+                public func willEncodeModel() {
+                    
+                }
+                
+                @CodingKey("a.b")
+                @EncodingKey("abccccc.sssss", treatDotAsNested: false)
                 var age: Int = 18
                 var name: String
                 let height: Float?
-
+                
                 @IgnoreCoding
-                var ignore: [Int]
+                var ignore: [String: Int]?
             }
 
             """,
