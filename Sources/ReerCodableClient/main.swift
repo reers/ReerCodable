@@ -5,7 +5,16 @@ let a = 17
 let b = 25
 
 @Codable
-public final class Test {
+public final class Test: CodableDelegate {
+    public func didDecodeModel() throws {
+        print("didDecodeModel")
+        throw ReerCodableError(text: "asfasdfas")
+    }
+    
+    public func willEncodeModel() throws {
+        
+    }
+    
     @CodingKey("a.b")
     @EncodingKey("abccccc.sssss", treatDotAsNested: false)
     var age: Int = 18
@@ -66,26 +75,26 @@ let modelData = try! JSONEncoder().encode(ret)
 let str = String(data: modelData, encoding: .utf8)
 print(str)
 
-@Codable
-public class Model: Codable {
-    var value: String
-}
+//@Codable
+//public class Model: Codable {
+//    var value: String
+//}
+//
+//@CodableSubclass
+//public final class SubModel: Model {
+//    @CodingKey("sub")
+//    var subValue: String?
+//}
 
-@CodableSubclass
-public final class SubModel: Model {
-    @CodingKey("sub")
-    var subValue: String?
-}
-
-let jsonData = """
-{
-    "value": "super",
-    "subValue": "sub"
-}
-""".data(using: .utf8)!
-
-let model = try! JSONDecoder().decode(SubModel.self, from: jsonData)
-print(model.subValue)
+//let jsonData = """
+//{
+//    "value": "super",
+//    "subValue": "sub"
+//}
+//""".data(using: .utf8)!
+//
+//let model = try! JSONDecoder().decode(SubModel.self, from: jsonData)
+//print(model.subValue)
 
 //@Codable
 //public class Model: Codable {

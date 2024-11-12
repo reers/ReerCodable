@@ -89,6 +89,7 @@ struct TypeInfo {
         \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: AnyCodingKey.self)
             \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
+            try self.didDecodeModel()
         }
         """
         return decoder
