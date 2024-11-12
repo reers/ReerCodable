@@ -1,5 +1,12 @@
 import SwiftSyntax
 
+enum TypeStructure {
+    case unknown
+    case basic(String)
+    case array(element: String)
+    case dictionary(key: String, value: String)
+}
+
 extension VariableDeclSyntax {
     var isLazy: Bool {
         return modifiers.contains { $0.name.trimmedDescription == "lazy" }
@@ -96,8 +103,19 @@ extension VariableDeclSyntax {
         return bindings.first?.initializer?.value.trimmedDescription
     }
     
-    func extractArrayType(from syntax: FunctionCallExprSyntax) -> String? {
-        guard 
+    func firstAttribute(named identifier: String) -> AttributeListSyntax.Element? {
+        return attributes.first(where: {
+            let attribute = $0.as(AttributeSyntax.self)?
+                .attributeName.as(IdentifierTypeSyntax.self)?
+                .trimmedDescription
+            return attribute == identifier
+        })
+    }
+}
+
+extension VariableDeclSyntax {
+    private func extractArrayType(from syntax: FunctionCallExprSyntax) -> String? {
+        guard
             let arrayExpr = syntax.calledExpression.as(ArrayExprSyntax.self),
             let firstElement = arrayExpr.elements.first,
             let declRef = firstElement.expression.as(DeclReferenceExprSyntax.self)
@@ -108,8 +126,8 @@ extension VariableDeclSyntax {
         return "[\(declRef.baseName.text)]"
     }
     
-    func extractDictType(from syntax: FunctionCallExprSyntax) -> String? {
-        guard 
+    private func extractDictType(from syntax: FunctionCallExprSyntax) -> String? {
+        guard
             let dictExpr = syntax.calledExpression.as(DictionaryExprSyntax.self),
             case .elements(let elements) = dictExpr.content,
             let firstElement = elements.first

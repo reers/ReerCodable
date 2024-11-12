@@ -6,16 +6,50 @@ struct Property {
     var name: String
     var type: String
     var isOptional = false
+    var isIgnored = false
     var keys: [String] = []
     var encodingKey: String?
     var treatDotAsNestedWhenEncoding: Bool = true
     var initExpr: String?
     
     var codingKeys: [String] {
-        keys.isEmpty
+        return keys.isEmpty
         ? ["\"\(name)\""]
         : keys + ["\"\(name)\""]
     }
+    
+    var defaultValue: String? {
+        let trimmed = type.trimmingCharacters(in: .whitespaces)
+        if let defaultValue = Self.basicTypeDefaults[trimmed] {
+            return defaultValue
+        }
+        if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
+            let content = trimmed.dropFirst().dropLast().trimmingCharacters(in: .whitespaces)
+            if content.contains(":") {
+                return "[:]"
+            } else {
+                return "[]"
+            }
+        }
+        return nil
+    }
+    
+    private static let basicTypeDefaults: [String: String] = [
+        "Int": "0",
+        "Int8": "0",
+        "Int16": "0",
+        "Int32": "0",
+        "Int64": "0",
+        "UInt": "0",
+        "UInt8": "0",
+        "UInt16": "0",
+        "UInt32": "0",
+        "UInt64": "0",
+        "Bool": "false",
+        "String": "\"\"",
+        "Float": "0.0",
+        "Double": "0.0"
+    ]
 }
 
 struct TypeInfo {
@@ -30,8 +64,17 @@ struct TypeInfo {
     }
     
     func generateDecoderInit(isOverride: Bool = false) throws -> DeclSyntax {
-        let assignments = properties
-            .map { property in
+        let assignments = try properties
+            .compactMap { property in
+                if property.isIgnored {
+                    if property.isOptional { return nil }
+                    if let initExpr = property.initExpr {
+                        return "self.\(property.name) = \(initExpr)"
+                    } else if let defaultValue = property.defaultValue {
+                        return "self.\(property.name) = \(defaultValue)"
+                    }
+                    throw MacroError(text: "The ignored property `\(property.name)` should have a default value.")
+                }
                 let body = """
                     container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
                     """
@@ -58,7 +101,8 @@ struct TypeInfo {
     
     func generateEncoderFunc(isOverride: Bool = false) throws -> DeclSyntax {
         let encoding = properties
-            .map { property in
+            .compactMap { property in
+                if property.isIgnored { return nil }
                 let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
                     (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
                 } else {
@@ -125,25 +169,17 @@ extension TypeInfo {
                 var property = Property(name: name, type: type)
                 property.isOptional = variable.isOptional
                 
-                let codingKey = variable.attributes.first(where: {
-                    let attribute = $0.as(AttributeSyntax.self)?
-                        .attributeName.as(IdentifierTypeSyntax.self)?
-                        .trimmedDescription
-                    return attribute == "CodingKey"
-                })
-                if let codingKey {
+                if variable.firstAttribute(named: "IgnoreCoding") != nil {
+                    property.isIgnored = true
+                }
+                
+                if let codingKey = variable.firstAttribute(named: "CodingKey") {
                     property.keys = codingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?
                         .compactMap { $0.expression.trimmedDescription } ?? []
                 }
                 
-                let encodingKey = variable.attributes.first(where: {
-                    let attribute = $0.as(AttributeSyntax.self)?
-                        .attributeName.as(IdentifierTypeSyntax.self)?
-                        .trimmedDescription
-                    return attribute == "EncodingKey"
-                })
-                if let encodingKey {
+                if let encodingKey = variable.firstAttribute(named: "EncodingKey") {
                     property.encodingKey = encodingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?
                         .first?.expression.trimmedDescription
