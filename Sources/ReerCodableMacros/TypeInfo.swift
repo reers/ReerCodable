@@ -24,12 +24,7 @@ struct Property {
             return defaultValue
         }
         if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
-            let content = trimmed.dropFirst().dropLast().trimmingCharacters(in: .whitespaces)
-            if content.contains(":") {
-                return "[:]"
-            } else {
-                return "[]"
-            }
+            return ".init()"
         }
         return nil
     }
@@ -73,7 +68,7 @@ struct TypeInfo {
                     } else if let defaultValue = property.defaultValue {
                         return "self.\(property.name) = \(defaultValue)"
                     }
-                    throw MacroError(text: "The ignored property `\(property.name)` should have a default value.")
+                    throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
                 }
                 let body = """
                     container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
@@ -128,6 +123,8 @@ struct TypeInfo {
             text += ": \(property.type)"
             if let initExpr = property.initExpr {
                 text += "= \(initExpr)"
+            } else if property.isIgnored, let defaultValue = property.defaultValue {
+                text += "= \(defaultValue)"
             } else if property.isOptional {
                 text += "= nil"
             }

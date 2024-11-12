@@ -32,7 +32,7 @@ public struct IgnoreCoding: PeerMacro {
                canGenerateDefaultValue(for: type) {
                 return []
             }
-            throw MacroError(text: "The ignored property `\(name)` should have a default value.")
+            throw MacroError(text: "The ignored property `\(name)` should have a default value, or be set as an optional type.")
         }
         return []
     }
