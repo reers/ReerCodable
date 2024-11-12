@@ -4,9 +4,18 @@ import Foundation
 let a = 17
 let b = 25
 
+//@Codable
+//struct Test {
+//    var age: Int
+//    
+//    func didDecodeModel() throws {
+//
+//    }
+//}
+
 @Codable
 public final class Test {
-    @CodingKey("a.b")
+    @CodingKey("age__")
     @EncodingKey("abccccc.sssss", treatDotAsNested: false)
     var age: Int = 18
     var name: String
@@ -14,6 +23,17 @@ public final class Test {
     
     @IgnoreCoding
     var ignore: [String: Int]?
+    
+    public func didDecode() throws {
+        print("laall")
+        if age < 0 {
+            throw ReerCodableError(text: "这是一个测试错误")
+        }
+    }
+    
+    public func willEncode() throws {
+        age = 100
+    }
 }
 
 public struct IgnoreModel: Codable {
@@ -40,11 +60,11 @@ open class Person: Codable {
 
 
 let ss = """
-{"age": 22,
+{"age__": 22,
 "as": {
     "b": 33
 },
-"a.b": "44",
+"a.b": "-44",
 "name": "phoenix",
 "height": "180",
 "tag": {
@@ -65,27 +85,27 @@ print(ret)
 let modelData = try! JSONEncoder().encode(ret)
 let str = String(data: modelData, encoding: .utf8)
 print(str)
-
-@Codable
-public class Model: Codable {
-    var value: String
-}
-
-@CodableSubclass
-public final class SubModel: Model {
-    @CodingKey("sub")
-    var subValue: String?
-}
-
-let jsonData = """
-{
-    "value": "super",
-    "subValue": "sub"
-}
-""".data(using: .utf8)!
-
-let model = try! JSONDecoder().decode(SubModel.self, from: jsonData)
-print(model.subValue)
+//
+//@Codable
+//public class Model: Codable {
+//    var value: String
+//}
+//
+//@CodableSubclass
+//public final class SubModel: Model {
+//    @CodingKey("sub")
+//    var subValue: String?
+//}
+//
+//let jsonData = """
+//{
+//    "value": "super",
+//    "subValue": "sub"
+//}
+//""".data(using: .utf8)!
+//
+//let model = try! JSONDecoder().decode(SubModel.self, from: jsonData)
+//print(model.subValue)
 
 //@Codable
 //public class Model: Codable {

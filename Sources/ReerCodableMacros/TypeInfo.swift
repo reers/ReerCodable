@@ -89,6 +89,7 @@ struct TypeInfo {
         \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: AnyCodingKey.self)
             \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
+            try self.didDecode()
         }
         """
         return decoder
@@ -110,6 +111,7 @@ struct TypeInfo {
         let accessable = if isOpen { "open " } else if isPublic || hasPublicOrOpenProperty { "public " } else { "" }
         let encoder: DeclSyntax = """
         \(raw: accessable)\(raw: isOverride ? "override " : "")func encode(to encoder: Encoder) throws {
+            try self.willEncode()
             \(raw: isOverride ? "try super.encode(to: encoder)\n" : "")var container = encoder.container(keyedBy: AnyCodingKey.self)
             \(raw: encoding)
         }

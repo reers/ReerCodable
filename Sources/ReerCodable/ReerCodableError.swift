@@ -8,4 +8,7 @@
 public struct ReerCodableError: Error, CustomStringConvertible {
     public let text: String
     public var description: String { return text }
+    public init(text: String) {
+        self.text = text
+    }
 }
