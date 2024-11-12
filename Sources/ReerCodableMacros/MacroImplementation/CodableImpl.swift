@@ -25,7 +25,7 @@ extension Codable: ExtensionMacro {
         }
         let extensionDecl: DeclSyntax =
             """
-            extension \(type.trimmed): Codable {}
+            extension \(type.trimmed): Codable, CodableDelegate {}
             """
         return [extensionDecl.cast(ExtensionDeclSyntax.self)]
     }
