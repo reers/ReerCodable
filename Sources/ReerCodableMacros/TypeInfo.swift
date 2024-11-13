@@ -105,8 +105,8 @@ struct TypeInfo {
                     let uint8 = property.type.hasPrefix("[UInt8]") ? ".re_bytes" : ""
                     body = """
                         {
-                            let tempValue = try container.decode(type: String\(questionMark).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                            return try tempValue\(questionMark).re_base64DecodedData()\(uint8)
+                            let base64String = try container.decode(type: String\(questionMark).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                            return try base64String\(questionMark).re_base64DecodedData()\(uint8)
                         }()
                         """
                 } else {
@@ -156,8 +156,10 @@ struct TypeInfo {
                     }
                     
                     return """
-                        let dataToStringTemp = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
-                        try container.encode(value: dataToStringTemp, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
+                        try {
+                            let base64String = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
+                            try container.encode(value: base64String, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
+                        }()
                         """
                 } else {
                     return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
