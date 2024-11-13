@@ -45,7 +45,8 @@ public struct IgnoreCoding: PeerMacro {
             "Bool", "String", "Float", "Double"
         ].contains(trimmed)
         if basicType
-           || (trimmed.hasPrefix("[") && trimmed.hasSuffix("]")) {
+           || (trimmed.hasPrefix("[") && trimmed.hasSuffix("]"))
+           || trimmed.hasPrefix("Set<") {
             return true
         }
         return false

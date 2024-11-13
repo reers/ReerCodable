@@ -31,7 +31,8 @@ struct Property {
         if let defaultValue = Self.basicTypeDefaults[trimmed] {
             return defaultValue
         }
-        if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
+        if (trimmed.hasPrefix("[") && trimmed.hasSuffix("]"))
+           || trimmed.hasPrefix("Set<") {
             return ".init()"
         }
         return nil

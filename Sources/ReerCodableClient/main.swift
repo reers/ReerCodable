@@ -21,7 +21,7 @@ public final class Test {
     let height: Float?
     
     @IgnoreCoding
-    var ignore: [String: Int]?
+    var ignore: Set<String>
     
     public func didDecode() throws {
         print("laall")
