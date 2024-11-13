@@ -1,12 +1,5 @@
 import SwiftSyntax
 
-enum TypeStructure {
-    case unknown
-    case basic(String)
-    case array(element: String)
-    case dictionary(key: String, value: String)
-}
-
 extension VariableDeclSyntax {
     var isLazy: Bool {
         return modifiers.contains { $0.name.trimmedDescription == "lazy" }
@@ -101,15 +94,6 @@ extension VariableDeclSyntax {
     
     var initExpr: String? {
         return bindings.first?.initializer?.value.trimmedDescription
-    }
-    
-    func firstAttribute(named identifier: String) -> AttributeListSyntax.Element? {
-        return attributes.first(where: {
-            let attribute = $0.as(AttributeSyntax.self)?
-                .attributeName.as(IdentifierTypeSyntax.self)?
-                .trimmedDescription
-            return attribute == identifier
-        })
     }
 }
 
