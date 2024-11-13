@@ -64,13 +64,7 @@ struct TypeInfo {
     init(decl: DeclGroupSyntax, context: some MacroExpansionContext) throws {
         self.decl = decl
         self.context = context
-        // TODO: - extend for AttributeListSyntax
-        if decl.attributes.first(where: {
-            let attribute = $0.as(AttributeSyntax.self)?
-                .attributeName.as(IdentifierTypeSyntax.self)?
-                .trimmedDescription
-            return attribute == "SnakeCase"
-        }) != nil {
+        if decl.attributes.firstAttribute(named: "SnakeCase") != nil {
             haveSnakeCase = true
         }
         properties = try parseProperties()
@@ -187,17 +181,17 @@ extension TypeInfo {
                 property.isOptional = variable.isOptional
                 property.snakeCase = haveSnakeCase
                 
-                if variable.firstAttribute(named: "IgnoreCoding") != nil {
+                if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
                     property.isIgnored = true
                 }
                 
-                if let codingKey = variable.firstAttribute(named: "CodingKey") {
+                if let codingKey = variable.attributes.firstAttribute(named: "CodingKey") {
                     property.keys = codingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?
                         .compactMap { $0.expression.trimmedDescription } ?? []
                 }
                 
-                if let encodingKey = variable.firstAttribute(named: "EncodingKey") {
+                if let encodingKey = variable.attributes.firstAttribute(named: "EncodingKey") {
                     property.encodingKey = encodingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?
                         .first?.expression.trimmedDescription

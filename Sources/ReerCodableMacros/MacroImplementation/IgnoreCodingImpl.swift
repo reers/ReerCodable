@@ -21,7 +21,7 @@ public struct IgnoreCoding: PeerMacro {
             return []
         }
         
-        if variable.firstAttribute(named: "IgnoreCoding") != nil {
+        if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
             if variable.isOptional {
                 return []
             }
