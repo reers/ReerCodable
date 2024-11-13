@@ -31,6 +31,10 @@ public final class Test {
     @Base64Coding
     var data: Data?
     
+    @CodingKey("data.data2")
+    @Base64Coding
+    var data2: Data?
+    
     public func didDecode() throws {
         var ss: String?
 //        print(ss?.re_base64DecodedData()?.re_bytes)
