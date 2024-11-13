@@ -39,6 +39,9 @@ public macro EncodingKey(
 @attached(peer)
 public macro IgnoreCoding() = #externalMacro(module: "ReerCodableMacros", type: "IgnoreCoding")
 
+/// `camelCase`
+@attached(peer)
+public macro CamelCase() = #externalMacro(module: "ReerCodableMacros", type: "CamelCase")
 
 
 /// `snake_case`

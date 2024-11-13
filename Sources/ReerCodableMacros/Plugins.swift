@@ -16,6 +16,7 @@ struct ReerCodablePlugin: CompilerPlugin {
         CodingKey.self,
         EncodingKey.self,
         IgnoreCoding.self,
-        SnakeCase.self
+        CamelCase.self,
+        SnakeCase.self,
     ]
 }
