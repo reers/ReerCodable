@@ -13,8 +13,9 @@ let b = 25
 //    }
 //}
 
-@Codable @SnakeCase
+@Codable
 public final class Test {
+    @SnakeCase
     var userAge: Int = 18
     var name: String
     let height: Float?

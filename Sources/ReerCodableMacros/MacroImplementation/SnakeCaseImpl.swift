@@ -17,9 +17,10 @@ public struct SnakeCase: PeerMacro {
         guard
             declaration.as(StructDeclSyntax.self) != nil
             || declaration.as(ClassDeclSyntax.self) !=  nil
+                || declaration.as(VariableDeclSyntax.self) !=  nil
         else {
             // TODO: - also used for variable
-            throw MacroError(text: "@SnakeCase macro is only for `struct` or `class`")
+            throw MacroError(text: "@SnakeCase macro is only for `struct`, `class` or a property.")
         }
 //        guard
 //            let variable = declaration.as(VariableDeclSyntax.self),

@@ -180,6 +180,11 @@ extension TypeInfo {
                 var property = Property(name: name, type: type)
                 property.isOptional = variable.isOptional
                 property.snakeCase = haveSnakeCase
+                if !haveSnakeCase {
+                    if variable.attributes.firstAttribute(named: "SnakeCase") != nil {
+                        property.snakeCase = true
+                    }
+                }
                 
                 if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
                     property.isIgnored = true
