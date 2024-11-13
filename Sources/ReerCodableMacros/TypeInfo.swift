@@ -11,16 +11,16 @@ struct Property {
     var encodingKey: String?
     var treatDotAsNestedWhenEncoding: Bool = true
     var initExpr: String?
-    var snakeCase = false
+    var caseStyles: [CaseStyle] = []
     
     var codingKeys: [String] {
         var result: [String] = keys
-        if snakeCase {
-            // FIXME: - maybe not from camel case
-            result.append("\"\(name.camelToSnake())\"")
+        if !caseStyles.isEmpty {
+            let convertedKey = KeyConvertor.convert(value: name, caseStyles: caseStyles)
+            result.append(contentsOf: convertedKey.map { "\"\($0)\"" })
         }
         let defaultKey = "\"\(name)\""
-        if defaultKey != result.last {
+        if !result.contains(defaultKey) {
             result.append(defaultKey)
         }
         return result
@@ -59,15 +59,25 @@ struct Property {
 struct TypeInfo {
     let context: MacroExpansionContext
     let decl: DeclGroupSyntax
-    var haveSnakeCase = false
+    var caseStyles: [CaseStyle] = []
     var properties: [Property] = []
     
     init(decl: DeclGroupSyntax, context: some MacroExpansionContext) throws {
         self.decl = decl
         self.context = context
-        if decl.attributes.firstAttribute(named: "SnakeCase") != nil {
-            haveSnakeCase = true
+        
+        caseStyles = decl.attributes.compactMap {
+            let attributeId = $0.as(AttributeSyntax.self)?
+                .attributeName.as(IdentifierTypeSyntax.self)?
+                .trimmedDescription
+            for caseStyle in CaseStyle.allCases {
+                if caseStyle.rawValue == attributeId {
+                    return caseStyle
+                }
+            }
+            return nil
         }
+        
         properties = try parseProperties()
     }
     
@@ -180,12 +190,18 @@ extension TypeInfo {
                 
                 var property = Property(name: name, type: type)
                 property.isOptional = variable.isOptional
-                property.snakeCase = haveSnakeCase
-                if !haveSnakeCase {
-                    if variable.attributes.firstAttribute(named: "SnakeCase") != nil {
-                        property.snakeCase = true
+                let propertyCaseStyles = variable.attributes.compactMap {
+                    let attributeId = $0.as(AttributeSyntax.self)?
+                        .attributeName.as(IdentifierTypeSyntax.self)?
+                        .trimmedDescription
+                    for caseStyle in CaseStyle.allCases {
+                        if caseStyle.rawValue == attributeId {
+                            return caseStyle
+                        }
                     }
+                    return nil
                 }
+                property.caseStyles = propertyCaseStyles.uniqueMerged(with: caseStyles)
                 
                 if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
                     property.isIgnored = true
