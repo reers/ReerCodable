@@ -19,7 +19,7 @@ public struct CodingKey: PeerMacro {
             let variable = declaration.as(VariableDeclSyntax.self),
             let name = variable.name
         else {
-            return []
+            throw MacroError(text: "@CodingKey macro is only for property.")
         }
         
         let codingKey = variable.attributes.first(where: {

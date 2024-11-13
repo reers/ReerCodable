@@ -9,6 +9,7 @@ struct Property {
     var isIgnored = false
     var keys: [String] = []
     var encodingKey: String?
+    var base64Coding = false
     var treatDotAsNestedWhenEncoding: Bool = true
     var initExpr: String?
     var caseStyles: [CaseStyle] = []
@@ -56,6 +57,8 @@ struct Property {
         "Float": "0.0",
         "Double": "0.0"
     ]
+    
+    var questionMark: String { isOptional ? "?" : "" }
 }
 
 struct TypeInfo {
@@ -96,9 +99,22 @@ struct TypeInfo {
                     }
                     throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
                 }
-                let body = """
-                    container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                    """
+                var body: String
+                if property.base64Coding {
+                    let questionMark = property.isOptional ? "?" : ""
+                    let uint8 = property.type.hasPrefix("[UInt8]") ? ".re_bytes" : ""
+                    body = """
+                        {
+                            let tempValue = try container.decode(type: String\(questionMark).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                            return try tempValue\(questionMark).re_base64DecodedData()\(uint8)
+                        }()
+                        """
+                } else {
+                    body = """
+                        container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                        """
+                }
+                
                 if let initExpr = property.initExpr {
                     return "self.\(property.name) = (try? \(body)) ?? (\(initExpr))"
                 } else {
@@ -130,7 +146,22 @@ struct TypeInfo {
                 } else {
                     (property.codingKeys.first!, true)
                 }
-                return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
+                if property.base64Coding {
+                    
+                    // a Data or Data? type
+                    let dataTypeTemp = if property.isOptional {
+                        property.type.hasPrefix("[UInt8]") ? "self.\(property.name).map({ Data($0) })" : "self.\(property.name)"
+                    } else {
+                        property.type.hasPrefix("[UInt8]") ? "Data(self.\(property.name))" : "self.\(property.name)"
+                    }
+                    
+                    return """
+                        let dataToStringTemp = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
+                        try container.encode(value: dataToStringTemp, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
+                        """
+                } else {
+                    return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
+                }
             }
             .joined(separator: "\n")
         
@@ -210,6 +241,10 @@ extension TypeInfo {
                 // ignore coding
                 if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
                     property.isIgnored = true
+                }
+                // base64 coding
+                if let base64Coding = variable.attributes.firstAttribute(named: "Base64Coding") {
+                    property.base64Coding = true
                 }
                 // coding key
                 if let codingKey = variable.attributes.firstAttribute(named: "CodingKey") {
