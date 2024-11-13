@@ -1,9 +1,10 @@
 //
-//  KeyConversion.swift
+//  KeyConverter.swift
 //  ReerCodable
 //
 //  Created by phoenix on 2024/11/13.
 //
+
 enum WordCase {
     case lowerCase
     case camelCase
@@ -11,65 +12,48 @@ enum WordCase {
     case upperCase
 }
 
-struct KeyConvertor {
-    private static let snakeConverter = KeyConvertor(separator: "_")
-    private static let kebabConverter = KeyConvertor(separator: "-")
-    private static let plainConverter = KeyConvertor(separator: "")
-    
-    let separator: String
+enum WordSeparator: String {
+    case snake = "_"
+    case kebab = "-"
+    case plain = ""
+}
 
-    init(separator: String) {
-        self.separator = separator
-    }
+struct KeyConverter {
     
-    /// 批量转换多个样式
     static func convert(value: String, caseStyles: [CaseStyle]) -> [String] {
         return caseStyles.map { convert(value: value, caseStyle: $0) }
     }
     
-    /// 转换单个样式
     static func convert(value: String, caseStyle: CaseStyle) -> String {
         switch caseStyle {
         case .flatCase:
-            return plainConverter.convert(value: value, variant: .lowerCase)
-            
+            return convert(value: value, wordCase: .lowerCase, separator: .plain)
         case .upperCase:
-            return plainConverter.convert(value: value, variant: .upperCase)
-            
+            return convert(value: value, wordCase: .upperCase, separator: .plain)
         case .camelCase:
-            return plainConverter.convert(value: value, wordCase: .camelCase)
-            
+            return convert(value: value, wordCase: .camelCase, separator: .plain)
         case .pascalCase:
-            return plainConverter.convert(value: value, wordCase: .pascalCase)
-            
+            return convert(value: value, wordCase: .pascalCase, separator: .plain)
         case .snakeCase:
-            return snakeConverter.convert(value: value, wordCase: .lowerCase)
-            
+            return convert(value: value, wordCase: .lowerCase, separator: .snake)
         case .kebabCase:
-            return kebabConverter.convert(value: value, wordCase: .lowerCase)
-            
+            return convert(value: value, wordCase: .lowerCase, separator: .kebab)
         case .camelSnakeCase:
-            return snakeConverter.convert(value: value, wordCase: .camelCase)
-            
+            return convert(value: value, wordCase: .camelCase, separator: .snake)
         case .pascalSnakeCase:
-            return snakeConverter.convert(value: value, wordCase: .pascalCase)
-            
+            return convert(value: value, wordCase: .pascalCase, separator: .snake)
         case .screamingSnakeCase:
-            return snakeConverter.convert(value: value, wordCase: .upperCase)
-            
+            return convert(value: value, wordCase: .upperCase, separator: .snake)
         case .camelKebabCase:
-            return kebabConverter.convert(value: value, wordCase: .camelCase)
-            
+            return convert(value: value, wordCase: .camelCase, separator: .kebab)
         case .pascalKebabCase:
-            return kebabConverter.convert(value: value, wordCase: .pascalCase)
-            
+            return convert(value: value, wordCase: .pascalCase, separator: .kebab)
         case .screamingKebabCase:
-            return kebabConverter.convert(value: value, wordCase: .upperCase)
+            return convert(value: value, wordCase: .upperCase, separator: .kebab)
         }
     }
     
-    func convert(value: String, wordCase: WordCase) -> String {
-        // Remove any special characters at the beginning/end
+    static func convert(value: String, wordCase: WordCase, separator: WordSeparator) -> String {
         let isAllCaps = value.isAllCaps
         let firstAlphanumericIndex = value.firstIndex(where: \.isAlphaNumeric) ?? value.startIndex
         let lastAlphanumericIndex = value.lastIndex(where: \.isAlphaNumeric) ?? value.endIndex
@@ -83,7 +67,7 @@ struct KeyConvertor {
             var hasHaddedSeparator = false
 
             if i >= 1, (!character.isAlphaNumeric || (character.isUppercase && !isAllCaps)) {
-                resultString += separator
+                resultString += separator.rawValue
                 hasHaddedSeparator = true
             }
 
@@ -99,15 +83,19 @@ struct KeyConvertor {
             }() else {
                 continue
             }
-            switch variant {
+            switch wordCase {
             case .lowerCase:
                 resultString += String(nextCharacter).lowercased()
             case .upperCase:
                 resultString += String(nextCharacter).uppercased()
             case .camelCase:
-                resultString += hasHaddedSeparator ? String(nextCharacter).uppercased() :  String(nextCharacter).lowercased()
+                resultString += hasHaddedSeparator
+                    ? String(nextCharacter).uppercased()
+                    : String(nextCharacter).lowercased()
             case .pascalCase:
-                resultString += hasHaddedSeparator || i == 0 ? String(nextCharacter).uppercased() :  String(nextCharacter).lowercased()
+                resultString += hasHaddedSeparator || i == 0
+                    ? String(nextCharacter).uppercased()
+                    : String(nextCharacter).lowercased()
             }
             i += 1
         }
@@ -123,6 +111,6 @@ private extension Character {
 
 private extension String {
     var isAllCaps: Bool {
-        first { $0.isAlphaNumeric && $0.isLowercase } == nil
+        return first { $0.isAlphaNumeric && $0.isLowercase } == nil
     }
 }

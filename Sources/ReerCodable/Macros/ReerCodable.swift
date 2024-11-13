@@ -39,11 +39,51 @@ public macro EncodingKey(
 @attached(peer)
 public macro IgnoreCoding() = #externalMacro(module: "ReerCodableMacros", type: "IgnoreCoding")
 
+
+/// `flatcase`
+@attached(peer)
+public macro FlatCase() = #externalMacro(module: "ReerCodableMacros", type: "FlatCase")
+
+/// `UPPERCASE`
+@attached(peer)
+public macro UpperCase() = #externalMacro(module: "ReerCodableMacros", type: "UpperCase")
+
 /// `camelCase`
 @attached(peer)
 public macro CamelCase() = #externalMacro(module: "ReerCodableMacros", type: "CamelCase")
 
+/// `PascalCase`
+@attached(peer)
+public macro PascalCase() = #externalMacro(module: "ReerCodableMacros", type: "PascalCase")
 
 /// `snake_case`
 @attached(peer)
 public macro SnakeCase() = #externalMacro(module: "ReerCodableMacros", type: "SnakeCase")
+
+/// `kebab-case`
+@attached(peer)
+public macro KebabCase() = #externalMacro(module: "ReerCodableMacros", type: "KebabCase")
+
+/// `camel_Snake_Case`
+@attached(peer)
+public macro CamelSnakeCase() = #externalMacro(module: "ReerCodableMacros", type: "CamelSnakeCase")
+
+/// `Pascal_Snake_Case`
+@attached(peer)
+public macro PascalSnakeCase() = #externalMacro(module: "ReerCodableMacros", type: "PascalSnakeCase")
+
+/// `SCREAMING_SNAKE_CASE`
+@attached(peer)
+public macro ScreamingSnakeCase() = #externalMacro(module: "ReerCodableMacros", type: "ScreamingSnakeCase")
+
+/// `camel-Kebab-Case`
+@attached(peer)
+public macro CamelKebabCase() = #externalMacro(module: "ReerCodableMacros", type: "CamelKebabCase")
+
+/// `Pascal-Kebab-Case`
+@attached(peer)
+public macro PascalKebabCase() = #externalMacro(module: "ReerCodableMacros", type: "PascalKebabCase")
+
+/// `SCREAMING-SNAKE-CASE`
+@attached(peer)
+public macro ScreamingKebabCase() = #externalMacro(module: "ReerCodableMacros", type: "ScreamingKebabCase")

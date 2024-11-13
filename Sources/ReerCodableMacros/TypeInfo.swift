@@ -16,14 +16,16 @@ struct Property {
     var codingKeys: [String] {
         var result: [String] = keys
         if !caseStyles.isEmpty {
-            let convertedKey = KeyConvertor.convert(value: name, caseStyles: caseStyles)
+            let convertedKey = KeyConverter.convert(value: name, caseStyles: caseStyles)
             result.append(contentsOf: convertedKey.map { "\"\($0)\"" })
         }
-        let defaultKey = "\"\(name)\""
-        if !result.contains(defaultKey) {
-            result.append(defaultKey)
+        result.append("\"\(name)\"")
+        
+        return result.reduce(into: [String]()) { array, element in
+            if !array.contains(element) {
+                array.append(element)
+            }
         }
-        return result
     }
     
     var defaultValue: String? {
@@ -70,8 +72,9 @@ struct TypeInfo {
             let attributeId = $0.as(AttributeSyntax.self)?
                 .attributeName.as(IdentifierTypeSyntax.self)?
                 .trimmedDescription
+            if attributeId == "Codable" { return nil }
             for caseStyle in CaseStyle.allCases {
-                if caseStyle.rawValue == attributeId {
+                if caseStyle.macroName == attributeId {
                     return caseStyle
                 }
             }
@@ -189,30 +192,32 @@ extension TypeInfo {
                 }
                 
                 var property = Property(name: name, type: type)
+                // isOptional
                 property.isOptional = variable.isOptional
+                // get property case attributes
                 let propertyCaseStyles = variable.attributes.compactMap {
                     let attributeId = $0.as(AttributeSyntax.self)?
                         .attributeName.as(IdentifierTypeSyntax.self)?
                         .trimmedDescription
                     for caseStyle in CaseStyle.allCases {
-                        if caseStyle.rawValue == attributeId {
+                        if caseStyle.macroName == attributeId {
                             return caseStyle
                         }
                     }
                     return nil
                 }
                 property.caseStyles = propertyCaseStyles.uniqueMerged(with: caseStyles)
-                
+                // ignore coding
                 if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
                     property.isIgnored = true
                 }
-                
+                // coding key
                 if let codingKey = variable.attributes.firstAttribute(named: "CodingKey") {
                     property.keys = codingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?
                         .compactMap { $0.expression.trimmedDescription } ?? []
                 }
-                
+                // encoding key
                 if let encodingKey = variable.attributes.firstAttribute(named: "EncodingKey") {
                     property.encodingKey = encodingKey.as(AttributeSyntax.self)?
                         .arguments?.as(LabeledExprListSyntax.self)?

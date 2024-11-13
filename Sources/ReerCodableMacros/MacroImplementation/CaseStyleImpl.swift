@@ -93,10 +93,50 @@ extension CaseStyleAttribute {
     }
 }
 
+public struct FlatCase: CaseStyleAttribute {
+    static var style: CaseStyle { .flatCase }
+}
+
+public struct UpperCase: CaseStyleAttribute {
+    static var style: CaseStyle { .upperCase }
+}
+
 public struct CamelCase: CaseStyleAttribute {
     static var style: CaseStyle { .camelCase }
 }
 
+public struct PascalCase: CaseStyleAttribute {
+    static var style: CaseStyle { .pascalCase }
+}
+
 public struct SnakeCase: CaseStyleAttribute {
     static var style: CaseStyle { .snakeCase }
+}
+
+public struct KebabCase: CaseStyleAttribute {
+    static var style: CaseStyle { .kebabCase }
+}
+
+public struct CamelSnakeCase: CaseStyleAttribute {
+    static var style: CaseStyle { .camelSnakeCase }
+}
+
+public struct PascalSnakeCase: CaseStyleAttribute {
+    static var style: CaseStyle { .pascalSnakeCase }
+}
+
+public struct ScreamingSnakeCase: CaseStyleAttribute {
+    static var style: CaseStyle { .screamingSnakeCase }
+}
+
+public struct CamelKebabCase: CaseStyleAttribute {
+    static var style: CaseStyle { .camelKebabCase }
+}
+
+public struct PascalKebabCase: CaseStyleAttribute {
+    static var style: CaseStyle { .pascalKebabCase }
+}
+
+public struct ScreamingKebabCase: CaseStyleAttribute {
+    static var style: CaseStyle { .screamingKebabCase }
 }

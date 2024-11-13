@@ -16,7 +16,17 @@ struct ReerCodablePlugin: CompilerPlugin {
         CodingKey.self,
         EncodingKey.self,
         IgnoreCoding.self,
+        FlatCase.self,
+        UpperCase.self,
         CamelCase.self,
         SnakeCase.self,
+        PascalCase.self,
+        KebabCase.self,
+        CamelSnakeCase.self,
+        PascalSnakeCase.self,
+        ScreamingSnakeCase.self,
+        CamelKebabCase.self,
+        PascalKebabCase.self,
+        ScreamingKebabCase.self,
     ]
 }
