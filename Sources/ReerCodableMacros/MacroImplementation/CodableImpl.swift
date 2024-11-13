@@ -16,7 +16,7 @@ extension Codable: ExtensionMacro {
             declaration.as(StructDeclSyntax.self) != nil
             || declaration.as(ClassDeclSyntax.self) !=  nil 
         else {
-            throw MacroError(text: "Codable macro is only for `struct` or `class`")
+            throw MacroError(text: "@Codable macro is only for `struct` or `class`")
         }
         
         if let inheritedType = declaration.inheritanceClause?.inheritedTypes,

@@ -39,6 +39,8 @@ public macro EncodingKey(
 @attached(peer)
 public macro IgnoreCoding() = #externalMacro(module: "ReerCodableMacros", type: "IgnoreCoding")
 
+@attached(peer)
+public macro Base64Coding() = #externalMacro(module: "ReerCodableMacros", type: "Base64Coding")
 
 /// `flatcase`
 @attached(peer)

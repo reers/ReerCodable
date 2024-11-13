@@ -18,7 +18,7 @@ public struct EncodingKey: PeerMacro {
             let variable = declaration.as(VariableDeclSyntax.self),
             let name = variable.name
         else {
-            return []
+            throw MacroError(text: "@EncodingKey macro is only for property.")
         }
         
         let encodingKey = variable.attributes.first(where: {

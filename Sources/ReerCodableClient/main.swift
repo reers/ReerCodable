@@ -22,13 +22,19 @@ public final class Test {
     
     @CodingKey("name")
     var userName: String
-    let height: Float?
+//    @Base64Coding
+//    let height: [UInt8]?
     
     @IgnoreCoding
     var ignore: Set<String>
     
+    @Base64Coding
+    var data: Data?
+    
     public func didDecode() throws {
-        print("laall")
+        var ss: String?
+//        print(ss?.re_base64DecodedData()?.re_bytes)
+        userAge = 22
         if userAge < 0 {
             throw ReerCodableError(text: "这是一个测试错误")
         }
@@ -36,6 +42,7 @@ public final class Test {
     
     public func willEncode() throws {
         userAge = 100
+        
     }
 }
 
@@ -44,14 +51,19 @@ public struct IgnoreModel: Codable {
 }
 
 
+
 open class Person: Codable {
     var name: String?
    
     
     required public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: AnyCodingKey.self)
+//        self.name =
 //        self.name = try container.decode(String.self, forKey: .name)
-        self.name = try container.decode(type: String?.self, keys: ["name"])
+//        self.name = try {
+//            let tempValue = try container.decode(type: String?.self, keys: ["name"])
+//            return tempValue?.base64DecodedData
+//        }()
     }
     
     open func encode(to encoder: any Encoder) throws {
@@ -75,7 +87,8 @@ let ss = """
 },
 "tag.isdf": "hhhhhh",
 "array": ["abc"],
-"season": "spring"
+"season": "spring",
+"data": "aGVsbG8gd29ybGQ="
 }
 
 """

@@ -14,6 +14,7 @@ let testMacros: [String: Macro.Type] = [
     "CodingKey": CodingKey.self,
     "EncodingKey": EncodingKey.self,
     "IgnoreCoding": IgnoreCoding.self,
+    "Base64Coding": Base64Coding.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,

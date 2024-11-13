@@ -18,7 +18,7 @@ public struct IgnoreCoding: PeerMacro {
             let variable = declaration.as(VariableDeclSyntax.self),
             let name = variable.name
         else {
-            return []
+            throw MacroError(text: "@IgnoreCoding macro is only for property.")
         }
         
         if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
