@@ -33,6 +33,8 @@ final class ReerCodableTests: XCTestCase {
                 var userAge: Int = 18
                 var name: String
                 let height: Float?
+                @IgnoreCoding
+                var set: Set<Int>
 
                 @IgnoreCoding
                 var ignore: [Int]
