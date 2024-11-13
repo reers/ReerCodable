@@ -14,7 +14,18 @@ let testMacros: [String: Macro.Type] = [
     "CodingKey": CodingKey.self,
     "EncodingKey": EncodingKey.self,
     "IgnoreCoding": IgnoreCoding.self,
-    "SnakeCase": SnakeCase.self
+    "FlatCase": FlatCase.self,
+    "UpperCase": UpperCase.self,
+    "CamelCase": CamelCase.self,
+    "PascalCase": PascalCase.self,
+    "SnakeCase": SnakeCase.self,
+    "KebabCase": KebabCase.self,
+    "CamelSnakeCase": CamelSnakeCase.self,
+    "PascalSnakeCase": PascalSnakeCase.self,
+    "ScreamingSnakeCase": ScreamingSnakeCase.self,
+    "CamelKebabCase": CamelKebabCase.self,
+    "PascalKebabCase": PascalKebabCase.self,
+    "ScreamingKebabCase": ScreamingKebabCase.self,
 ]
 #endif
 
@@ -26,7 +37,7 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            @SnakeCase
+            @ScreamingKebabCase
             public final class Test {
                 @CodingKey("age__", "a.b")
                 @EncodingKey("a.b", treatDotAsNested: false)

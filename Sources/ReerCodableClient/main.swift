@@ -14,10 +14,14 @@ let b = 25
 //}
 
 @Codable
+@SnakeCase
+@ScreamingKebabCase
 public final class Test {
-    @SnakeCase
+    @CodingKey("age__", "a.b")
     var userAge: Int = 18
-    var name: String
+    
+    @CodingKey("name")
+    var userName: String
     let height: Float?
     
     @IgnoreCoding
@@ -78,15 +82,14 @@ let ss = """
 let data = ss.data(using: .utf8)!
 let dict = try! JSONSerialization.jsonObject(with: data);
 
-let decoder = JSONEncoder()
-decoder.keyEncodingStrategy
-let ret = try! JSONDecoder().decode(Test.self, from: data)
+
+let ret = try JSONDecoder().decode(Test.self, from: data)
 print(ret)
 
 let modelData = try! JSONEncoder().encode(ret)
 let str = String(data: modelData, encoding: .utf8)
 print(str)
-//
+
 //@Codable
 //public class Model: Codable {
 //    var value: String
