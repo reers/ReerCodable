@@ -42,6 +42,9 @@ public macro IgnoreCoding() = #externalMacro(module: "ReerCodableMacros", type: 
 @attached(peer)
 public macro Base64Coding() = #externalMacro(module: "ReerCodableMacros", type: "Base64Coding")
 
+@attached(peer)
+public macro DateCoding(_ strategy: DateCodingStrategy) = #externalMacro(module: "ReerCodableMacros", type: "DateCoding")
+
 /// `flatcase`
 @attached(peer)
 public macro FlatCase() = #externalMacro(module: "ReerCodableMacros", type: "FlatCase")

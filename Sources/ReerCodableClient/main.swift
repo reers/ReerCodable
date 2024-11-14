@@ -13,6 +13,11 @@ let b = 25
 //    }
 //}
 
+let formatter = DateFormatter()
+formatter.locale = Locale(identifier: "en_US_POSIX")
+formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
+formatter.timeZone = TimeZone(secondsFromGMT: 0)
+
 @Codable
 @SnakeCase
 @ScreamingKebabCase
@@ -34,6 +39,9 @@ public final class Test {
     @CodingKey("data.data2")
     @Base64Coding
     var data2: Data?
+    
+    @DateCoding(.millisecondsSince1970)
+    var date: Date?
     
     public func didDecode() throws {
         var ss: String?
@@ -62,18 +70,22 @@ open class Person: Codable {
     
     required public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: AnyCodingKey.self)
+//        let date = try container.decodeDate(type: Date?.self, keys: [], strategy: .secondsSince1970)
 //        self.name =
 //        self.name = try container.decode(String.self, forKey: .name)
 //        self.name = try {
 //            let tempValue = try container.decode(type: String?.self, keys: ["name"])
 //            return tempValue?.base64DecodedData
 //        }()
+//        let strategy = DateCodingStrategy.formatted(formatter)
+//        strategy.enco
     }
     
     open func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: AnyCodingKey.self)
 //        try container.encodeIfPresent(self.name, forKey: .init(stringValue: "name")!)
         try container.encode(value: self.name, key: "a.b.c", treatDotAsNested: true)
+        
     }
 }
 
@@ -92,7 +104,8 @@ let ss = """
 "tag.isdf": "hhhhhh",
 "array": ["abc"],
 "season": "spring",
-"data": "aGVsbG8gd29ybGQ="
+"data": "aGVsbG8gd29ybGQ=",
+"date": 1731585275944
 }
 
 """

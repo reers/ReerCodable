@@ -15,6 +15,7 @@ let testMacros: [String: Macro.Type] = [
     "EncodingKey": EncodingKey.self,
     "IgnoreCoding": IgnoreCoding.self,
     "Base64Coding": Base64Coding.self,
+    "DateCoding": DateCoding.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,
@@ -50,6 +51,9 @@ final class ReerCodableTests: XCTestCase {
 
                 @IgnoreCoding
                 var ignore: [Int]
+            
+                @DateCoding(.secondsSince1970)
+                var date: Date?
             }
 
             """,

@@ -9,10 +9,11 @@ struct Property {
     var isIgnored = false
     var keys: [String] = []
     var encodingKey: String?
-    var base64Coding = false
     var treatDotAsNestedWhenEncoding: Bool = true
     var initExpr: String?
+    var base64Coding = false
     var caseStyles: [CaseStyle] = []
+    var dateCodingStrategy: String?
     
     var codingKeys: [String] {
         var result: [String] = keys
@@ -109,6 +110,14 @@ struct TypeInfo {
                             return try base64String\(questionMark).re_base64DecodedData()\(uint8)
                         }()
                         """
+                } else if let dateCodingStrategy = property.dateCodingStrategy {
+                    body = """
+                        container.decodeDate(
+                            type: \(property.type).self, 
+                            keys: [\(property.codingKeys.joined(separator: ", "))], 
+                            strategy: \(dateCodingStrategy)
+                        )
+                        """
                 } else {
                     body = """
                         container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
@@ -160,6 +169,10 @@ struct TypeInfo {
                             let base64String = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
                             try container.encode(value: base64String, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
                         }()
+                        """
+                } else if let dateCodingStrategy = property.dateCodingStrategy {
+                    return """
+                        try container.encodeDate(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
                         """
                 } else {
                     return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
@@ -245,9 +258,15 @@ extension TypeInfo {
                     property.isIgnored = true
                 }
                 // base64 coding
-                if let base64Coding = variable.attributes.firstAttribute(named: "Base64Coding") {
+                if variable.attributes.containsAttribute(named: "Base64Coding") {
                     property.base64Coding = true
                 }
+                // date coding
+                if let dateCoding = variable.attributes.firstAttribute(named: "DateCoding") {
+                    property.dateCodingStrategy = dateCoding.as(AttributeSyntax.self)?
+                        .arguments?.as(LabeledExprListSyntax.self)?.trimmedDescription
+                }
+                
                 // coding key
                 if let codingKey = variable.attributes.firstAttribute(named: "CodingKey") {
                     property.keys = codingKey.as(AttributeSyntax.self)?
