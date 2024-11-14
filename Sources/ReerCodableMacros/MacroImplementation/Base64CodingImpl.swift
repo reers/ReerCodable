@@ -15,8 +15,7 @@ public struct Base64Coding: PeerMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard
-            let variable = declaration.as(VariableDeclSyntax.self),
-            let name = variable.name
+            let variable = declaration.as(VariableDeclSyntax.self)
         else {
             throw MacroError(text: "@Base64Coding macro is only for property.")
         }

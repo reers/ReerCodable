@@ -75,6 +75,83 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     }
 }
 
+extension KeyedDecodingContainer where K == AnyCodingKey {
+    public func decodeDate<Value: Decodable>(
+        type: Value.Type,
+        keys: [String],
+        strategy: DateCodingStrategy
+    ) throws -> Value {
+        switch strategy {
+        case .timeIntervalSince2001:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                guard let timeInterval = try decode(type: Double?.self, keys: keys) else {
+                    return valueType.init(nilLiteral: ()) as! Value
+                }
+                return Date(timeIntervalSinceReferenceDate: timeInterval) as! Value
+            } else {
+                let timeInterval = try decode(type: Double.self, keys: keys)
+                return Date(timeIntervalSinceReferenceDate: timeInterval) as! Value
+            }
+        case .timeIntervalSince1970:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                guard let timeInterval = try decode(type: Double?.self, keys: keys) else {
+                    return valueType.init(nilLiteral: ()) as! Value
+                }
+                return Date(timeIntervalSince1970: timeInterval) as! Value
+            } else {
+                let timeInterval = try decode(type: Double.self, keys: keys)
+                return Date(timeIntervalSince1970: timeInterval) as! Value
+            }
+        case .secondsSince1970:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                guard let timeInterval = try decode(type: Double?.self, keys: keys) else {
+                    return valueType.init(nilLiteral: ()) as! Value
+                }
+                return Date(timeIntervalSince1970: timeInterval) as! Value
+            } else {
+                let timeInterval = try decode(type: Double.self, keys: keys)
+                return Date(timeIntervalSince1970: timeInterval) as! Value
+            }
+        case .millisecondsSince1970:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                guard let milliseconds = try decode(type: Double?.self, keys: keys) else {
+                    return valueType.init(nilLiteral: ()) as! Value
+                }
+                return Date(timeIntervalSince1970: milliseconds / 1000) as! Value
+            } else {
+                let milliseconds = try decode(type: Double.self, keys: keys)
+                return Date(timeIntervalSince1970: milliseconds / 1000) as! Value
+            }
+        case .iso8601:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                guard let iso8601String = try decode(type: String?.self, keys: keys) else {
+                    return valueType.init(nilLiteral: ()) as! Value
+                }
+                return DateCodingStrategy.iso8601Formatter.date(from: iso8601String) as! Value
+            } else {
+                let iso8601String = try decode(type: String.self, keys: keys)
+                if let date = DateCodingStrategy.iso8601Formatter.date(from: iso8601String) {
+                    return date as! Value
+                }
+                throw ReerCodableError(text: "Decode date with iso8601 string failed for keys: \(keys)")
+            }
+        case .formatted(let dateFormatter):
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                guard let formattedString = try decode(type: String?.self, keys: keys) else {
+                    return valueType.init(nilLiteral: ()) as! Value
+                }
+                return dateFormatter.date(from: formattedString) as! Value
+            } else {
+                let formattedString = try decode(type: String.self, keys: keys)
+                if let date = dateFormatter.date(from: formattedString) {
+                    return date as! Value
+                }
+                throw ReerCodableError(text: "Decode date with formatted string failed for keys: \(keys)")
+            }
+        }
+    }
+}
+
 // MARK: - Encode
 
 extension KeyedEncodingContainer where K == AnyCodingKey {
@@ -114,6 +191,72 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
             container = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: codingKey)
         }
         return container
+    }
+}
+
+extension KeyedEncodingContainer where K == AnyCodingKey {
+    public mutating func encodeDate<Value: Encodable>(
+        value: Value,
+        key: String,
+        treatDotAsNested: Bool = true,
+        strategy: DateCodingStrategy
+    ) throws {
+        switch strategy {
+        case .timeIntervalSince2001:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                if let date = value as? Date {
+                    try? encode(value: date.timeIntervalSinceReferenceDate, key: key, treatDotAsNested: treatDotAsNested)
+                }
+            } else {
+                let date = value as! Date
+                try encode(value: date.timeIntervalSinceReferenceDate, key: key, treatDotAsNested: treatDotAsNested)
+            }
+        case .timeIntervalSince1970:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                if let date = value as? Date {
+                    try? encode(value: date.timeIntervalSince1970, key: key, treatDotAsNested: treatDotAsNested)
+                }
+            } else {
+                let date = value as! Date
+                try encode(value: date.timeIntervalSince1970, key: key, treatDotAsNested: treatDotAsNested)
+            }
+        case .secondsSince1970:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                if let date = value as? Date {
+                    try? encode(value: Int64(date.timeIntervalSince1970), key: key, treatDotAsNested: treatDotAsNested)
+                }
+            } else {
+                let date = value as! Date
+                try encode(value: Int64(date.timeIntervalSince1970), key: key, treatDotAsNested: treatDotAsNested)
+            }
+        case .millisecondsSince1970:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                if let date = value as? Date {
+                    try? encode(value: Int64(date.timeIntervalSince1970 * 1000), key: key, treatDotAsNested: treatDotAsNested)
+                }
+            } else {
+                let date = value as! Date
+                try encode(value: Int64(date.timeIntervalSince1970 * 1000), key: key, treatDotAsNested: treatDotAsNested)
+            }
+        case .iso8601:
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                if let date = value as? Date {
+                    try? encode(value: DateCodingStrategy.iso8601Formatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
+                }
+            } else {
+                let date = value as! Date
+                try encode(value: DateCodingStrategy.iso8601Formatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
+            }
+        case .formatted(let dateFormatter):
+            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+                if let date = value as? Date {
+                    try? encode(value: dateFormatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
+                }
+            } else {
+                let date = value as! Date
+                try encode(value: dateFormatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
+            }
+        }
     }
 }
 
