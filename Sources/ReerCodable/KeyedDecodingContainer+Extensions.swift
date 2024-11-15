@@ -84,72 +84,49 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         strategy: DateCodingStrategy
     ) throws -> Value {
         switch strategy {
-        case .timeIntervalSince2001:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                guard let timeInterval = try decode(type: Double?.self, keys: keys) else {
-                    return valueType.init(nilLiteral: ()) as! Value
+        case .timeIntervalSince2001, .timeIntervalSince1970, .secondsSince1970, .millisecondsSince1970:
+            return try decodeDateValue(type: type, keys: keys) { (rawValue: Double) in
+                switch strategy {
+                case .timeIntervalSince2001:
+                    return Date(timeIntervalSinceReferenceDate: rawValue)
+                case .timeIntervalSince1970, .secondsSince1970:
+                    return Date(timeIntervalSince1970: rawValue)
+                case .millisecondsSince1970:
+                    return Date(timeIntervalSince1970: rawValue / 1000)
+                default:
+                    throw ReerCodableError(text: "Unreachable")
                 }
-                return Date(timeIntervalSinceReferenceDate: timeInterval) as! Value
-            } else {
-                let timeInterval = try decode(type: Double.self, keys: keys)
-                return Date(timeIntervalSinceReferenceDate: timeInterval) as! Value
-            }
-        case .timeIntervalSince1970:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                guard let timeInterval = try decode(type: Double?.self, keys: keys) else {
-                    return valueType.init(nilLiteral: ()) as! Value
-                }
-                return Date(timeIntervalSince1970: timeInterval) as! Value
-            } else {
-                let timeInterval = try decode(type: Double.self, keys: keys)
-                return Date(timeIntervalSince1970: timeInterval) as! Value
-            }
-        case .secondsSince1970:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                guard let timeInterval = try decode(type: Double?.self, keys: keys) else {
-                    return valueType.init(nilLiteral: ()) as! Value
-                }
-                return Date(timeIntervalSince1970: timeInterval) as! Value
-            } else {
-                let timeInterval = try decode(type: Double.self, keys: keys)
-                return Date(timeIntervalSince1970: timeInterval) as! Value
-            }
-        case .millisecondsSince1970:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                guard let milliseconds = try decode(type: Double?.self, keys: keys) else {
-                    return valueType.init(nilLiteral: ()) as! Value
-                }
-                return Date(timeIntervalSince1970: milliseconds / 1000) as! Value
-            } else {
-                let milliseconds = try decode(type: Double.self, keys: keys)
-                return Date(timeIntervalSince1970: milliseconds / 1000) as! Value
             }
         case .iso8601:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                guard let iso8601String = try decode(type: String?.self, keys: keys) else {
-                    return valueType.init(nilLiteral: ()) as! Value
+            return try decodeDateValue(type: type, keys: keys) { (rawValue: String) in
+                guard let date = DateCodingStrategy.iso8601Formatter.date(from: rawValue) else {
+                    throw ReerCodableError(text: "Decode date with iso8601 string failed for keys: \(keys)")
                 }
-                return DateCodingStrategy.iso8601Formatter.date(from: iso8601String) as! Value
-            } else {
-                let iso8601String = try decode(type: String.self, keys: keys)
-                if let date = DateCodingStrategy.iso8601Formatter.date(from: iso8601String) {
-                    return date as! Value
-                }
-                throw ReerCodableError(text: "Decode date with iso8601 string failed for keys: \(keys)")
+                return date
             }
         case .formatted(let dateFormatter):
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                guard let formattedString = try decode(type: String?.self, keys: keys) else {
-                    return valueType.init(nilLiteral: ()) as! Value
+            return try decodeDateValue(type: type, keys: keys) { (rawValue: String) in
+                guard let date = dateFormatter.date(from: rawValue) else {
+                    throw ReerCodableError(text: "Decode date with formatted string failed for keys: \(keys)")
                 }
-                return dateFormatter.date(from: formattedString) as! Value
-            } else {
-                let formattedString = try decode(type: String.self, keys: keys)
-                if let date = dateFormatter.date(from: formattedString) {
-                    return date as! Value
-                }
-                throw ReerCodableError(text: "Decode date with formatted string failed for keys: \(keys)")
+                return date
             }
+        }
+    }
+    
+    private func decodeDateValue<Value: Decodable, T: Decodable>(
+        type: Value.Type,
+        keys: [String],
+        transform: (T) throws -> Date
+    ) throws -> Value {
+        if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
+            guard let rawValue = try decode(type: T?.self, keys: keys) else {
+                return valueType.init(nilLiteral: ()) as! Value
+            }
+            return try transform(rawValue) as! Value
+        } else {
+            let rawValue = try decode(type: T.self, keys: keys)
+            return try transform(rawValue) as! Value
         }
     }
 }
