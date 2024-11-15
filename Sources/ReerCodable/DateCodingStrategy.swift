@@ -35,35 +35,4 @@ public enum DateCodingStrategy {
         formatter.formatOptions = .withInternetDateTime
         return formatter
     }()
-    
-//    public func decode(from: String) throws -> Date {
-//        
-//    }
-    
-//    public func encode(_ date: Date) -> String {
-//        switch self {
-//        case .timeIntervalSince2001:
-//            return date.timeIntervalSinceReferenceDate
-//        default:
-//            <#code#>
-//        }
-//        switch self {
-//        case .deferredToDate:
-//            return date.databaseValue
-//        case .timeIntervalSinceReferenceDate:
-//            return date.timeIntervalSinceReferenceDate.databaseValue
-//        case .timeIntervalSince1970:
-//            return date.timeIntervalSince1970.databaseValue
-//        case .millisecondsSince1970:
-//            return Int64(floor(1000.0 * date.timeIntervalSince1970)).databaseValue
-//        case .secondsSince1970:
-//            return Int64(floor(date.timeIntervalSince1970)).databaseValue
-//        case .iso8601:
-//            return Self.iso8601Formatter.string(from: date).databaseValue
-//        case .formatted(let formatter):
-//            return formatter.string(from: date).databaseValue
-//        case .custom(let format):
-//            return format(date)?.databaseValue ?? .null
-//        }
-//    }
 }

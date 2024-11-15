@@ -1,72 +1,11 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-struct Property {
-    var modifiers: DeclModifierListSyntax = []
-    var name: String
-    var type: String
-    var isOptional = false
-    var isIgnored = false
-    var keys: [String] = []
-    var encodingKey: String?
-    var treatDotAsNestedWhenEncoding: Bool = true
-    var initExpr: String?
-    var base64Coding = false
-    var caseStyles: [CaseStyle] = []
-    var dateCodingStrategy: String?
-    
-    var codingKeys: [String] {
-        var result: [String] = keys
-        if !caseStyles.isEmpty {
-            let convertedKey = KeyConverter.convert(value: name, caseStyles: caseStyles)
-            result.append(contentsOf: convertedKey.map { "\"\($0)\"" })
-        }
-        result.append("\"\(name)\"")
-        
-        return result.reduce(into: [String]()) { array, element in
-            if !array.contains(element) {
-                array.append(element)
-            }
-        }
-    }
-    
-    var defaultValue: String? {
-        let trimmed = type.trimmingCharacters(in: .whitespaces)
-        if let defaultValue = Self.basicTypeDefaults[trimmed] {
-            return defaultValue
-        }
-        if (trimmed.hasPrefix("[") && trimmed.hasSuffix("]"))
-           || trimmed.hasPrefix("Set<") {
-            return ".init()"
-        }
-        return nil
-    }
-    
-    private static let basicTypeDefaults: [String: String] = [
-        "Int": "0",
-        "Int8": "0",
-        "Int16": "0",
-        "Int32": "0",
-        "Int64": "0",
-        "UInt": "0",
-        "UInt8": "0",
-        "UInt16": "0",
-        "UInt32": "0",
-        "UInt64": "0",
-        "Bool": "false",
-        "String": "\"\"",
-        "Float": "0.0",
-        "Double": "0.0"
-    ]
-    
-    var questionMark: String { isOptional ? "?" : "" }
-}
-
 struct TypeInfo {
     let context: MacroExpansionContext
     let decl: DeclGroupSyntax
     var caseStyles: [CaseStyle] = []
-    var properties: [Property] = []
+    var properties: [PropertyInfo] = []
     
     init(decl: DeclGroupSyntax, context: some MacroExpansionContext) throws {
         self.decl = decl
@@ -87,146 +26,20 @@ struct TypeInfo {
         
         properties = try parseProperties()
     }
-    
-    func generateDecoderInit(isOverride: Bool = false) throws -> DeclSyntax {
-        let assignments = try properties
-            .compactMap { property in
-                if property.isIgnored {
-                    if property.isOptional { return nil }
-                    if let initExpr = property.initExpr {
-                        return "self.\(property.name) = \(initExpr)"
-                    } else if let defaultValue = property.defaultValue {
-                        return "self.\(property.name) = \(defaultValue)"
-                    }
-                    throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
-                }
-                var body: String
-                if property.base64Coding {
-                    let questionMark = property.isOptional ? "?" : ""
-                    let uint8 = property.type.hasPrefix("[UInt8]") ? ".re_bytes" : ""
-                    body = """
-                        {
-                            let base64String = try container.decode(type: String\(questionMark).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                            return try base64String\(questionMark).re_base64DecodedData()\(uint8)
-                        }()
-                        """
-                } else if let dateCodingStrategy = property.dateCodingStrategy {
-                    body = """
-                        container.decodeDate(
-                            type: \(property.type).self, 
-                            keys: [\(property.codingKeys.joined(separator: ", "))], 
-                            strategy: \(dateCodingStrategy)
-                        )
-                        """
-                } else {
-                    body = """
-                        container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                        """
-                }
-                
-                if let initExpr = property.initExpr {
-                    return "self.\(property.name) = (try? \(body)) ?? (\(initExpr))"
-                } else {
-                    return "self.\(property.name) = try \(body)"
-                }
-            }
-            .joined(separator: "\n")
-        let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
-        var needRequired = isClass && !isFinal
-        if isOverride {
-            needRequired = true
-        }
-        let decoder: DeclSyntax = """
-        \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: AnyCodingKey.self)
-            \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
-            try self.didDecode()
-        }
-        """
-        return decoder
-    }
-    
-    func generateEncoderFunc(isOverride: Bool = false) throws -> DeclSyntax {
-        let encoding = properties
-            .compactMap { property in
-                if property.isIgnored { return nil }
-                let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
-                    (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
-                } else {
-                    (property.codingKeys.first!, true)
-                }
-                if property.base64Coding {
-                    
-                    // a Data or Data? type
-                    let dataTypeTemp = if property.isOptional {
-                        property.type.hasPrefix("[UInt8]") ? "self.\(property.name).map({ Data($0) })" : "self.\(property.name)"
-                    } else {
-                        property.type.hasPrefix("[UInt8]") ? "Data(self.\(property.name))" : "self.\(property.name)"
-                    }
-                    
-                    return """
-                        try {
-                            let base64String = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
-                            try container.encode(value: base64String, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
-                        }()
-                        """
-                } else if let dateCodingStrategy = property.dateCodingStrategy {
-                    return """
-                        try container.encodeDate(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
-                        """
-                } else {
-                    return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
-                }
-            }
-            .joined(separator: "\n")
-        
-        let accessable = if isOpen { "open " } else if isPublic || hasPublicOrOpenProperty { "public " } else { "" }
-        let encoder: DeclSyntax = """
-        \(raw: accessable)\(raw: isOverride ? "override " : "")func encode(to encoder: Encoder) throws {
-            try self.willEncode()
-            \(raw: isOverride ? "try super.encode(to: encoder)\n" : "")var container = encoder.container(keyedBy: AnyCodingKey.self)
-            \(raw: encoding)
-        }
-        """
-        return encoder
-    }
-    
-    func generateMemberwiseInit(isOverride: Bool = false) throws -> DeclSyntax {
-        let parameters = properties.map { property in
-            var text = property.name
-            text += ": \(property.type)"
-            if let initExpr = property.initExpr {
-                text += "= \(initExpr)"
-            } else if property.isIgnored, let defaultValue = property.defaultValue {
-                text += "= \(defaultValue)"
-            } else if property.isOptional {
-                text += "= nil"
-            }
-            return text
-        }
-
-        let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
-        let overrideInit = isOverride ? "super.init()\n" : ""
-
-        let initializer: DeclSyntax = """
-        \(raw: needPublic ? "public " : "")init(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n")) {
-            \(raw: overrideInit)\(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n"))
-        }
-        """
-        return initializer
-    }
 }
 
+// MARK: - Parse info
+
 extension TypeInfo {
-    func parseProperties() throws -> [Property] {
-        return try decl.memberBlock.members.flatMap { member -> [Property] in
+    func parseProperties() throws -> [PropertyInfo] {
+        return try decl.memberBlock.members.flatMap { member -> [PropertyInfo] in
             guard
                 let variable = member.decl.as(VariableDeclSyntax.self),
                 variable.isStoredProperty
             else {
                 return []
             }
-            var properties: [Property] = []
+            var properties: [PropertyInfo] = []
             for _ in variable.bindings {
                 if variable.isLazy { continue }
                 
@@ -237,7 +50,7 @@ extension TypeInfo {
                     throw MacroError(text: "Macro expansion failed: property requires a name.")
                 }
                 
-                var property = Property(name: name, type: type)
+                var property = PropertyInfo(name: name, type: type)
                 // isOptional
                 property.isOptional = variable.isOptional
                 // get property case attributes
@@ -294,6 +107,146 @@ extension TypeInfo {
             return properties
         }
     }
+}
+
+// MARK: - Generate
+
+extension TypeInfo {
+    /// Decode
+    func generateDecoderInit(isOverride: Bool = false) throws -> DeclSyntax {
+        let assignments = try properties
+            .compactMap { property in
+                if property.isIgnored {
+                    if property.isOptional { return nil }
+                    if let initExpr = property.initExpr {
+                        return "self.\(property.name) = \(initExpr)"
+                    } else if let defaultValue = property.defaultValue {
+                        return "self.\(property.name) = \(defaultValue)"
+                    }
+                    throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
+                }
+                var body: String
+                if property.base64Coding {
+                    let questionMark = property.isOptional ? "?" : ""
+                    let uint8 = property.type.hasPrefix("[UInt8]") ? ".re_bytes" : ""
+                    body = """
+                        {
+                            let base64String = try container.decode(type: String\(questionMark).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                            return try base64String\(questionMark).re_base64DecodedData\(uint8)
+                        }()
+                        """
+                } else if let dateCodingStrategy = property.dateCodingStrategy {
+                    body = """
+                        container.decodeDate(
+                            type: \(property.type).self, 
+                            keys: [\(property.codingKeys.joined(separator: ", "))], 
+                            strategy: \(dateCodingStrategy)
+                        )
+                        """
+                } else {
+                    body = """
+                        container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                        """
+                }
+                
+                if let initExpr = property.initExpr {
+                    return "self.\(property.name) = (try? \(body)) ?? (\(initExpr))"
+                } else {
+                    return "self.\(property.name) = try \(body)"
+                }
+            }
+            .joined(separator: "\n")
+        let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
+        var needRequired = isClass && !isFinal
+        if isOverride {
+            needRequired = true
+        }
+        let decoder: DeclSyntax = """
+        \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: AnyCodingKey.self)
+            \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
+            try self.didDecode()
+        }
+        """
+        return decoder
+    }
+    
+    /// Encode
+    func generateEncoderFunc(isOverride: Bool = false) throws -> DeclSyntax {
+        let encoding = properties
+            .compactMap { property in
+                if property.isIgnored { return nil }
+                let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
+                    (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
+                } else {
+                    (property.codingKeys.first!, true)
+                }
+                if property.base64Coding {
+                    
+                    // a Data or Data? type
+                    let dataTypeTemp = if property.isOptional {
+                        property.type.hasPrefix("[UInt8]") ? "self.\(property.name).map({ Data($0) })" : "self.\(property.name)"
+                    } else {
+                        property.type.hasPrefix("[UInt8]") ? "Data(self.\(property.name))" : "self.\(property.name)"
+                    }
+                    
+                    return """
+                        try {
+                            let base64String = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
+                            try container.encode(value: base64String, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
+                        }()
+                        """
+                } else if let dateCodingStrategy = property.dateCodingStrategy {
+                    return """
+                        try container.encodeDate(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
+                        """
+                } else {
+                    return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
+                }
+            }
+            .joined(separator: "\n")
+        
+        let accessable = if isOpen { "open " } else if isPublic || hasPublicOrOpenProperty { "public " } else { "" }
+        let encoder: DeclSyntax = """
+        \(raw: accessable)\(raw: isOverride ? "override " : "")func encode(to encoder: Encoder) throws {
+            try self.willEncode()
+            \(raw: isOverride ? "try super.encode(to: encoder)\n" : "")var container = encoder.container(keyedBy: AnyCodingKey.self)
+            \(raw: encoding)
+        }
+        """
+        return encoder
+    }
+    
+    /// Init
+    func generateMemberwiseInit(isOverride: Bool = false) throws -> DeclSyntax {
+        let parameters = properties.map { property in
+            var text = property.name
+            text += ": \(property.type)"
+            if let initExpr = property.initExpr {
+                text += "= \(initExpr)"
+            } else if property.isIgnored, let defaultValue = property.defaultValue {
+                text += "= \(defaultValue)"
+            } else if property.isOptional {
+                text += "= nil"
+            }
+            return text
+        }
+
+        let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
+        let overrideInit = isOverride ? "super.init()\n" : ""
+
+        let initializer: DeclSyntax = """
+        \(raw: needPublic ? "public " : "")init(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n")) {
+            \(raw: overrideInit)\(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n"))
+        }
+        """
+        return initializer
+    }
+}
+
+// MARK: - Info
+
+extension TypeInfo {
     
     var isClass: Bool {
         return decl.is(ClassDeclSyntax.self)
