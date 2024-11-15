@@ -8,6 +8,6 @@
 import Foundation
 
 struct MacroError: Error, CustomStringConvertible {
-    public let text: String
-    public var description: String { return text }
+    let text: String
+    var description: String { return text }
 }
