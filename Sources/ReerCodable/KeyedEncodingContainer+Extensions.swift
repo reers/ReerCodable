@@ -58,61 +58,37 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
         treatDotAsNested: Bool = true,
         strategy: DateCodingStrategy
     ) throws {
-        switch strategy {
-        case .timeIntervalSince2001:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                if let date = value as? Date {
-                    try? encode(value: date.timeIntervalSinceReferenceDate, key: key, treatDotAsNested: treatDotAsNested)
-                }
-            } else {
-                let date = value as! Date
-                try encode(value: date.timeIntervalSinceReferenceDate, key: key, treatDotAsNested: treatDotAsNested)
+        try encodeDateValue(value, key: key, treatDotAsNested: treatDotAsNested) { date in
+            switch strategy {
+            case .timeIntervalSince2001:
+                return date.timeIntervalSinceReferenceDate
+            case .timeIntervalSince1970:
+                return date.timeIntervalSince1970
+            case .secondsSince1970:
+                return Int64(date.timeIntervalSince1970)
+            case .millisecondsSince1970:
+                return Int64(date.timeIntervalSince1970 * 1000)
+            case .iso8601:
+                return DateCodingStrategy.iso8601Formatter.string(from: date)
+            case .formatted(let dateFormatter):
+                return dateFormatter.string(from: date)
             }
-        case .timeIntervalSince1970:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                if let date = value as? Date {
-                    try? encode(value: date.timeIntervalSince1970, key: key, treatDotAsNested: treatDotAsNested)
-                }
-            } else {
-                let date = value as! Date
-                try encode(value: date.timeIntervalSince1970, key: key, treatDotAsNested: treatDotAsNested)
+        }
+    }
+    
+    private mutating func encodeDateValue<Value: Encodable>(
+        _ value: Value,
+        key: String,
+        treatDotAsNested: Bool = true,
+        transform: (Date) -> Encodable
+    ) throws {
+        if Value.self is ExpressibleByNilLiteral.Type {
+            if let date = value as? Date {
+                try? encode(value: transform(date), key: key, treatDotAsNested: treatDotAsNested)
             }
-        case .secondsSince1970:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                if let date = value as? Date {
-                    try? encode(value: Int64(date.timeIntervalSince1970), key: key, treatDotAsNested: treatDotAsNested)
-                }
-            } else {
-                let date = value as! Date
-                try encode(value: Int64(date.timeIntervalSince1970), key: key, treatDotAsNested: treatDotAsNested)
-            }
-        case .millisecondsSince1970:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                if let date = value as? Date {
-                    try? encode(value: Int64(date.timeIntervalSince1970 * 1000), key: key, treatDotAsNested: treatDotAsNested)
-                }
-            } else {
-                let date = value as! Date
-                try encode(value: Int64(date.timeIntervalSince1970 * 1000), key: key, treatDotAsNested: treatDotAsNested)
-            }
-        case .iso8601:
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                if let date = value as? Date {
-                    try? encode(value: DateCodingStrategy.iso8601Formatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
-                }
-            } else {
-                let date = value as! Date
-                try encode(value: DateCodingStrategy.iso8601Formatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
-            }
-        case .formatted(let dateFormatter):
-            if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-                if let date = value as? Date {
-                    try? encode(value: dateFormatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
-                }
-            } else {
-                let date = value as! Date
-                try encode(value: dateFormatter.string(from: date), key: key, treatDotAsNested: treatDotAsNested)
-            }
+        } else {
+            let date = value as! Date
+            try encode(value: transform(date), key: key, treatDotAsNested: treatDotAsNested)
         }
     }
 }
