@@ -20,7 +20,7 @@
 //  THE SOFTWARE.
 
 
-@attached(extension, conformances: Codable, CodableDelegate, names: arbitrary)
+@attached(extension, conformances: Codable, ReerCodableDelegate, names: arbitrary)
 @attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
 public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "Codable")
 
