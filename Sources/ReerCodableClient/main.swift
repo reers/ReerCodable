@@ -48,6 +48,10 @@ public final class Test {
     @CompactDecoding
     var array: Set<String>
     
+    
+    @CompactDecoding
+    var dict: [String: String]
+    
     public func didDecode() throws {
         var ss: String?
 //        print(ss?.re_base64DecodedData()?.re_bytes)
@@ -72,7 +76,7 @@ public struct IgnoreModel: Codable {
 open class Person: Decodable {
     
     var array: [String]?
-    var dict: [String: String]
+    var dict: [Int: String]
     var set: Set<String>
     
     required public init(from decoder: any Decoder) throws {
@@ -94,15 +98,15 @@ open class Person: Decodable {
 //        self.array = tempArray
         
         // 2. Dictionary compact decoding
-        let dictContainer = try container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(stringValue: "dict")!)
-        var tempDict: [String: String] = [:]
-        
-        for key in dictContainer.allKeys {
-            if let value = try? dictContainer.decode(String.self, forKey: key) {
-                tempDict[key.stringValue] = value
-            }
-        }
-        self.dict = tempDict
+//        let dictContainer = try container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(stringValue: "dict")!)
+//        var tempDict: [String: String] = [:]
+//        
+//        for key in dictContainer.allKeys {
+//            if let value = try? dictContainer.decode(String.self, forKey: key) {
+//                tempDict[key.stringValue] = value
+//            }
+//        }
+        self.dict = try container.compactDecodeDictionary(type: [Int: String].self, keys: ["dict"])
         
         // 3. Set compact decoding
 //        var setContainer = try container.nestedUnkeyedContainer(forKey: AnyCodingKey(stringValue: "set")!)
@@ -138,6 +142,11 @@ let ss = """
 "array": {
     "xxx": ["a", null, "b", null, "c"]
 },
+"dict": {
+        "111": null,
+        "222": null,
+        "333": "value3"
+    },
 "season": "spring",
 "data": "aGVsbG8gd29ybGQ=",
 "date": 1731585275944
@@ -205,9 +214,9 @@ let presonData = """
     "xxx": ["a", null, "b", null, "c"]
 },
 "dict": {
-        "key1": "value1",
-        "key2": null,
-        "key3": "value3"
+        "111": "value1",
+        "222": null,
+        "333": "value3"
     },
 "set": ["x", null, "y", null, "z"]
 }

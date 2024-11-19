@@ -155,6 +155,7 @@ extension TypeInfo {
                             """
                     } else if propertyType.isDictionary {
                         body = """
+                            container.compactDecodeDictionary(type: \(property.type.nonOptionalType).self, keys: [\(property.codingKeys.joined(separator: ", "))])
                             """
                     } else if propertyType.isSet {
                         body = """
