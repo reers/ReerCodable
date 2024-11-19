@@ -84,6 +84,19 @@ extension TypeInfo {
                     property.isCompactDecoding = true
                 }
                 
+                if let customCoding = variable.attributes.firstAttribute(named: "CustomCoding"),
+                   let attribute = customCoding.as(AttributeSyntax.self),
+                   let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) {
+                    print(attribute)
+                    property.customDecoder = arguments
+                        .first(where: { $0.label?.identifier?.name == "decode" })?
+                        .expression.trimmedDescription
+                    
+                    property.customEncoder = arguments
+                        .first(where: { $0.label?.identifier?.name == "encode" })?
+                        .expression.trimmedDescription
+                }
+                
                 // coding key
                 if let codingKey = variable.attributes.firstAttribute(named: "CodingKey") {
                     property.keys = codingKey.as(AttributeSyntax.self)?
@@ -130,6 +143,7 @@ extension TypeInfo {
                     throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
                 }
                 var body: String
+                // base64
                 if property.base64Coding {
                     let questionMark = property.isOptional ? "?" : ""
                     let uint8 = property.type.hasPrefix("[UInt8]") ? ".re_bytes" : ""
@@ -139,7 +153,9 @@ extension TypeInfo {
                             return try base64String\(questionMark).re_base64DecodedData\(uint8)
                         }()
                         """
-                } else if let dateCodingStrategy = property.dateCodingStrategy {
+                }
+                // Date
+                else if let dateCodingStrategy = property.dateCodingStrategy {
                     body = """
                         container.decodeDate(
                             type: \(property.type).self, 
@@ -147,7 +163,9 @@ extension TypeInfo {
                             strategy: \(dateCodingStrategy)
                         )
                         """
-                } else if property.isCompactDecoding {
+                }
+                // compact decode
+                else if property.isCompactDecoding {
                     let propertyType = parseSwiftType(property.type)
                     if propertyType.isArray {
                         body = """
@@ -166,7 +184,15 @@ extension TypeInfo {
                     } else {
                         throw MacroError(text: "Can not handle property `\(property.name)` with @CompactDecoding.")
                     }
-                } else {
+                }
+                // custom decode
+                else if let customDecoder = property.customDecoder {
+                    body = """
+                        \(customDecoder)(decoder)
+                        """
+                }
+                // normal
+                else {
                     body = """
                         container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
                         """
@@ -205,6 +231,7 @@ extension TypeInfo {
                 } else {
                     (property.codingKeys.first!, true)
                 }
+                // base64
                 if property.base64Coding {
                     
                     // a Data or Data? type
@@ -220,11 +247,21 @@ extension TypeInfo {
                             try container.encode(value: base64String, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
                         }()
                         """
-                } else if let dateCodingStrategy = property.dateCodingStrategy {
+                }
+                // Date
+                else if let dateCodingStrategy = property.dateCodingStrategy {
                     return """
                         try container.encodeDate(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
                         """
-                } else {
+                }
+                // custom encode
+                else if let customEncoder = property.customEncoder {
+                    return """
+                        let _ = try \(customEncoder)(encoder, self.\(property.name))
+                        """
+                }
+                // normal
+                else {
                     return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
                 }
             }

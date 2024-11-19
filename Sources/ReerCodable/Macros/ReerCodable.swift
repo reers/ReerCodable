@@ -48,6 +48,12 @@ public macro DateCoding(_ strategy: DateCodingStrategy) = #externalMacro(module:
 @attached(peer)
 public macro CompactDecoding() = #externalMacro(module: "ReerCodableMacros", type: "CompactDecoding")
 
+@attached(peer)
+public macro CustomCoding<Value>(
+    decode: ((_ decoder: Decoder) throws -> Value?)? = nil,
+    encode: ((_ encoder: Encoder, _ value: Value) throws -> Void)? = nil
+) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
+
 /// `flatcase`
 @attached(peer)
 public macro FlatCase() = #externalMacro(module: "ReerCodableMacros", type: "FlatCase")

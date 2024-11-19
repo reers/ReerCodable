@@ -17,6 +17,7 @@ let testMacros: [String: Macro.Type] = [
     "Base64Coding": Base64Coding.self,
     "DateCoding": DateCoding.self,
     "CompactDecoding": CompactDecoding.self,
+    "CustomCoding": CustomCoding.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,
@@ -59,6 +60,16 @@ final class ReerCodableTests: XCTestCase {
                 @CodingKey("array.xxx")
                 @CompactDecoding
                 var array: [String]
+            
+                @CustomCoding(
+                    decode: { decoder in
+                        return 222222
+                    },
+                    encode: { encoder, value  in
+                        print(333333)
+                    }
+                )
+                var custom: Int
             }
 
             """,
