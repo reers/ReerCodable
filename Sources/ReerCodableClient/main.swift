@@ -7,7 +7,7 @@ let b = 25
 //@Codable
 //struct Test {
 //    var age: Int
-//    
+//
 //    func didDecodeModel() throws {
 //
 //    }
@@ -52,6 +52,20 @@ public final class Test {
     @CompactDecoding
     var dict: [String: String]
     
+    @CustomCoding(
+        decode: { decoder in
+            let container = try decoder.container(keyedBy: AnyCodingKey.self)
+            let ret = try container.decode(Int.self, forKey: AnyCodingKey(stringValue: "custom")!)
+            return ret * 1000
+        },
+        encode: { (encoder: Encoder, value: Int) in
+//            print(333333)
+            var container = try encoder.container(keyedBy: AnyCodingKey.self)
+            try container.encode(66666, forKey: AnyCodingKey(stringValue: "custom")!)
+        }
+    )
+    var custom: Int
+    
     public func didDecode() throws {
         var ss: String?
 //        print(ss?.re_base64DecodedData()?.re_bytes)
@@ -73,21 +87,26 @@ public struct IgnoreModel: Codable {
 
 
 
-open class Person: Decodable {
+open class Person: Codable {
     
     var array: [String]?
     var dict: [Int: String]
     var set: Set<String>
+    var int: Int
     
     required public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: AnyCodingKey.self)
         self.array = try? container.compactDecodeArray(type: [String].self, keys: ["array.xxx"])
+        
+        self.int = try { decoder in
+            return 222222
+        }(decoder)
 //        self.array = try container.compactDecodeOptionalArray(type: [String]?.self, keys: ["array"])
         
         // 1. Array compact decoding
 //        var arrayContainer = try container.nestedUnkeyedContainer(forKey: AnyCodingKey(stringValue: "array")!)
 //        var tempArray: [String] = []
-//        
+//
 //        while !arrayContainer.isAtEnd {
 //            if let element = try? arrayContainer.decode(String.self) {
 //                tempArray.append(element)
@@ -100,7 +119,7 @@ open class Person: Decodable {
         // 2. Dictionary compact decoding
 //        let dictContainer = try container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(stringValue: "dict")!)
 //        var tempDict: [String: String] = [:]
-//        
+//
 //        for key in dictContainer.allKeys {
 //            if let value = try? dictContainer.decode(String.self, forKey: key) {
 //                tempDict[key.stringValue] = value
@@ -111,7 +130,7 @@ open class Person: Decodable {
         // 3. Set compact decoding
 //        var setContainer = try container.nestedUnkeyedContainer(forKey: AnyCodingKey(stringValue: "set")!)
 //        var tempSet: Set<String> = []
-//        
+//
 //        while !setContainer.isAtEnd {
 //            if let element = try? setContainer.decode(String.self) {
 //                tempSet.insert(element)
@@ -124,6 +143,13 @@ open class Person: Decodable {
             Set(try container.compactDecodeArray(type: [String].self, keys: ["set"]))
         }()
     }
+//    public func encode(to encoder: any Encoder) throws {
+////        var container = encoder.container(keyedBy: AnyCodingKey.self)
+////        try container.encode(value: self.userAge, key: "age__", treatDotAsNested: true)
+//        { encoder, value  in
+//            print(333333)
+//        }(encoder, self.int)
+//    }
 }
 
 
@@ -149,7 +175,8 @@ let ss = """
     },
 "season": "spring",
 "data": "aGVsbG8gd29ybGQ=",
-"date": 1731585275944
+"date": 1731585275944,
+"custom": 111
 }
 
 """
@@ -194,7 +221,7 @@ print(str)
 //public final class SubModel: Model {
 ////    @CodingKey("sub")
 //    var subValue: String?
-//    
+//
 //    public init(from decoder: Decoder) throws {
 //        let container = try decoder.container(keyedBy: AnyCodingKey.self)
 //        self.subValue = try container.decode(type: String?.self, keys: ["sub", "subValue"])
@@ -223,3 +250,4 @@ let presonData = """
 """.data(using: .utf8)!
 let rettt = try! JSONDecoder().decode(Person.self, from: presonData)
 print(rettt)
+let data342: String = try rettt.encodedString()
