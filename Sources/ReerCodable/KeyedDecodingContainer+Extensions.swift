@@ -24,7 +24,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
             return valueType.init(nilLiteral: ()) as! Value
         }
-        throw ReerCodableError(text: "Keys not found or type not match: \(keys)")
+        throw ReerCodableError(text: "Keys \(keys) not found or type not match or collection contains null.")
     }
     
     private func tryDecodeWithNormalKey<Value: Decodable>(
@@ -131,7 +131,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     }
 }
 
-// MARK: - Comact Decode Array
+// MARK: - Compact Decode Array
 
 extension KeyedDecodingContainer where K == AnyCodingKey {
     
@@ -174,5 +174,103 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             throw ReerCodableError(text: "Get nested container failed.")
         }
         return try container.tryDecodeArrayWithNormalKey(lastKey)
+    }
+}
+
+// MARK: - Compact Decode Dictionary
+
+extension KeyedDecodingContainer where K == AnyCodingKey {
+    
+    public func compactDecodeDictionary<Key: Hashable & Decodable, Value: Decodable>(
+        type: [Key: Value].Type,
+        keys: [String]
+    ) throws -> [Key: Value] {
+        for key in keys {
+            if key.maybeNested, let value: [Key: Value] = try? tryDecodeDictionaryWithNestedKey(key) {
+                return value
+            } else if let value: [Key: Value] = try? tryDecodeDictionaryWithNormalKey(key) {
+                return value
+            }
+        }
+        throw ReerCodableError(text: "Keys not found or type not match: \(keys) when compact decoding dictionary.")
+    }
+    
+    private func tryDecodeDictionaryWithNormalKey<Key: Hashable & Decodable, Value: Decodable>(_ key: String) throws -> [Key: Value] {
+        let dictContainer = try nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(stringValue: key)!)
+        var tempDict: [Key: Value] = [:]
+        
+        for key in dictContainer.allKeys {
+            if let keyValue = try? Key(from: KeyDecoder(key.stringValue)),
+               let value = try? dictContainer.decode(Value.self, forKey: key) {
+                tempDict[keyValue] = value
+            }
+        }
+        return tempDict
+    }
+    
+    private func tryDecodeDictionaryWithNestedKey<Key: Hashable & Decodable, Value: Decodable>(_ key: String) throws -> [Key: Value] {
+        let keyPath = key.components(separatedBy: ".")
+        guard !keyPath.isEmpty else {
+            throw ReerCodableError(text: "Key path invalid.")
+        }
+        guard
+            let lastKey = keyPath.last,
+            let container = try? getNestedContainer(path: keyPath.dropLast())
+        else {
+            throw ReerCodableError(text: "Get nested container failed.")
+        }
+        return try container.tryDecodeDictionaryWithNormalKey(lastKey)
+    }
+}
+
+// 用于将字符串转换为键类型的辅助解码器
+private struct KeyDecoder: Decoder {
+    let codingPath: [CodingKey] = []
+    let userInfo: [CodingUserInfoKey: Any] = [:]
+    let value: String
+    
+    init(_ value: String) {
+        self.value = value
+    }
+    
+    func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
+        throw DecodingError.typeMismatch(Key.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Not a keyed container"))
+    }
+    
+    func unkeyedContainer() throws -> UnkeyedDecodingContainer {
+        throw DecodingError.typeMismatch(UnkeyedDecodingContainer.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Not an unkeyed container"))
+    }
+    
+    func singleValueContainer() throws -> SingleValueDecodingContainer {
+        SingleValueContainer(value)
+    }
+    
+    private struct SingleValueContainer: SingleValueDecodingContainer {
+        let codingPath: [CodingKey] = []
+        let value: String
+        
+        init(_ value: String) {
+            self.value = value
+        }
+        
+        func decodeNil() -> Bool { false }
+        func decode(_ type: String.Type) throws -> String { value }
+        func decode(_ type: Bool.Type) throws -> Bool { Bool(value) ?? false }
+        func decode(_ type: Int.Type) throws -> Int { Int(value) ?? 0 }
+        func decode(_ type: Int8.Type) throws -> Int8 { Int8(value) ?? 0 }
+        func decode(_ type: Int16.Type) throws -> Int16 { Int16(value) ?? 0 }
+        func decode(_ type: Int32.Type) throws -> Int32 { Int32(value) ?? 0 }
+        func decode(_ type: Int64.Type) throws -> Int64 { Int64(value) ?? 0 }
+        func decode(_ type: UInt.Type) throws -> UInt { UInt(value) ?? 0 }
+        func decode(_ type: UInt8.Type) throws -> UInt8 { UInt8(value) ?? 0 }
+        func decode(_ type: UInt16.Type) throws -> UInt16 { UInt16(value) ?? 0 }
+        func decode(_ type: UInt32.Type) throws -> UInt32 { UInt32(value) ?? 0 }
+        func decode(_ type: UInt64.Type) throws -> UInt64 { UInt64(value) ?? 0 }
+        func decode(_ type: Float.Type) throws -> Float { Float(value) ?? 0 }
+        func decode(_ type: Double.Type) throws -> Double { Double(value) ?? 0 }
+        
+        func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+            throw DecodingError.typeMismatch(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Type not supported"))
+        }
     }
 }
