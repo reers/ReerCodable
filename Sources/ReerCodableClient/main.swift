@@ -43,6 +43,11 @@ public final class Test {
     @DateCoding(.millisecondsSince1970)
     var date: Date?
     
+    @CodingKey("array.xxx")
+    @EncodingKey("iamset")
+    @CompactDecoding
+    var array: Set<String>
+    
     public func didDecode() throws {
         var ss: String?
 //        print(ss?.re_base64DecodedData()?.re_bytes)
@@ -64,28 +69,56 @@ public struct IgnoreModel: Codable {
 
 
 
-open class Person: Codable {
-    var name: String?
-   
+open class Person: Decodable {
+    
+    var array: [String]?
+    var dict: [String: String]
+    var set: Set<String>
     
     required public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: AnyCodingKey.self)
-//        let date = try container.decodeDate(type: Date?.self, keys: [], strategy: .secondsSince1970)
-//        self.name =
-//        self.name = try container.decode(String.self, forKey: .name)
-//        self.name = try {
-//            let tempValue = try container.decode(type: String?.self, keys: ["name"])
-//            return tempValue?.base64DecodedData
-//        }()
-//        let strategy = DateCodingStrategy.formatted(formatter)
-//        strategy.enco
-    }
-    
-    open func encode(to encoder: any Encoder) throws {
-        var container = encoder.container(keyedBy: AnyCodingKey.self)
-//        try container.encodeIfPresent(self.name, forKey: .init(stringValue: "name")!)
-        try container.encode(value: self.name, key: "a.b.c", treatDotAsNested: true)
+        self.array = try? container.compactDecodeArray(type: [String].self, keys: ["array.xxx"])
+//        self.array = try container.compactDecodeOptionalArray(type: [String]?.self, keys: ["array"])
         
+        // 1. Array compact decoding
+//        var arrayContainer = try container.nestedUnkeyedContainer(forKey: AnyCodingKey(stringValue: "array")!)
+//        var tempArray: [String] = []
+//        
+//        while !arrayContainer.isAtEnd {
+//            if let element = try? arrayContainer.decode(String.self) {
+//                tempArray.append(element)
+//            } else {
+//                _ = try? arrayContainer.decodeNil()
+//            }
+//        }
+//        self.array = tempArray
+        
+        // 2. Dictionary compact decoding
+        let dictContainer = try container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(stringValue: "dict")!)
+        var tempDict: [String: String] = [:]
+        
+        for key in dictContainer.allKeys {
+            if let value = try? dictContainer.decode(String.self, forKey: key) {
+                tempDict[key.stringValue] = value
+            }
+        }
+        self.dict = tempDict
+        
+        // 3. Set compact decoding
+//        var setContainer = try container.nestedUnkeyedContainer(forKey: AnyCodingKey(stringValue: "set")!)
+//        var tempSet: Set<String> = []
+//        
+//        while !setContainer.isAtEnd {
+//            if let element = try? setContainer.decode(String.self) {
+//                tempSet.insert(element)
+//            } else {
+//                _ = try? setContainer.decodeNil()
+//            }
+//        }
+        
+        self.set = try {
+            Set(try container.compactDecodeArray(type: [String].self, keys: ["set"]))
+        }()
     }
 }
 
@@ -102,7 +135,9 @@ let ss = """
     "ed": "3333"
 },
 "tag.isdf": "hhhhhh",
-"array": ["abc"],
+"array": {
+    "xxx": ["a", null, "b", null, "c"]
+},
 "season": "spring",
 "data": "aGVsbG8gd29ybGQ=",
 "date": 1731585275944
@@ -164,3 +199,18 @@ print(str)
 //    }
 //}
 
+let presonData = """
+{
+"array": {
+    "xxx": ["a", null, "b", null, "c"]
+},
+"dict": {
+        "key1": "value1",
+        "key2": null,
+        "key3": "value3"
+    },
+"set": ["x", null, "y", null, "z"]
+}
+""".data(using: .utf8)!
+let rettt = try! JSONDecoder().decode(Person.self, from: presonData)
+print(rettt)

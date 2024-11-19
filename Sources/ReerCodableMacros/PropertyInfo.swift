@@ -21,6 +21,7 @@ struct PropertyInfo {
     var base64Coding = false
     var caseStyles: [CaseStyle] = []
     var dateCodingStrategy: String?
+    var isCompactDecoding = false
     
     var codingKeys: [String] {
         var result: [String] = keys

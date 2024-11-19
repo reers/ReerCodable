@@ -130,3 +130,49 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         }
     }
 }
+
+// MARK: - Comact Decode Array
+
+extension KeyedDecodingContainer where K == AnyCodingKey {
+    
+    public func compactDecodeArray<Element: Decodable>(
+        type: [Element].Type,
+        keys: [String]
+    ) throws -> [Element] {
+        for key in keys {
+            if key.maybeNested, let value: [Element] = try? tryDecodeArrayWithNestedKey(key) {
+                return value
+            } else if let value: [Element] = try? tryDecodeArrayWithNormalKey(key) {
+                return value
+            }
+        }
+        throw ReerCodableError(text: "Keys not found or type not match: \(keys) when compact decoding array.")
+    }
+    
+    private func tryDecodeArrayWithNormalKey<Element: Decodable>(_ key: String) throws -> [Element] {
+        var arrayContainer = try nestedUnkeyedContainer(forKey: AnyCodingKey(stringValue: key)!)
+        var tempArray: [Element] = []
+        while !arrayContainer.isAtEnd {
+            if let element = try? arrayContainer.decode(Element.self) {
+                tempArray.append(element)
+            } else {
+                _ = try? arrayContainer.decodeNil()
+            }
+        }
+        return tempArray
+    }
+    
+    private func tryDecodeArrayWithNestedKey<Element: Decodable>(_ key: String) throws -> [Element] {
+        let keyPath = key.components(separatedBy: ".")
+        guard !keyPath.isEmpty else {
+            throw ReerCodableError(text: "Key path invalid.")
+        }
+        guard
+            let lastKey = keyPath.last,
+            let container = try? getNestedContainer(path: keyPath.dropLast())
+        else {
+            throw ReerCodableError(text: "Get nested container failed.")
+        }
+        return try container.tryDecodeArrayWithNormalKey(lastKey)
+    }
+}

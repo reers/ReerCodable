@@ -80,6 +80,10 @@ extension TypeInfo {
                         .arguments?.as(LabeledExprListSyntax.self)?.trimmedDescription
                 }
                 
+                if variable.attributes.containsAttribute(named: "CompactDecoding") {
+                    property.isCompactDecoding = true
+                }
+                
                 // coding key
                 if let codingKey = variable.attributes.firstAttribute(named: "CodingKey") {
                     property.keys = codingKey.as(AttributeSyntax.self)?
@@ -143,6 +147,24 @@ extension TypeInfo {
                             strategy: \(dateCodingStrategy)
                         )
                         """
+                } else if property.isCompactDecoding {
+                    let propertyType = parseSwiftType(property.type)
+                    if propertyType.isArray {
+                        body = """
+                            container.compactDecodeArray(type: \(property.type.nonOptionalType).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                            """
+                    } else if propertyType.isDictionary {
+                        body = """
+                            """
+                    } else if propertyType.isSet {
+                        body = """
+                            {
+                                Set(try container.compactDecodeArray(type: [\(property.type.nonOptionalType.setElement)].self, keys: [\(property.codingKeys.joined(separator: ", "))]))
+                            }()
+                            """
+                    } else {
+                        throw MacroError(text: "Can not handle property `\(property.name)` with @CompactDecoding.")
+                    }
                 } else {
                     body = """
                         container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
@@ -152,7 +174,8 @@ extension TypeInfo {
                 if let initExpr = property.initExpr {
                     return "self.\(property.name) = (try? \(body)) ?? (\(initExpr))"
                 } else {
-                    return "self.\(property.name) = try \(body)"
+                    let questionMark = property.isOptional ? "?" : ""
+                    return "self.\(property.name) = try\(questionMark) \(body)"
                 }
             }
             .joined(separator: "\n")
