@@ -54,14 +54,21 @@ public final class Test {
     
     @CustomCoding(
         decode: { decoder in
-            let container = try decoder.container(keyedBy: AnyCodingKey.self)
-            let ret = try container.decode(Int.self, forKey: AnyCodingKey(stringValue: "custom")!)
-            return ret * 1000
+//            let container = try decoder.container(keyedBy: AnyCodingKey.self)
+//            let ret = try container.decode(Int.self, forKey: AnyCodingKey(stringValue: "custom")!)
+//            return ret * 1000
+            if let ret: Int = decoder["custom"] {
+                return ret * 1000
+            } else {
+                return 0
+            }
         },
         encode: { (encoder: Encoder, value: Int) in
 //            print(333333)
-            var container = try encoder.container(keyedBy: AnyCodingKey.self)
-            try container.encode(66666, forKey: AnyCodingKey(stringValue: "custom")!)
+//            var container = try encoder.container(keyedBy: AnyCodingKey.self)
+//            try container.encode(66666, forKey: AnyCodingKey(stringValue: "custom")!)
+            
+            encoder["custom"] = 66666
         }
     )
     var custom: Int
