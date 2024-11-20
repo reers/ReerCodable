@@ -237,7 +237,9 @@ enum Video: Codable {
     case hosted(url: URL)
 }
 
-public enum Theme: Codable {
+@Codable
+public enum Theme {
+    @CodingCaseKey(case: "white")
     case white
     case black
     case custom(hex: String)

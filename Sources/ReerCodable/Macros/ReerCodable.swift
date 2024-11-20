@@ -60,12 +60,16 @@ public struct CaseValue {
     let keys: [String]
     let index: Int?
     
-    public static func named(_ label: String, keys: String...) -> CaseValue {
-        .init(label: label, keys: keys, index: nil)
+    public init(label: String, keys: String...) {
+        self.label = label
+        self.keys = keys
+        self.index = nil
     }
     
-    public static func unnamed(_ index: Int, keys: String...) -> CaseValue {
-        .init(label: nil, keys: keys, index: index)
+    public init(index: Int, keys: String...) {
+        self.keys = keys
+        self.index = index
+        self.label = nil
     }
 }
 

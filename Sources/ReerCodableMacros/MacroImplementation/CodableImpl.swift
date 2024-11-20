@@ -20,13 +20,14 @@ extension Codable: ExtensionMacro {
             throw MacroError(text: "@Codable macro is only for `struct`, `class` or `enum`.")
         }
         
+        var codableExisted = false
         if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
            inheritedType.contains(where: { $0.type.trimmedDescription == "Codable" }) {
-            return []
+            codableExisted = true
         }
         let extensionDecl: DeclSyntax =
             """
-            extension \(type.trimmed): Codable, ReerCodableDelegate {}
+            extension \(type.trimmed):\(raw: codableExisted ? "" : "Codable,") ReerCodableDelegate {}
             """
         return [extensionDecl.cast(ExtensionDeclSyntax.self)]
     }
