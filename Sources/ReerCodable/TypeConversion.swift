@@ -81,6 +81,25 @@ extension FloatConvertable {
     }
 }
 
+// MARK: - To CGFloat
+
+#if canImport(CoreFoundation)
+import CoreFoundation
+
+extension CGFloat: TypeConvertible {
+    static func convert(from object: Any) -> CGFloat? {
+        if let string = object as? CustomStringConvertible,
+           let double = Double(string.description) {
+            return CGFloat(double)
+        } else if let bool = object as? Bool {
+            return bool ? 1.0 : 0
+        } else {
+            return nil
+        }
+    }
+}
+#endif
+
 // MARK: - To String
 
 extension String: TypeConvertible {
