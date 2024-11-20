@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ReerCodable}",
+            "name": "Debug ReerCodableClient",
+            "program": "${workspaceFolder:ReerCodable}/.build/debug/ReerCodableClient",
+            "preLaunchTask": "swift: Build Debug ReerCodableClient"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ReerCodable}",
+            "name": "Release ReerCodableClient",
+            "program": "${workspaceFolder:ReerCodable}/.build/release/ReerCodableClient",
+            "preLaunchTask": "swift: Build Release ReerCodableClient"
+        }
+    ]
+}
