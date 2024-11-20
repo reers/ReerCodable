@@ -18,6 +18,7 @@ let testMacros: [String: Macro.Type] = [
     "DateCoding": DateCoding.self,
     "CompactDecoding": CompactDecoding.self,
     "CustomCoding": CustomCoding.self,
+    "CodingCaseKey": CodingCaseKey.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,
@@ -34,6 +35,27 @@ let testMacros: [String: Macro.Type] = [
 #endif
 
 final class ReerCodableTests: XCTestCase {
+    
+    func testEnumMacro() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacroExpansion(
+            """
+            @Codable
+            enum Season: Double {
+                @CodingCaseKey(case: "SPRING")
+                case spring = 1.5
+                case summer = 2.5
+            }
+            """,
+            expandedSource: """
+            
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
     
     static let test = "abc"
     func testMacro() throws {
@@ -86,4 +108,5 @@ final class ReerCodableTests: XCTestCase {
         #endif
     }
 
+    
 }

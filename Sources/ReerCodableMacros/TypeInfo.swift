@@ -4,12 +4,16 @@ import SwiftSyntaxMacros
 struct TypeInfo {
     let context: MacroExpansionContext
     let decl: DeclGroupSyntax
+    var isEnum = false
     var caseStyles: [CaseStyle] = []
     var properties: [PropertyInfo] = []
     
     init(decl: DeclGroupSyntax, context: some MacroExpansionContext) throws {
         self.decl = decl
         self.context = context
+        if decl.is(EnumDeclSyntax.self) {
+            self.isEnum = true
+        }
         
         caseStyles = decl.attributes.compactMap {
             let attributeId = $0.as(AttributeSyntax.self)?

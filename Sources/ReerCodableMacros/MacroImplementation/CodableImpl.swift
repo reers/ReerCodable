@@ -13,10 +13,11 @@ extension Codable: ExtensionMacro {
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.ExtensionDeclSyntax] {
         guard
-            declaration.as(StructDeclSyntax.self) != nil
-            || declaration.as(ClassDeclSyntax.self) !=  nil 
+            declaration.is(StructDeclSyntax.self)
+            || declaration.is(ClassDeclSyntax.self)
+            || declaration.is(EnumDeclSyntax.self)
         else {
-            throw MacroError(text: "@Codable macro is only for `struct` or `class`")
+            throw MacroError(text: "@Codable macro is only for `struct`, `class` or `enum`.")
         }
         
         if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
@@ -67,7 +68,7 @@ extension Codable: MemberMacro {
             hasMemberwiseInit = false
         }
         var decls = [decoder, encoder]
-        if hasMemberwiseInit {
+        if hasMemberwiseInit, !declaration.is(EnumDeclSyntax.self) {
             decls.append(try typeInfo.generateMemberwiseInit())
         }
         return decls

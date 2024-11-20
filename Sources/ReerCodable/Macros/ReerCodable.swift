@@ -28,7 +28,7 @@ public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "Reer
 public macro CodableSubclass() = #externalMacro(module: "ReerCodableMacros", type: "CodableSubclass")
 
 @attached(peer)
-public macro CodingKey(_ key: String ...) = #externalMacro(module: "ReerCodableMacros", type: "CodingKey")
+public macro CodingKey(_ key: String...) = #externalMacro(module: "ReerCodableMacros", type: "CodingKey")
 
 @attached(peer)
 public macro EncodingKey(
@@ -53,6 +53,27 @@ public macro CustomCoding<Value>(
     decode: ((_ decoder: Decoder) throws -> Value?)? = nil,
     encode: ((_ encoder: Encoder, _ value: Value) throws -> Void)? = nil
 ) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
+
+
+public struct CaseValue {
+    let label: String?
+    let keys: [String]
+    let index: Int?
+    
+    public static func named(_ label: String, keys: String...) -> CaseValue {
+        .init(label: label, keys: keys, index: nil)
+    }
+    
+    public static func unnamed(_ index: Int, keys: String...) -> CaseValue {
+        .init(label: nil, keys: keys, index: index)
+    }
+}
+
+@attached(peer)
+public macro CodingCaseKey(
+    case: String...,
+    value: [CaseValue] = []
+) = #externalMacro(module: "ReerCodableMacros", type: "CodingCaseKey")
 
 /// `flatcase`
 @attached(peer)
