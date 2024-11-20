@@ -238,11 +238,19 @@ enum Video: Codable {
 }
 
 @Codable
-public enum Theme {
-    @CodingCaseKey(case: "white")
+public enum Theme: Codable {
+//    @CodingCaseKey("white", value: [.init(label: "hex", keys: "HEX", "color")])
     case white
     case black
-    case custom(hex: String)
+    
+//    @CodingCaseKey(
+//        "white",
+//        value: [
+//            .init(label: "hex", keys: "HEX", "color"),
+//            .init(index: 1, keys: "alpha")
+//        ]
+//    )
+    case custom(hex: String, CGFloat)
 }
 
 @Codable
@@ -255,7 +263,8 @@ let data = """
 {
 "theme": {
     "custom": {
-        "hex": "#ff0000"
+        "hex": "#ff0000",
+        "alpha": 0.3
     }
 }
 }

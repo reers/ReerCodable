@@ -41,8 +41,9 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
+            @SnakeCase
             enum Season: Double {
-                @CodingCaseKey(case: "SPRING")
+                @CodingCaseKey("SPRING", value: [.init(label: "hex", keys: "HEX", "color")])
                 case spring = 1.5
                 case summer = 2.5
             }

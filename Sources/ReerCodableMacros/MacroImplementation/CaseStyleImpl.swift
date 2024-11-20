@@ -75,9 +75,9 @@ extension CaseStyleAttribute {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard
-            declaration.as(StructDeclSyntax.self) != nil
-            || declaration.as(ClassDeclSyntax.self) !=  nil
-            || declaration.as(VariableDeclSyntax.self) !=  nil
+            declaration.is(StructDeclSyntax.self)
+            || declaration.is(ClassDeclSyntax.self)
+            || declaration.is(VariableDeclSyntax.self)
         else {
             throw MacroError(text: "@\(style.macroName) macro is only for `struct`, `class` or a property.")
         }

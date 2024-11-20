@@ -68,6 +68,17 @@ extension Codable: MemberMacro {
            item.expression.description == "false" {
             hasMemberwiseInit = false
         }
+        
+        // Only have @Codable for Enum and no @CodingCaseKey case, do nothing.
+        if declaration.is(EnumDeclSyntax.self),
+           declaration.attributes.containsAttribute(named: "Codable"),
+           declaration.attributes.count == 1,
+           !declaration.memberBlock.members.contains(where: {
+               return $0.decl.as(EnumCaseDeclSyntax.self)?.attributes.containsAttribute(named: "CodingCaseKey") ?? false
+           }) {
+            return []
+        }
+        
         var decls = [decoder, encoder]
         if hasMemberwiseInit, !declaration.is(EnumDeclSyntax.self) {
             decls.append(try typeInfo.generateMemberwiseInit())

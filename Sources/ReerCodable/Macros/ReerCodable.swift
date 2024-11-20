@@ -75,7 +75,7 @@ public struct CaseValue {
 
 @attached(peer)
 public macro CodingCaseKey(
-    case: String...,
+    _ key: String...,
     value: [CaseValue] = []
 ) = #externalMacro(module: "ReerCodableMacros", type: "CodingCaseKey")
 
