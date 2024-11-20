@@ -25,7 +25,7 @@ public struct CodingCaseKey: PeerMacro {
         }
         guard
             let caseParam = node.arguments?.as(LabeledExprListSyntax.self)?.filter({ $0.label?.trimmedDescription == "case" }),
-            let segments = caseParam.as(LabeledExprSyntax.self)?.expression.as(StringLiteralExprSyntax.self)?.segments,
+            let segments = caseParam.first?.expression.as(StringLiteralExprSyntax.self)?.segments,
             segments.count > 0
         else {
             throw MacroError(text: "Case `\(name)` requires at least one coding case key.")
