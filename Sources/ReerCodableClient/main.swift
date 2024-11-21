@@ -225,10 +225,11 @@ import Foundation
 //print(rettt)
 //let data342: String = try rettt.encodedString()
 
-//@Codable
+// Only String-based raw type enums are supported when using @CodingCaseKey
+@Codable
 enum Season: Double {
     
-    case spring = 1.5, summer = 2.5
+    case spring = 1.0, summer = 2.5
 }
 
 enum Video: Codable {
@@ -253,9 +254,10 @@ public enum Theme: Codable {
     case custom(hex: String, CGFloat)
 }
 
-@Codable
-struct Test {
+//@Codable
+struct Test: Codable {
     var theme: Theme
+    var season: Season
 }
 
 
@@ -264,9 +266,10 @@ let data = """
 "theme": {
     "custom": {
         "hex": "#ff0000",
-        "alpha": 0.3
+        "_1": 0.3
     }
-}
+},
+"season": 1.0
 }
 """.data(using: .utf8)!
 let ret = try! Test.decoded(from: data)
