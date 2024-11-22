@@ -54,6 +54,18 @@ public macro CustomCoding<Value>(
     encode: ((_ encoder: Encoder, _ value: Value) throws -> Void)? = nil
 ) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
 
+public protocol CodingCustomizable {
+    associatedtype Value: Codable
+    
+    static func decode(by decoder: Decoder) throws -> Value
+    static func encode(by encoder: Encoder, _ value: Value) throws
+}
+
+@attached(peer)
+public macro CustomCoding(
+    _ customCodingType: any CodingCustomizable.Type
+) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
+
 
 public struct CaseValue {
     let label: String?

@@ -99,6 +99,10 @@ extension TypeInfo {
                     property.customEncoder = arguments
                         .first(where: { $0.label?.identifier?.name == "encode" })?
                         .expression.trimmedDescription
+                    
+                    if property.customDecoder == nil, property.customEncoder == nil {
+                        property.customByType = arguments.trimmedDescription
+                    }
                 }
                 
                 // coding key
@@ -195,6 +199,12 @@ extension TypeInfo {
                         \(customDecoder)(decoder)
                         """
                 }
+                // custom decode by type
+                else if let customByType = property.customByType {
+                    body = """
+                        \(customByType).decode(by: decoder)
+                        """
+                }
                 // normal
                 else {
                     body = """
@@ -262,6 +272,12 @@ extension TypeInfo {
                 else if let customEncoder = property.customEncoder {
                     return """
                         let _ = try \(customEncoder)(encoder, self.\(property.name))
+                        """
+                }
+                // custom encode by type
+                else if let customByType = property.customByType {
+                    return """
+                        try \(customByType).encode(by: encoder, self.\(property.name))
                         """
                 }
                 // normal
