@@ -50,7 +50,7 @@ public macro CompactDecoding() = #externalMacro(module: "ReerCodableMacros", typ
 
 @attached(peer)
 public macro CustomCoding<Value>(
-    decode: ((_ decoder: Decoder) throws -> Value?)? = nil,
+    decode: ((_ decoder: Decoder) throws -> Value)? = nil,
     encode: ((_ encoder: Encoder, _ value: Value) throws -> Void)? = nil
 ) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
 
