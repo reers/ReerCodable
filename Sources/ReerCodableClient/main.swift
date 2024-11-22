@@ -232,10 +232,20 @@ print(str)
 //let data342: String = try rettt.encodedString()
 
 // Only String-based raw type enums are supported when using @CodingCaseKey
-@Codable
-enum Season: Double {
-    
+//@Codable
+enum Season: Double, Codable {
     case spring = 1.0, summer = 2.5
+    
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(type: Double.self, enumName: String(describing: Self.self))
+//        let value = try container.decode(Double.self)
+        switch value {
+        case 1.0: self = .spring
+        case 2.5: self = .summer
+        default: throw ReerCodableError(text: "failed")
+        }
+    }
 }
 
 
@@ -282,12 +292,7 @@ let data2 = """
 let ret2 = try! Test2.decoded(from: data2)
 print(ret)
 
-enum Case {
-    case bool(Bool)
-    case int(Int)
-    case double(Double)
-    case string(String)
-}
+
 
 enum Phone {
 //    @CodingCase(.string("custom"), .int(10), value: [.init(index: 0, keys: )])

@@ -66,6 +66,12 @@ public macro CustomCoding(
     _ customCodingType: any CodingCustomizable.Type
 ) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
 
+public enum CaseMatcher {
+    case bool(Bool)
+    case int(Int)
+    case double(Double)
+    case string(String)
+}
 
 public struct CaseValue {
     let label: String?
@@ -86,10 +92,10 @@ public struct CaseValue {
 }
 
 @attached(peer)
-public macro CodingCaseKey(
-    _ key: String...,
+public macro CodingCase(
+    _ cases: CaseMatcher...,
     value: [CaseValue] = []
-) = #externalMacro(module: "ReerCodableMacros", type: "CodingCaseKey")
+) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")
 
 /// `flatcase`
 @attached(peer)
