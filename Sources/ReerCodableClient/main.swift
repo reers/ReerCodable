@@ -83,7 +83,7 @@ public final class Test {
     
     var theme: Theme?
     
-    public func didDecode() throws {
+    public func didDecode(from decoder: any Decoder) throws {
         var ss: String?
 //        print(ss?.re_base64DecodedData()?.re_bytes)
         userAge = 22
@@ -92,7 +92,7 @@ public final class Test {
         }
     }
     
-    public func willEncode() throws {
+    public func willEncode(to encoder: any Encoder) throws {
         userAge = 100
         
     }

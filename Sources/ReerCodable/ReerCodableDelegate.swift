@@ -6,11 +6,11 @@
 //
 
 public protocol ReerCodableDelegate {
-    func didDecode() throws
-    func willEncode() throws
+    func didDecode(from decoder: any Decoder) throws
+    func willEncode(to encoder: any Encoder) throws
 }
 
 extension ReerCodableDelegate {
-    public func didDecode() throws {}
-    public func willEncode() throws {}
+    public func didDecode(from decoder: any Decoder) throws {}
+    public func willEncode(to encoder: any Encoder) throws {}
 }
