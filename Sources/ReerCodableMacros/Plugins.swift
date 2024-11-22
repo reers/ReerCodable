@@ -20,7 +20,7 @@ struct ReerCodablePlugin: CompilerPlugin {
         DateCoding.self,
         CompactDecoding.self,
         CustomCoding.self,
-        CodingCaseKey.self,
+        CodingCase.self,
         FlatCase.self,
         UpperCase.self,
         CamelCase.self,

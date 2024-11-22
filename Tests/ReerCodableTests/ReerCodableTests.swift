@@ -18,7 +18,7 @@ let testMacros: [String: Macro.Type] = [
     "DateCoding": DateCoding.self,
     "CompactDecoding": CompactDecoding.self,
     "CustomCoding": CustomCoding.self,
-    "CodingCaseKey": CodingCaseKey.self,
+    "CodingCase": CodingCase.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,
@@ -43,7 +43,7 @@ final class ReerCodableTests: XCTestCase {
             @Codable
             @SnakeCase
             enum Season: Double {
-                @CodingCaseKey("SPRING", value: [.init(label: "hex", keys: "HEX", "color")])
+                @CodingCase("SPRING", value: [.init(label: "hex", keys: "HEX", "color")])
                 case spring = 1.5
                 case summer = 2.5
             }
