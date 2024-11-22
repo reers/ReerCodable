@@ -10,10 +10,11 @@ import SwiftSyntax
 extension AttributeListSyntax {
     func firstAttribute(named identifier: String) -> AttributeListSyntax.Element? {
         return first {
-            let attribute = $0.as(AttributeSyntax.self)?
+            guard let attribute = $0.as(AttributeSyntax.self)?
                 .attributeName.as(IdentifierTypeSyntax.self)?
                 .trimmedDescription
-            return attribute == identifier
+            else { return false }
+            return (attribute == identifier) || attribute.hasPrefix("\(identifier)<")
         }
     }
     
