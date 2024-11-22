@@ -84,7 +84,7 @@ final class ReerCodableTests: XCTestCase {
                 @CompactDecoding
                 var array: [String]
             
-                @CustomCoding(
+                @CustomCoding<Int>(
                     decode: { decoder in
                         return 222222
                     },

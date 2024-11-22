@@ -15,86 +15,76 @@ import Foundation
 
 
 
-//let formatter = DateFormatter()
-//formatter.locale = Locale(identifier: "en_US_POSIX")
-//formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
-//formatter.timeZone = TimeZone(secondsFromGMT: 0)
-//
-//@Codable
-//@SnakeCase
-//@ScreamingKebabCase
-//public final class Test {
-//    @CodingKey("age__", "a.b")
-//    var userAge: Int = 18
-//    
-//    @CodingKey("name")
-//    var userName: String
-////    @Base64Coding
-////    let height: [UInt8]?
-//    
-//    @IgnoreCoding
-//    var ignore: Set<String>
-//    
+let formatter = DateFormatter()
+formatter.locale = Locale(identifier: "en_US_POSIX")
+formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
+formatter.timeZone = TimeZone(secondsFromGMT: 0)
+
+@Codable
+@SnakeCase
+@ScreamingKebabCase
+public final class Test {
+    @CodingKey("age__", "a.b")
+    var userAge: Int = 18
+    
+    @CodingKey("name")
+    var userName: String
 //    @Base64Coding
-//    var data: Data?
-//    
-//    @CodingKey("data.data2")
-//    @Base64Coding
-//    var data2: Data?
-//    
-//    @DateCoding(.millisecondsSince1970)
-//    var date: Date?
-//    
-//    @CodingKey("array.xxx")
-//    @EncodingKey("iamset")
-//    @CompactDecoding
-//    var array: Set<String>
-//    
-//    
-//    @CompactDecoding
-//    var dict: [String: String]
-//    
-//    @CustomCoding(
-//        decode: { decoder in
-////            let container = try decoder.container(keyedBy: AnyCodingKey.self)
-////            let ret = try container.decode(Int.self, forKey: AnyCodingKey(stringValue: "custom")!)
-////            return ret * 1000
-//            if let ret: Int = decoder["custom"] {
-//                return ret * 1000
-//            } else {
-//                return 0
-//            }
-//        },
-//        encode: { (encoder: Encoder, value: Int) in
-////            print(333333)
-////            var container = try encoder.container(keyedBy: AnyCodingKey.self)
-////            try container.encode(66666, forKey: AnyCodingKey(stringValue: "custom")!)
-//            
-//            encoder["custom"] = 66666
-//        }
-//    )
-//    var custom: Int
-//    
-//    var theme: Theme?
-//    
-//    public func didDecode() throws {
-//        var ss: String?
-////        print(ss?.re_base64DecodedData()?.re_bytes)
-//        userAge = 22
-//        if userAge < 0 {
-//            throw ReerCodableError(text: "这是一个测试错误")
-//        }
-//    }
-//    
-//    public func willEncode() throws {
-//        userAge = 100
-//        
-//    }
-//}
-//
-//public struct IgnoreModel: Codable {
-//    
-//}
+//    let height: [UInt8]?
+    
+    @IgnoreCoding
+    var ignore: Set<String>
+    
+    @Base64Coding
+    var data: Data?
+    
+    @CodingKey("data.data2")
+    @Base64Coding
+    var data2: Data?
+    
+    @DateCoding(.millisecondsSince1970)
+    var date: Date?
+    
+    @CodingKey("array.xxx")
+    @EncodingKey("iamset")
+    @CompactDecoding
+    var array: Set<String>
+    
+    
+    @CompactDecoding
+    var dict: [String: String]
+    
+    @CustomCoding<Int>(
+        decode: { decoder in
+            let temp: Int = try decoder.value(forKeys: "custom")
+            return temp * 1000
+        },
+        encode: { encoder, value in
+            try encoder.set(value, forKey: "custom")
+        }
+    )
+    var custom: Int
+    
+    var theme: Theme?
+    
+    public func didDecode() throws {
+        var ss: String?
+//        print(ss?.re_base64DecodedData()?.re_bytes)
+        userAge = 22
+        if userAge < 0 {
+            throw ReerCodableError(text: "这是一个测试错误")
+        }
+    }
+    
+    public func willEncode() throws {
+        userAge = 100
+        
+    }
+}
+
+public struct IgnoreModel: Codable {
+    
+}
 //
 //
 //
@@ -164,48 +154,48 @@ import Foundation
 //}
 //
 //
-//let ss = """
-//{"age__": 22,
-//"as": {
-//    "b": 33
-//},
-//"a.b": "-44",
-//"name": "phoenix",
-//"height": "180",
-//"tag": {
-//    "ed": "3333"
-//},
-//"tag.isdf": "hhhhhh",
-//"array": {
-//    "xxx": ["a", null, "b", null, "c"]
-//},
-//"dict": {
-//        "111": null,
-//        "222": null,
-//        "333": "value3"
-//    },
-//"season": "spring",
-//"data": "aGVsbG8gd29ybGQ=",
-//"date": 1731585275944,
-//"custom": 111,
-//"theme": {
-//    "custom": {
-//        "hex": "#ff0000"
-//    }
-//}
-//}
-//
-//"""
-//let data = ss.data(using: .utf8)!
-//let dict = try! JSONSerialization.jsonObject(with: data);
-//
-//
-//let ret = try JSONDecoder().decode(Test.self, from: data)
-//print(ret)
-//
-//let modelData = try! JSONEncoder().encode(ret)
-//let str = String(data: modelData, encoding: .utf8)
-//print(str)
+let ss = """
+{"age__": 22,
+"as": {
+    "b": 33
+},
+"a.b": "-44",
+"name": "phoenix",
+"height": "180",
+"tag": {
+    "ed": "3333"
+},
+"tag.isdf": "hhhhhh",
+"array": {
+    "xxx": ["a", null, "b", null, "c"]
+},
+"dict": {
+        "111": null,
+        "222": null,
+        "333": "value3"
+    },
+"season": "spring",
+"data": "aGVsbG8gd29ybGQ=",
+"date": 1731585275944,
+"custom": 111,
+"theme": {
+    "custom": {
+        "hex": "#ff0000"
+    }
+}
+}
+
+"""
+let data = ss.data(using: .utf8)!
+let dict = try! JSONSerialization.jsonObject(with: data);
+
+
+let ret = try JSONDecoder().decode(Test.self, from: data)
+print(ret)
+
+let modelData = try! JSONEncoder().encode(ret)
+let str = String(data: modelData, encoding: .utf8)
+print(str)
 //
 //
 //let presonData = """
@@ -255,13 +245,13 @@ public enum Theme: Codable {
 }
 
 //@Codable
-struct Test: Codable {
+struct Test2: Codable {
     var theme: Theme
     var season: Season
 }
 
 
-let data = """
+let data2 = """
 {
 "theme": {
     "custom": {
@@ -272,5 +262,5 @@ let data = """
 "season": 1.0
 }
 """.data(using: .utf8)!
-let ret = try! Test.decoded(from: data)
+let ret2 = try! Test2.decoded(from: data2)
 print(ret)

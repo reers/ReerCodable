@@ -6,11 +6,8 @@
 //
 
 public extension Encoder {
-    subscript<T: Encodable>(key: String, treatDotAsNested: Bool = true) -> T? {
-        get { return nil }
-        nonmutating set {
-            var container = container(keyedBy: AnyCodingKey.self)
-            try? container.encode(value: newValue, key: key, treatDotAsNested: treatDotAsNested)
-        }
+    func set<Value: Encodable>(_ value: Value, forKey key: String, treatDotAsNested: Bool = true) throws {
+        var container = container(keyedBy: AnyCodingKey.self)
+        try container.encode(value: value, key: key, treatDotAsNested: treatDotAsNested)
     }
 }
