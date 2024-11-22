@@ -13,6 +13,19 @@ import Foundation
 //    }
 //}
 
+struct IntTransformer: CodingCustomizable {
+    typealias Value = Int
+    
+    static func decode(by decoder: any Decoder) throws -> Int {
+        let temp: Int = try decoder.value(forKeys: "custom")
+        return temp * 1000
+    }
+    
+    static func encode(by encoder: any Encoder, _ value: Int) throws {
+        try encoder.set(value, forKey: "custom_by")
+    }
+}
+
 
 
 let formatter = DateFormatter()
@@ -64,6 +77,9 @@ public final class Test {
         }
     )
     var custom: Int
+    
+    @CustomCoding(IntTransformer.self)
+    var customBy: Int
     
     var theme: Theme?
     

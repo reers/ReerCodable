@@ -93,6 +93,9 @@ final class ReerCodableTests: XCTestCase {
                     }
                 )
                 var custom: Int
+            
+                @CustomCoding(IntTransformer.self)
+                var customBy: Int
             }
 
             """,

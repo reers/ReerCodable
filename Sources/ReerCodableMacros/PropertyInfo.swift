@@ -24,6 +24,7 @@ struct PropertyInfo {
     var isCompactDecoding = false
     var customDecoder: String?
     var customEncoder: String?
+    var customByType: String?
     
     var codingKeys: [String] {
         var result: [String] = keys
