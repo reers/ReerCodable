@@ -238,6 +238,7 @@ enum Season: Double {
     case spring = 1.0, summer = 2.5
 }
 
+
 enum Video: Codable {
     case youTube(id: String)
     case vimeo(id: String)
@@ -280,3 +281,94 @@ let data2 = """
 """.data(using: .utf8)!
 let ret2 = try! Test2.decoded(from: data2)
 print(ret)
+
+enum Case {
+    case bool(Bool)
+    case int(Int)
+    case double(Double)
+    case string(String)
+}
+
+enum Phone {
+//    @CodingCase(.string("custom"), .int(10), value: [.init(index: 0, keys: )])
+    case apple(String, width: Double)
+    case huawei(String, width: Double)
+}
+
+enum Gender: Int, Codable {
+//    @CodingCase(.int(0), .string("male"))
+    case male = 0
+    case female = 1
+    
+    // Custom decoder implementation
+    init(from decoder: Decoder) throws {
+        // Try to decode as String first
+        if let container = try? decoder.singleValueContainer(),
+           let stringValue = try? container.decode(String.self) {
+            switch stringValue.lowercased() {
+            case "male", "m":
+                self = .male
+            case "female", "f":
+                self = .female
+            default:
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Invalid gender string: \(stringValue)"
+                )
+            }
+        } else {
+            // Fallback to default Int decoding
+            let container = try decoder.singleValueContainer()
+            let rawValue = try container.decode(Int.self)
+            guard let gender = Gender(rawValue: rawValue) else {
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Invalid gender value: \(rawValue)"
+                )
+            }
+            self = gender
+        }
+    }
+    
+    // Custom encoder implementation
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        // Encode as String for better readability
+        switch self {
+        case .male:
+            try container.encode("male")
+        case .female:
+            try container.encode("female")
+        }
+    }
+}
+
+// Testing the implementation
+let jsonString = """
+{
+    "gender1": "male",
+    "gender2": "f",
+    "gender3": 0
+}
+"""
+
+struct Person: Codable {
+    let gender1: Gender
+    let gender2: Gender
+    let gender3: Gender
+}
+
+do {
+    let decoder = JSONDecoder()
+    let person = try decoder.decode(Person.self, from: jsonString.data(using: .utf8)!)
+    print(person.gender1) // male
+    print(person.gender2) // female
+    print(person.gender3) // male
+    
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = .prettyPrinted
+    let data = try encoder.encode(person)
+    print(String(data: data, encoding: .utf8)!)
+} catch {
+    print("Error: \(error)")
+}
