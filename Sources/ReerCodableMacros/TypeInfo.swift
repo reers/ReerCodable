@@ -194,7 +194,6 @@ extension TypeInfo {
     func generateDecoderInit(isOverride: Bool = false) throws -> DeclSyntax {
         var assignments: String
         if isEnum {
-            
             assignments = """
                 let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
                 switch value {
@@ -202,12 +201,6 @@ extension TypeInfo {
                 default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
                 }
                 """
-            //        let value = try container.decode(type: Double.self, enumName: String(describing: Self.self))
-            //        switch value {
-            //        case 1.0: self = .spring
-            //        case 2.5: self = .summer
-            //        default: throw ReerCodableError(text: "failed")
-            //        }
         } else {
             assignments = try properties
                 .compactMap { property in
@@ -312,61 +305,72 @@ extension TypeInfo {
     
     /// Encode
     func generateEncoderFunc(isOverride: Bool = false) throws -> DeclSyntax {
-        let encoding = properties
-            .compactMap { property in
-                if property.isIgnored { return nil }
-                let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
-                    (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
-                } else {
-                    (property.codingKeys.first!, true)
+        var encoding: String
+        if isEnum {
+            encoding = """
+                switch self {
+                \(enumCases.compactMap { "case .\($0.caseName): try container.encode(\($0.rawValue))" }.joined(separator: "\n"))
                 }
-                // base64
-                if property.base64Coding {
-                    
-                    // a Data or Data? type
-                    let dataTypeTemp = if property.isOptional {
-                        property.type.hasPrefix("[UInt8]") ? "self.\(property.name).map({ Data($0) })" : "self.\(property.name)"
+                """
+        } else {
+            encoding = properties
+                .compactMap { property in
+                    if property.isIgnored { return nil }
+                    let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
+                        (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
                     } else {
-                        property.type.hasPrefix("[UInt8]") ? "Data(self.\(property.name))" : "self.\(property.name)"
+                        (property.codingKeys.first!, true)
                     }
-                    
-                    return """
+                    // base64
+                    if property.base64Coding {
+                        
+                        // a Data or Data? type
+                        let dataTypeTemp = if property.isOptional {
+                            property.type.hasPrefix("[UInt8]") ? "self.\(property.name).map({ Data($0) })" : "self.\(property.name)"
+                        } else {
+                            property.type.hasPrefix("[UInt8]") ? "Data(self.\(property.name))" : "self.\(property.name)"
+                        }
+                        
+                        return """
                         try {
                             let base64String = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
                             try container.encode(value: base64String, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
                         }()
                         """
-                }
-                // Date
-                else if let dateCodingStrategy = property.dateCodingStrategy {
-                    return """
+                    }
+                    // Date
+                    else if let dateCodingStrategy = property.dateCodingStrategy {
+                        return """
                         try container.encodeDate(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
                         """
-                }
-                // custom encode
-                else if let customEncoder = property.customEncoder {
-                    return """
+                    }
+                    // custom encode
+                    else if let customEncoder = property.customEncoder {
+                        return """
                         let _ = try \(customEncoder)(encoder, self.\(property.name))
                         """
-                }
-                // custom encode by type
-                else if let customByType = property.customByType {
-                    return """
+                    }
+                    // custom encode by type
+                    else if let customByType = property.customByType {
+                        return """
                         try \(customByType).encode(by: encoder, self.\(property.name))
                         """
+                    }
+                    // normal
+                    else {
+                        return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
+                    }
                 }
-                // normal
-                else {
-                    return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
-                }
-            }
-            .joined(separator: "\n")
-        
+                .joined(separator: "\n")
+        }
+        let container = isEnum
+            ? "var container = encoder.singleValueContainer()"
+            : "var container = encoder.container(keyedBy: AnyCodingKey.self)"
         let accessable = if isOpen { "open " } else if isPublic || hasPublicOrOpenProperty { "public " } else { "" }
         let encoder: DeclSyntax = """
         \(raw: accessable)\(raw: isOverride ? "override " : "")func encode(to encoder: Encoder) throws {
             try self.willEncode(to: encoder)
-            \(raw: isOverride ? "try super.encode(to: encoder)\n" : "")var container = encoder.container(keyedBy: AnyCodingKey.self)
+            \(raw: isOverride ? "try super.encode(to: encoder)\n" : "")\(raw: container)
             \(raw: encoding)
         }
         """
