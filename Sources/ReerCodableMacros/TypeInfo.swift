@@ -1,18 +1,64 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
+struct EnumCase {
+    var caseName: String
+    var rawValue: String
+}
+
 struct TypeInfo {
     let context: MacroExpansionContext
     let decl: DeclGroupSyntax
     var isEnum = false
+    var enumRawType: String?
+    var enumCases: [EnumCase] = []
     var caseStyles: [CaseStyle] = []
     var properties: [PropertyInfo] = []
     
     init(decl: DeclGroupSyntax, context: some MacroExpansionContext) throws {
         self.decl = decl
         self.context = context
-        if decl.is(EnumDeclSyntax.self) {
+        if let enumDecl = decl.as(EnumDeclSyntax.self) {
             self.isEnum = true
+            let availableRawTypes = [
+                "Int", "Int8", "Int16", "Int32", "Int64",
+                "UInt", "UInt8", "UInt16", "UInt32", "UInt64",
+                "String", "Float", "Double"
+            ]
+            if let rawTypeName = enumDecl.inheritanceClause?.inheritedTypes.first?.type.as(IdentifierTypeSyntax.self)?.name.trimmedDescription,
+               availableRawTypes.contains(rawTypeName) {
+                enumRawType = rawTypeName
+            }
+            
+            var index = 0
+            var lastRawValue: Double = 0.0
+            try enumDecl.memberBlock.members.forEach {
+                try $0.decl.as(EnumCaseDeclSyntax.self)?.elements.forEach { caseElement in
+                    let name = caseElement.name.trimmedDescription
+                    var raw: String
+                    if let rawValue = caseElement.rawValue?.value.trimmedDescription {
+                        raw = rawValue
+                        lastRawValue = Double(raw)!
+                    } else if let enumRawType {
+                        switch enumRawType {
+                        case "Int", "Int8", "Int16", "Int32", "Int64", "UInt", "UInt8", "UInt16", "UInt32", "UInt64":
+                            raw = if index == 0 { "0" } else { String(Int(lastRawValue) + 1) }
+                            lastRawValue = Double(raw)!
+                        case "String":
+                            raw = name
+                        case "Double", "Float":
+                            raw = if index == 0 { "0.0" } else { String(Double(lastRawValue) + 1) }
+                        default:
+                            throw MacroError(text: "Can not handle enum raw type: \(enumRawType)")
+                        }
+                    } else {
+                        raw = name
+                    }
+                    
+                    enumCases.append(.init(caseName: name, rawValue: raw))
+                    index += 1
+                }
+            }
         }
         
         caseStyles = decl.attributes.compactMap {
