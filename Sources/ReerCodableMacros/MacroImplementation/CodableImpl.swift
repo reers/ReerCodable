@@ -68,7 +68,7 @@ extension Codable: MemberMacro {
            item.expression.description == "false" {
             hasMemberwiseInit = false
         }
-        
+        /*
         // Only have @Codable for Enum and no @CodingCase case, do nothing.
         if declaration.is(EnumDeclSyntax.self),
            declaration.attributes.containsAttribute(named: "Codable"),
@@ -78,6 +78,7 @@ extension Codable: MemberMacro {
            }) {
             return []
         }
+         */
         
         var decls = [decoder, encoder]
         if hasMemberwiseInit, !declaration.is(EnumDeclSyntax.self) {

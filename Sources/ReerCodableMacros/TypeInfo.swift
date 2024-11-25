@@ -1,9 +1,16 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
+struct AssociatedValue {
+    var label: String?
+    var type: String
+    var index: Int
+}
+
 struct EnumCase {
     var caseName: String
     var rawValue: String
+    var associated: [AssociatedValue] = []
 }
 
 struct TypeInfo {
@@ -52,7 +59,7 @@ struct TypeInfo {
                             throw MacroError(text: "Can not handle enum raw type: \(enumRawType)")
                         }
                     } else {
-                        raw = name
+                        raw = "\"\(name)\""
                     }
                     
                     enumCases.append(.init(caseName: name, rawValue: raw))
@@ -185,95 +192,117 @@ extension TypeInfo {
 extension TypeInfo {
     /// Decode
     func generateDecoderInit(isOverride: Bool = false) throws -> DeclSyntax {
-        let assignments = try properties
-            .compactMap { property in
-                if property.isIgnored {
-                    if property.isOptional { return nil }
-                    if let initExpr = property.initExpr {
-                        return "self.\(property.name) = \(initExpr)"
-                    } else if let defaultValue = property.defaultValue {
-                        return "self.\(property.name) = \(defaultValue)"
+        var assignments: String
+        if isEnum {
+            
+            assignments = """
+                let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
+                switch value {
+                \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
+                default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
+                }
+                """
+            //        let value = try container.decode(type: Double.self, enumName: String(describing: Self.self))
+            //        switch value {
+            //        case 1.0: self = .spring
+            //        case 2.5: self = .summer
+            //        default: throw ReerCodableError(text: "failed")
+            //        }
+        } else {
+            assignments = try properties
+                .compactMap { property in
+                    if property.isIgnored {
+                        if property.isOptional { return nil }
+                        if let initExpr = property.initExpr {
+                            return "self.\(property.name) = \(initExpr)"
+                        } else if let defaultValue = property.defaultValue {
+                            return "self.\(property.name) = \(defaultValue)"
+                        }
+                        throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
                     }
-                    throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
-                }
-                var body: String
-                // base64
-                if property.base64Coding {
-                    let questionMark = property.isOptional ? "?" : ""
-                    let uint8 = property.type.hasPrefix("[UInt8]") ? ".re_bytes" : ""
-                    body = """
-                        {
-                            let base64String = try container.decode(type: String\(questionMark).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                            return try base64String\(questionMark).re_base64DecodedData\(uint8)
-                        }()
-                        """
-                }
-                // Date
-                else if let dateCodingStrategy = property.dateCodingStrategy {
-                    body = """
-                        container.decodeDate(
-                            type: \(property.type).self, 
-                            keys: [\(property.codingKeys.joined(separator: ", "))], 
-                            strategy: \(dateCodingStrategy)
-                        )
-                        """
-                }
-                // compact decode
-                else if property.isCompactDecoding {
-                    let propertyType = parseSwiftType(property.type)
-                    if propertyType.isArray {
-                        body = """
-                            container.compactDecodeArray(type: \(property.type.nonOptionalType).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                            """
-                    } else if propertyType.isDictionary {
-                        body = """
-                            container.compactDecodeDictionary(type: \(property.type.nonOptionalType).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                            """
-                    } else if propertyType.isSet {
+                    var body: String
+                    // base64
+                    if property.base64Coding {
+                        let questionMark = property.isOptional ? "?" : ""
+                        let uint8 = property.type.hasPrefix("[UInt8]") ? ".re_bytes" : ""
                         body = """
                             {
-                                Set(try container.compactDecodeArray(type: [\(property.type.nonOptionalType.setElement)].self, keys: [\(property.codingKeys.joined(separator: ", "))]))
+                                let base64String = try container.decode(type: String\(questionMark).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                                return try base64String\(questionMark).re_base64DecodedData\(uint8)
                             }()
                             """
+                    }
+                    // Date
+                    else if let dateCodingStrategy = property.dateCodingStrategy {
+                        body = """
+                            container.decodeDate(
+                                type: \(property.type).self, 
+                                keys: [\(property.codingKeys.joined(separator: ", "))], 
+                                strategy: \(dateCodingStrategy)
+                            )
+                            """
+                    }
+                    // compact decode
+                    else if property.isCompactDecoding {
+                        let propertyType = parseSwiftType(property.type)
+                        if propertyType.isArray {
+                            body = """
+                                container.compactDecodeArray(type: \(property.type.nonOptionalType).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                                """
+                        } else if propertyType.isDictionary {
+                            body = """
+                                container.compactDecodeDictionary(type: \(property.type.nonOptionalType).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                                """
+                        } else if propertyType.isSet {
+                            body = """
+                                {
+                                    Set(try container.compactDecodeArray(type: [\(property.type.nonOptionalType.setElement)].self, keys: [\(property.codingKeys.joined(separator: ", "))]))
+                                }()
+                                """
+                        } else {
+                            throw MacroError(text: "Can not handle property `\(property.name)` with @CompactDecoding.")
+                        }
+                    }
+                    // custom decode
+                    else if let customDecoder = property.customDecoder {
+                        body = """
+                            \(customDecoder)(decoder)
+                            """
+                    }
+                    // custom decode by type
+                    else if let customByType = property.customByType {
+                        body = """
+                            \(customByType).decode(by: decoder)
+                            """
+                    }
+                    // normal
+                    else {
+                        body = """
+                            container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                            """
+                    }
+                    
+                    if let initExpr = property.initExpr {
+                        return "self.\(property.name) = (try? \(body)) ?? (\(initExpr))"
                     } else {
-                        throw MacroError(text: "Can not handle property `\(property.name)` with @CompactDecoding.")
+                        let questionMark = property.isOptional ? "?" : ""
+                        return "self.\(property.name) = try\(questionMark) \(body)"
                     }
                 }
-                // custom decode
-                else if let customDecoder = property.customDecoder {
-                    body = """
-                        \(customDecoder)(decoder)
-                        """
-                }
-                // custom decode by type
-                else if let customByType = property.customByType {
-                    body = """
-                        \(customByType).decode(by: decoder)
-                        """
-                }
-                // normal
-                else {
-                    body = """
-                        container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
-                        """
-                }
-                
-                if let initExpr = property.initExpr {
-                    return "self.\(property.name) = (try? \(body)) ?? (\(initExpr))"
-                } else {
-                    let questionMark = property.isOptional ? "?" : ""
-                    return "self.\(property.name) = try\(questionMark) \(body)"
-                }
-            }
-            .joined(separator: "\n")
+                .joined(separator: "\n")
+        }
+        
         let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
         var needRequired = isClass && !isFinal
         if isOverride {
             needRequired = true
         }
+        let container = isEnum
+            ? "let container = try decoder.singleValueContainer()"
+            : "let container = try decoder.container(keyedBy: AnyCodingKey.self)"
         let decoder: DeclSyntax = """
         \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: AnyCodingKey.self)
+            \(raw: container)
             \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
             try self.didDecode(from: decoder)
         }
