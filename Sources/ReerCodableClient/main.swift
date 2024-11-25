@@ -233,20 +233,11 @@ print(str)
 
 // Only String-based raw type enums are supported when using @CodingCaseKey
 @Codable
-enum Season: UInt8, Codable {
+enum Season: Double, Codable {
     case spring
     case summer = 43
     case fall
     
-//    init(from decoder: any Decoder) throws {
-//        let container = try decoder.singleValueContainer()
-//        let value = try container.decode(type: Double.self, enumName: String(describing: Self.self))
-//        switch value {
-//        case 1.0: self = .spring
-//        case 2.5: self = .summer
-//        default: throw ReerCodableError(text: "failed")
-//        }
-//    }
 }
 enum Season2: UInt8 {
     case spring, summer = 43, fall
@@ -293,6 +284,7 @@ let data2 = """
 }
 """.data(using: .utf8)!
 let ret2 = try! Test2.decoded(from: data2)
+print(try ret2.encodedDict())
 print(ret)
 
 
