@@ -41,8 +41,10 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            enum Season: UInt8 {
-                case spring, summer = 43, fall
+            enum Video: Codable {
+                case youTube(id: String, TimeInterval)
+                case vimeo(id: String)
+                case hosted(url: URL)
             }
             """,
             expandedSource: """

@@ -243,11 +243,6 @@ enum Season2: UInt8 {
     case spring, summer = 43, fall
 }
 
-enum Video: Codable {
-    case youTube(id: String)
-    case vimeo(id: String)
-    case hosted(url: URL)
-}
 
 //@Codable
 public enum Theme: Codable {
@@ -372,3 +367,116 @@ do {
 } catch {
     print("Error: \(error)")
 }
+
+
+enum Video: Codable {
+    case youTube(id: String, TimeInterval)
+    case vimeo(id: String)
+    case hosted(url: URL)
+}
+
+extension Video {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: AnyCodingKey.self)
+        
+        if container.contains(AnyCodingKey(stringValue: "youTube")!) {
+            let youTubeContainer = try container.nestedContainer(
+                keyedBy: AnyCodingKey.self,
+                forKey: AnyCodingKey(stringValue: "youTube")!
+            )
+            let id = try youTubeContainer.decode(
+                String.self,
+                forKey: AnyCodingKey(stringValue: "id")!
+            )
+            let duration = try youTubeContainer.decode(
+                TimeInterval.self,
+                forKey: AnyCodingKey(stringValue: "_1")! // 或者用 "_1"
+            )
+            self = .youTube(id: id, duration)
+        }
+        else if container.contains(AnyCodingKey(stringValue: "vimeo")!) {
+            let vimeoContainer = try container.nestedContainer(
+                keyedBy: AnyCodingKey.self,
+                forKey: AnyCodingKey(stringValue: "vimeo")!
+            )
+            let id = try vimeoContainer.decode(
+                String.self,
+                forKey: AnyCodingKey(stringValue: "id")!
+            )
+            self = .vimeo(id: id)
+        }
+        else if container.contains(AnyCodingKey(stringValue: "hosted")!) {
+            let hostedContainer = try container.nestedContainer(
+                keyedBy: AnyCodingKey.self,
+                forKey: AnyCodingKey(stringValue: "hosted")!
+            )
+            let url = try hostedContainer.decode(
+                URL.self,
+                forKey: AnyCodingKey(stringValue: "url")!
+            )
+            self = .hosted(url: url)
+        }
+        else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: container.codingPath,
+                    debugDescription: "Unrecognized Video type"
+                )
+            )
+        }
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: AnyCodingKey.self)
+        
+        switch self {
+        case let .youTube(id, duration):
+            var youTubeContainer = container.nestedContainer(
+                keyedBy: AnyCodingKey.self,
+                forKey: AnyCodingKey(stringValue: "youTube")!
+            )
+            try youTubeContainer.encode(id, forKey: AnyCodingKey(stringValue: "id")!)
+            try youTubeContainer.encode(duration, forKey: AnyCodingKey(stringValue: "duration")!)
+            
+        case let .vimeo(id):
+            var vimeoContainer = container.nestedContainer(
+                keyedBy: AnyCodingKey.self,
+                forKey: AnyCodingKey(stringValue: "vimeo")!
+            )
+            try vimeoContainer.encode(id, forKey: AnyCodingKey(stringValue: "id")!)
+            
+        case let .hosted(url):
+            var hostedContainer = container.nestedContainer(
+                keyedBy: AnyCodingKey.self,
+                forKey: AnyCodingKey(stringValue: "hosted")!
+            )
+            try hostedContainer.encode(url, forKey: AnyCodingKey(stringValue: "url")!)
+        }
+    }
+}
+
+struct Response: Codable {
+    let name: String
+    let videos: [Video]
+}
+
+let videoJson = """
+{
+    "name": "Conference talks",
+    "videos": [
+        {
+            "youTube": {
+                "id": "ujOc3a7Hav0",
+                "_1": 44.5
+            }
+        },
+        {
+            "vimeo": {
+                "id": "234961067"
+            }
+        }
+    ]
+}
+""".data(using: .utf8)!
+let resp = try! Response.decoded(from: videoJson)
+print(resp)
