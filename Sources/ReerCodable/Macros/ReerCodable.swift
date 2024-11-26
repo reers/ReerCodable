@@ -77,22 +77,28 @@ public struct CaseValue {
     let label: String?
     let keys: [String]
     let index: Int?
+    let defaultValue: Any?
     
-    public init(label: String, keys: String...) {
+    public init(label: String, keys: String..., default: Any? = nil) {
         self.label = label
         self.keys = keys
         self.index = nil
+        self.defaultValue = `default`
     }
     
-    public init(index: Int, keys: String...) {
+    public init(index: Int, keys: String..., default: Any? = nil) {
         self.keys = keys
         self.index = index
         self.label = nil
+        self.defaultValue = `default`
     }
 }
 
 @attached(peer)
 public macro CodingCase(match cases: CaseMatcher...) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")
+
+@attached(peer)
+public macro CodingCase(keys: String..., values: [CaseValue]) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")
 
 /// `flatcase`
 @attached(peer)
