@@ -488,7 +488,7 @@ print(respdict)
 //    }
 //}
 @Codable
-enum Phone {
+enum Phone: Codable {
     @CodingCase(match: .bool(true), .int(8), .int(10), .string("youtube"), .string("Apple"))
     case apple
     
@@ -499,6 +499,15 @@ enum Phone {
     case oppo
 }
 
-let resp2 = try! Phone.decoded(from: "false".data(using: .utf8)!)
+struct Resp2: Codable {
+    let phone: Phone
+}
+
+let phoneData = """
+{
+"phone": false
+}
+""".data(using: .utf8)!
+let resp2 = try! Resp2.decoded(from: phoneData)
 print(resp2)
 
