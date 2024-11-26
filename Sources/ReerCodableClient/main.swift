@@ -284,11 +284,11 @@ print(ret)
 
 
 
-enum Phone {
-//    @CodingCase(.string("custom"), .int(10), value: [.init(index: 0, keys: )])
-    case apple(String, width: Double)
-    case huawei(String, width: Double)
-}
+//enum Phone {
+////    @CodingCase(.string("custom"), .int(10), value: [.init(index: 0, keys: )])
+//    case apple(String, width: Double)
+//    case huawei(String, width: Double)
+//}
 
 enum Gender: Int, Codable {
 //    @CodingCase(.int(0), .string("male"))
@@ -442,3 +442,63 @@ let resp = try! Response.decoded(from: videoJson)
 print(resp)
 let respdict = try! resp.encodedDict()
 print(respdict)
+
+//@Codable
+//enum Phone: Decodable {
+////    @CodingCase(match: .bool(true), .int(8), .string("youtube"))
+//    case apple
+//    case mi
+//    case oppo
+//    
+//    init(from decoder: Decoder) throws {
+//        let container = try decoder.singleValueContainer()
+//
+//        // 尝试解码为不同类型
+//        if let boolValue = try? container.decode(Bool.self) {
+//            switch boolValue {
+//            case true:
+//                self = .apple
+//                return
+//            default: break
+//            }
+//        }
+//
+//        if let intValue = try? container.decode(Int.self) {
+//            switch intValue {
+//            case 8:
+//                self = .apple
+//                return
+//            default: break
+//            }
+//        }
+//        let stringValue = try container.decode(String.self)
+//        switch stringValue {
+//        case "youtube":
+//            self = .apple
+//        case "mi":
+//            self = .mi
+//        case "oppo":
+//            self = .oppo
+//        default:
+//            throw DecodingError.dataCorruptedError(
+//                in: container,
+//                debugDescription: "Cannot initialize Phone from invalid value: \(stringValue)"
+//            )
+//        }
+//    }
+//}
+@Codable
+enum Phone {
+    @CodingCase(match: .bool(true), .int(8), .int(10), .string("youtube"), .string("Apple"))
+    case apple
+    
+    @CodingCase(match: .int(12), .string("MI"), .string("xiaomi"))
+    case mi
+    
+    @CodingCase(match: .bool(false))
+    case oppo
+}
+
+let resp2 = try! Phone.decoded(from: "false".data(using: .utf8)!)
+print(resp2)
+

@@ -14,6 +14,8 @@ struct AssociatedValue {
 struct EnumCase {
     var caseName: String
     var rawValue: String
+    // [Type: Value]
+    var matches: [String: [String]] = [:]
     var associated: [AssociatedValue] = []
     
     var initText: String {
@@ -81,6 +83,23 @@ struct TypeInfo {
                     }
                     enumCases.append(.init(caseName: name, rawValue: raw, associated: associated))
                     index += 1
+                }
+                
+                if let attribute = $0.decl.as(EnumCaseDeclSyntax.self)?.attributes.first?.as(AttributeSyntax.self),
+                   attribute.attributeName.as(IdentifierTypeSyntax.self)?.name.trimmedDescription == "CodingCase" {
+                    if let arguments = attribute.arguments?.as(LabeledExprListSyntax.self),
+                       arguments.first?.label?.trimmedDescription == "match" {
+                        arguments.forEach {
+                            if let matchString = $0.expression.as(FunctionCallExprSyntax.self)?.trimmedDescription,
+                               let tuple = parseEnumCaseMatchString(matchString) {
+                                var last = enumCases.removeLast()
+                                var values = last.matches[tuple.type] ?? []
+                                values.append(tuple.value)
+                                last.matches[tuple.type] = values
+                                enumCases.append(last)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -202,6 +221,66 @@ extension TypeInfo {
             return properties
         }
     }
+    // .int(8) -> (Int, 8)
+    func parseEnumCaseMatchString(_ string: String) -> (type: String, value: String)? {
+        let cleaned = string.trimmingCharacters(in: .whitespaces)
+        
+        guard
+            let range = cleaned.range(of: "("),
+            let endRange = cleaned.range(of: ")", options: .backwards)
+        else {
+            return nil
+        }
+        
+        var typeStr = cleaned[cleaned.index(after: cleaned.startIndex)..<range.lowerBound]
+            .trimmingCharacters(in: .whitespaces)
+        let valueStr = cleaned[range.upperBound..<endRange.lowerBound]
+            .trimmingCharacters(in: .whitespaces)
+        
+        typeStr = typeStr.prefix(1).uppercased() + typeStr.dropFirst()
+        
+        return (typeStr, valueStr)
+    }
+    /*
+     @Codable
+     enum Phone {
+         @CodingCase(match: .bool(true), .int(8), .int(10), .string("youtube"), .string("Apple"))
+         case apple
+         
+         @CodingCase(match: .int(12), .string("MI"), .string("xiaomi"))
+         case mi
+         case oppo
+     }
+     
+     [
+         "Int": [
+             ("valueString": "8, 10", "caseName": "apple"),
+             ("valueString": "12", "caseName": "mi")
+         ],
+         "String": [
+             ("valueString": "apple", "caseName": "apple"),
+             ("valueString": "MI, xiaomi", "caseName": "mi")
+         ],
+         "Bool": [
+             ("valueString": "true", "caseName": "apple")
+         ]
+     ]
+     */
+    func processEnumCases(_ enumCases: [EnumCase]) -> [String: [(valueString: String, caseName: String)]] {
+        var result: [String: [(String, String)]] = [:]
+        
+        for enumCase in enumCases {
+            for (type, values) in enumCase.matches {
+                let caseInfo = (values.joined(separator: ", "), enumCase.caseName)
+                if result[type] == nil {
+                    result[type] = []
+                }
+                result[type]?.append(caseInfo)
+            }
+        }
+        
+        return result
+    }
 }
 
 // MARK: - Generate
@@ -209,9 +288,11 @@ extension TypeInfo {
 extension TypeInfo {
     /// Decode
     func generateDecoderInit(isOverride: Bool = false) throws -> DeclSyntax {
+        var shouldAddDidDecode = true
         var assignments: String
         if isEnum {
             assignments = generateEnumDecoderAssignments()
+            shouldAddDidDecode = false
         } else {
             assignments = try properties
                 .compactMap { property in
@@ -308,7 +389,7 @@ extension TypeInfo {
         \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
             \(raw: container)
             \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
-            try self.didDecode(from: decoder)
+            \(raw: shouldAddDidDecode ? "try self.didDecode(from: decoder)" : "")
         }
         """
         return decoder
@@ -435,13 +516,39 @@ extension TypeInfo {
                 }
                 """
         } else {
-            return """
-                let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
-                switch value {
-                \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
-                default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
+            if enumCases.contains(where: { !$0.matches.isEmpty }) {
+                let dict = processEnumCases(enumCases)
+                let tryDecode = dict.compactMapWithLastKey("String") { type, caseValues in
+                    return """
+                        if let value = try? container.decode(\(type).self) {\nswitch value {
+                        \(caseValues.compactMap {
+                        """
+                        case \($0.valueString): self = .\($0.caseName); try self.didDecode(from: decoder); return;
+                        """
+                        }.joined(separator: "\n"))
+                        default: break
+                        }
+                        }
+                        """
                 }
-                """
+                let tryRaw = """
+                    let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
+                    switch value {
+                    \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
+                    default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
+                    }
+                    try self.didDecode(from: decoder)
+                    """
+                return tryDecode.joined(separator: "\n") + "\n" + tryRaw
+            } else {
+                return """
+                    let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
+                    switch value {
+                    \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
+                    default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
+                    }
+                    """
+            }
         }
     }
     
@@ -506,5 +613,23 @@ extension TypeInfo {
     
     var hasEnumAssociatedValue: Bool {
         return isEnum && enumCases.contains { !$0.associated.isEmpty }
+    }
+}
+
+extension Dictionary {
+    func compactMapWithLastKey<T>(_ lastKey: Key, transform: ((key: Key, value: Value)) throws -> T?) rethrows -> [T] {
+        var result: [T] = []
+        for (key, value) in self where key != lastKey {
+            if let transformed = try transform((key, value)) {
+                result.append(transformed)
+            }
+        }
+        
+        if let lastValue = self[lastKey],
+           let transformed = try transform((lastKey, lastValue)) {
+            result.append(transformed)
+        }
+        
+        return result
     }
 }
