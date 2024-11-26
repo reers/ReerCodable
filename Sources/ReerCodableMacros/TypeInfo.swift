@@ -61,8 +61,15 @@ struct TypeInfo {
                     } else {
                         raw = "\"\(name)\""
                     }
-                    
-                    enumCases.append(.init(caseName: name, rawValue: raw))
+                    var associated: [AssociatedValue] = []
+                    var paramIndex = 0
+                    caseElement.parameterClause?.parameters.forEach {
+                        let label = $0.firstName?.trimmedDescription
+                        let type = $0.type.as(IdentifierTypeSyntax.self)!.name.trimmedDescription
+                        associated.append(.init(label: label, type: type, index: paramIndex))
+                        paramIndex += 1
+                    }
+                    enumCases.append(.init(caseName: name, rawValue: raw, associated: associated))
                     index += 1
                 }
             }
