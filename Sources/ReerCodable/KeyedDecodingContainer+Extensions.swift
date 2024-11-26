@@ -65,7 +65,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         return container.tryDecodeWithNormalKey(type: type, key: lastKey)
     }
     
-    private func getNestedContainer(path: [String]) throws -> KeyedDecodingContainer<AnyCodingKey>? {
+    public func getNestedContainer(path: [String]) throws -> KeyedDecodingContainer<AnyCodingKey>? {
         guard let first = path.first else { return self }
         guard let key = AnyCodingKey(stringValue: first) else {
             return nil

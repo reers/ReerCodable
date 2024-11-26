@@ -368,92 +368,52 @@ do {
     print("Error: \(error)")
 }
 
-
+@Codable
 enum Video: Codable {
     case youTube(id: String, TimeInterval)
     case vimeo(id: String)
     case hosted(url: URL)
 }
 
-extension Video {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: AnyCodingKey.self)
-        
-        if container.contains(AnyCodingKey(stringValue: "youTube")!) {
-            let youTubeContainer = try container.nestedContainer(
-                keyedBy: AnyCodingKey.self,
-                forKey: AnyCodingKey(stringValue: "youTube")!
-            )
-            let id = try youTubeContainer.decode(
-                String.self,
-                forKey: AnyCodingKey(stringValue: "id")!
-            )
-            let duration = try youTubeContainer.decode(
-                TimeInterval.self,
-                forKey: AnyCodingKey(stringValue: "_1")! // 或者用 "_1"
-            )
-            self = .youTube(id: id, duration)
-        }
-        else if container.contains(AnyCodingKey(stringValue: "vimeo")!) {
-            let vimeoContainer = try container.nestedContainer(
-                keyedBy: AnyCodingKey.self,
-                forKey: AnyCodingKey(stringValue: "vimeo")!
-            )
-            let id = try vimeoContainer.decode(
-                String.self,
-                forKey: AnyCodingKey(stringValue: "id")!
-            )
-            self = .vimeo(id: id)
-        }
-        else if container.contains(AnyCodingKey(stringValue: "hosted")!) {
-            let hostedContainer = try container.nestedContainer(
-                keyedBy: AnyCodingKey.self,
-                forKey: AnyCodingKey(stringValue: "hosted")!
-            )
-            let url = try hostedContainer.decode(
-                URL.self,
-                forKey: AnyCodingKey(stringValue: "url")!
-            )
-            self = .hosted(url: url)
-        }
-        else {
-            throw DecodingError.dataCorrupted(
-                DecodingError.Context(
-                    codingPath: container.codingPath,
-                    debugDescription: "Unrecognized Video type"
-                )
-            )
-        }
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyCodingKey.self)
-        
-        switch self {
-        case let .youTube(id, duration):
-            var youTubeContainer = container.nestedContainer(
-                keyedBy: AnyCodingKey.self,
-                forKey: AnyCodingKey(stringValue: "youTube")!
-            )
-            try youTubeContainer.encode(id, forKey: AnyCodingKey(stringValue: "id")!)
-            try youTubeContainer.encode(duration, forKey: AnyCodingKey(stringValue: "duration")!)
-            
-        case let .vimeo(id):
-            var vimeoContainer = container.nestedContainer(
-                keyedBy: AnyCodingKey.self,
-                forKey: AnyCodingKey(stringValue: "vimeo")!
-            )
-            try vimeoContainer.encode(id, forKey: AnyCodingKey(stringValue: "id")!)
-            
-        case let .hosted(url):
-            var hostedContainer = container.nestedContainer(
-                keyedBy: AnyCodingKey.self,
-                forKey: AnyCodingKey(stringValue: "hosted")!
-            )
-            try hostedContainer.encode(url, forKey: AnyCodingKey(stringValue: "url")!)
-        }
-    }
-}
+//extension Video {
+//    public init(from decoder: Decoder) throws {
+//        let container = try decoder.container(keyedBy: AnyCodingKey.self)
+//
+//        guard container.allKeys.count == 1 else {
+//            throw ReerCodableError(text: "Invalid number of keys found, expected one.")
+//        }
+//        if let nestedContainer = try? container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("youTube")) {
+//            let id = try nestedContainer.decode(String.self, forKey: AnyCodingKey("id"))
+//            let duration = try nestedContainer.decode(TimeInterval.self, forKey: AnyCodingKey("_1"))
+//            self = .youTube(id: id, duration)
+//        } else if let nestedContainer = try? container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("vimeo")) {
+//            let id = try nestedContainer.decode(String.self, forKey: AnyCodingKey("id"))
+//            self = .vimeo(id: id)
+//        } else if let nestedContainer = try? container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("hosted")) {
+//            let url = try nestedContainer.decode(URL.self, forKey: AnyCodingKey("url"))
+//            self = .hosted(url: url)
+//        } else {
+//            throw ReerCodableError(text: "Key not found for \\(String(describing: Self.self)).")
+//        }
+//    }
+//    
+//    public func encode(to encoder: Encoder) throws {
+//        var container = encoder.container(keyedBy: AnyCodingKey.self)
+//        
+//        switch self {
+//        case let .youTube(id, duration):
+//            var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("youTube"))
+//            try nestedContainer.encode(id, forKey: AnyCodingKey("id"))
+//            try nestedContainer.encode(duration, forKey: AnyCodingKey("duration"))
+//        case let .vimeo(id):
+//            var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("vimeo"))
+//            try nestedContainer.encode(id, forKey: AnyCodingKey("id"))
+//        case let .hosted(url):
+//            var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("hosted"))
+//            try nestedContainer.encode(url, forKey: AnyCodingKey("url"))
+//        }
+//    }
+//}
 
 struct Response: Codable {
     let name: String
@@ -480,3 +440,5 @@ let videoJson = """
 """.data(using: .utf8)!
 let resp = try! Response.decoded(from: videoJson)
 print(resp)
+let respdict = try! resp.encodedDict()
+print(respdict)

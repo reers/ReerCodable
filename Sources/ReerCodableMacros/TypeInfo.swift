@@ -5,12 +5,22 @@ struct AssociatedValue {
     var label: String?
     var type: String
     var index: Int
+    
+    var variableName: String {
+        return label ?? "_\(index)"
+    }
 }
 
 struct EnumCase {
     var caseName: String
     var rawValue: String
     var associated: [AssociatedValue] = []
+    
+    var initText: String {
+        return """
+            .\(caseName)(\(associated.compactMap { "\($0.label == nil ? $0.variableName : "\($0.variableName): \($0.variableName)")" }.joined(separator: ",")))
+            """
+    }
 }
 
 struct TypeInfo {
@@ -201,13 +211,7 @@ extension TypeInfo {
     func generateDecoderInit(isOverride: Bool = false) throws -> DeclSyntax {
         var assignments: String
         if isEnum {
-            assignments = """
-                let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
-                switch value {
-                \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
-                default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
-                }
-                """
+            assignments = generateEnumDecoderAssignments()
         } else {
             assignments = try properties
                 .compactMap { property in
@@ -297,7 +301,7 @@ extension TypeInfo {
         if isOverride {
             needRequired = true
         }
-        let container = isEnum
+        let container = isEnum && !hasEnumAssociatedValue
             ? "let container = try decoder.singleValueContainer()"
             : "let container = try decoder.container(keyedBy: AnyCodingKey.self)"
         let decoder: DeclSyntax = """
@@ -314,11 +318,7 @@ extension TypeInfo {
     func generateEncoderFunc(isOverride: Bool = false) throws -> DeclSyntax {
         var encoding: String
         if isEnum {
-            encoding = """
-                switch self {
-                \(enumCases.compactMap { "case .\($0.caseName): try container.encode(\($0.rawValue))" }.joined(separator: "\n"))
-                }
-                """
+            encoding = generateEnumEncoderEncoding()
         } else {
             encoding = properties
                 .compactMap { property in
@@ -370,7 +370,7 @@ extension TypeInfo {
                 }
                 .joined(separator: "\n")
         }
-        let container = isEnum
+        let container = isEnum && !hasEnumAssociatedValue
             ? "var container = encoder.singleValueContainer()"
             : "var container = encoder.container(keyedBy: AnyCodingKey.self)"
         let accessable = if isOpen { "open " } else if isPublic || hasPublicOrOpenProperty { "public " } else { "" }
@@ -409,6 +409,70 @@ extension TypeInfo {
         """
         return initializer
     }
+    
+    private func generateEnumDecoderAssignments() -> String {
+        if hasEnumAssociatedValue {
+            var index = -1
+            let findCase = enumCases.compactMap {
+                index += 1
+                return """
+                    \(index > 0 ? "else " : "")if let nestedContainer = try? container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)")) {
+                        \($0.associated.compactMap { value in
+                        """
+                        let \(value.variableName) = try nestedContainer.decode(\(value.type).self, forKey: AnyCodingKey("\(value.variableName)"))
+                        """
+                        }.joined(separator: "\n    "))
+                        self = \($0.initText)
+                    } 
+                    """
+            }.joined(separator: "\n")
+            
+            return """
+                guard container.allKeys.count == 1 else { throw ReerCodableError(text: "Invalid number of keys found, expected one.") }
+                \(findCase)
+                else {
+                    throw ReerCodableError(text: "Key not found for \\(String(describing: Self.self)).")
+                }
+                """
+        } else {
+            return """
+                let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
+                switch value {
+                \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
+                default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
+                }
+                """
+        }
+    }
+    
+    private func generateEnumEncoderEncoding() -> String {
+        if hasEnumAssociatedValue {
+            let encodeCase = """
+                \(enumCases.compactMap {
+                    """
+                    case let .\($0.caseName)(\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))):
+                        var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)"))
+                        \($0.associated.compactMap { value in
+                        """
+                        try nestedContainer.encode(\(value.variableName), forKey: AnyCodingKey("\(value.variableName)"))
+                        """
+                        }.joined(separator: "\n    "))
+                    """
+                }.joined(separator: "\n"))
+                """
+            return """
+                switch self {
+                \(encodeCase)
+                }
+                """
+        } else {
+            return """
+                switch self {
+                \(enumCases.compactMap { "case .\($0.caseName): try container.encode(\($0.rawValue))" }.joined(separator: "\n"))
+                }
+                """
+        }
+    }
 }
 
 // MARK: - Info
@@ -438,5 +502,9 @@ extension TypeInfo {
         return properties.contains { property in
             property.modifiers.contains { $0.name.text == "public" || $0.name.text == "open" }
         }
+    }
+    
+    var hasEnumAssociatedValue: Bool {
+        return isEnum && enumCases.contains { !$0.associated.isEmpty }
     }
 }
