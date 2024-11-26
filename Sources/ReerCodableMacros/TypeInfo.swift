@@ -103,7 +103,7 @@ struct TypeInfo {
                 }
             }
         }
-        
+        try validateEnumCases(enumCases)
         caseStyles = decl.attributes.compactMap {
             let attributeId = $0.as(AttributeSyntax.self)?
                 .attributeName.as(IdentifierTypeSyntax.self)?
@@ -280,6 +280,28 @@ extension TypeInfo {
         }
         
         return result
+    }
+    
+    func validateEnumCases(_ cases: [EnumCase]) throws {
+        var matchMap: [String: [String: String]] = [:]
+        
+        for enumCase in cases {
+            for (type, values) in enumCase.matches {
+                if matchMap[type] == nil {
+                    matchMap[type] = [:]
+                }
+                
+                for value in values {
+                    if let existingCase = matchMap[type]?[value] {
+                        let error = """
+                            Duplicate match found: \(type.lowercased())(\(value)) is used in both cases '\(existingCase)' and '\(enumCase.caseName)'. Matching cases must be mutually exclusive.
+                            """
+                        throw MacroError(text: error)
+                    }
+                    matchMap[type]?[value] = enumCase.caseName
+                }
+            }
+        }
     }
 }
 
