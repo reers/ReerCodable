@@ -10,7 +10,7 @@ import ReerCodableMacros
 
 let testMacros: [String: Macro.Type] = [
     "Codable": Codable.self,
-    "CodableSubclass": CodableSubclass.self,
+    "InheritedCodable": InheritedCodable.self,
     "CodingKey": CodingKey.self,
     "EncodingKey": EncodingKey.self,
     "IgnoreCoding": IgnoreCoding.self,
