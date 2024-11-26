@@ -23,12 +23,8 @@ public struct CodingCase: PeerMacro {
         if enumCaseDecl.elements.count > 1 {
             throw MacroError(text: "Multiple cases in a single line declaration are not allowed. Please declare each case separately")
         }
-        guard
-            let caseParam = node.arguments?.as(LabeledExprListSyntax.self)?.first,
-            let segments = caseParam.expression.as(StringLiteralExprSyntax.self)?.segments,
-            segments.count > 0
-        else {
-            throw MacroError(text: "Case `\(name)` requires at least one coding case key.")
+        guard let count = node.arguments?.as(LabeledExprListSyntax.self)?.count, count > 0 else {
+            throw MacroError(text: "Case `\(name)` requires at least one coding case matcher.")
         }
         return []
     }
