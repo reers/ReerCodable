@@ -511,3 +511,50 @@ let phoneData = """
 let resp2 = try! Resp2.decoded(from: phoneData)
 print(resp2)
 
+let videoJson1 = """
+{
+    "name": "Conference talks",
+    "videos": [
+        {
+            "youTube": {
+                "id": "ujOc3a7Hav0",
+                "_1": 44.5
+            }
+        },
+        {
+            "vimeo": {
+                "id": "234961067"
+            }
+        }
+    ]
+}
+""".data(using: .utf8)!
+
+let videoJson2 = """
+{
+    "name": "Conference talks",
+    "videos": [
+        {
+            "type": "youTube"
+        },
+        {
+            "type": "vimeo",
+            "id": "234961067"
+        },
+        {
+            "type": "hosted",
+            "url": "https://example.com/video.mp4"
+        }
+    ]
+}
+""".data(using: .utf8)!
+
+enum Video3: Codable {
+    case youTube
+    case vimeo(id: String)
+    case hosted(url: URL)
+}
+struct Resp3: Codable {
+    let name: String
+    let videos: [Video3]
+}
