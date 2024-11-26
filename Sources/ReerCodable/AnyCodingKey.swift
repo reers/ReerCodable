@@ -23,6 +23,11 @@
 public struct AnyCodingKey: CodingKey, Hashable {
     public let stringValue: String
     public let intValue: Int?
+    
+    public init(_ string: String) {
+        stringValue = string
+        intValue = nil
+    }
 
     public init?(stringValue: String) {
         self.stringValue = stringValue
