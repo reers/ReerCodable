@@ -95,10 +95,11 @@ public struct CaseValue {
 }
 
 @attached(peer)
-public macro CodingCase(match cases: CaseMatcher...) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")
+public macro CodingCase(
+    match cases: CaseMatcher...,
+    values: [CaseValue] = []
+) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")
 
-@attached(peer)
-public macro CodingCase(keys: String..., values: [CaseValue]) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")
 
 /// `flatcase`
 @attached(peer)

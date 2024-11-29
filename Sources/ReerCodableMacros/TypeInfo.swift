@@ -19,8 +19,10 @@ struct EnumCase {
     var associated: [AssociatedValue] = []
     
     var initText: String {
+        let associated = "\(associated.compactMap { "\($0.label == nil ? $0.variableName : "\($0.variableName): \($0.variableName)")" }.joined(separator: ","))"
+        let postfix = associated.isEmpty ? "\(associated)" : "(\(associated))"
         return """
-            .\(caseName)(\(associated.compactMap { "\($0.label == nil ? $0.variableName : "\($0.variableName): \($0.variableName)")" }.joined(separator: ",")))
+            .\(caseName)\(postfix)
             """
     }
 }
@@ -578,8 +580,10 @@ extension TypeInfo {
         if hasEnumAssociatedValue {
             let encodeCase = """
                 \(enumCases.compactMap {
-                    """
-                    case let .\($0.caseName)(\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))):
+                    let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
+                    let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
+                    return """
+                    case let .\($0.caseName)\(postfix):
                         var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)"))
                         \($0.associated.compactMap { value in
                         """

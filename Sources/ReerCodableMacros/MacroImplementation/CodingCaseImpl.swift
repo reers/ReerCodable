@@ -26,6 +26,7 @@ public struct CodingCase: PeerMacro {
         guard let count = node.arguments?.as(LabeledExprListSyntax.self)?.count, count > 0 else {
             throw MacroError(text: "Case `\(name)` requires at least one coding case matcher.")
         }
+        // 带关联值的枚举要判断 Casematch 必须是 .string(....)
         return []
     }
 }

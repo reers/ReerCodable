@@ -41,13 +41,21 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            enum Phone {
-                @CodingCase(match: .bool(true), .int(8), .int(10), .string("youtube"), .string("Apple"))
-                case apple
+            enum Video3: Codable {
+                @CodingCase(match: .string("youtube"), .string("type.youtube"))
+                case youTube
                 
-                @CodingCase(match: .int(12), .string("MI"), .string("xiaomi"))
-                case mi
-                case oppo
+                @CodingCase(
+                    match: .string("vimeo"), .string("type.vimeo"),
+                    values: [.init(label: "id", keys: "ID")]
+                )
+                case vimeo(id: String)
+                
+                @CodingCase(
+                    match: .string("hosted"), .string("type.hosted"),
+                    values: [.init(label: "url", keys: "url")]
+                )
+                case hosted(url: URL)
             }
             """,
             expandedSource: """
