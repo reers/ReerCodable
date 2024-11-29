@@ -511,12 +511,12 @@ let phoneData = """
 let resp2 = try! Resp2.decoded(from: phoneData)
 print(resp2)
 
-let videoJson1 = """
+let videoJson3_1 = """
 {
     "name": "Conference talks",
     "videos": [
         {
-            "youTube": {
+            "youtube": {
                 "id": "ujOc3a7Hav0",
                 "_1": 44.5
             }
@@ -525,21 +525,26 @@ let videoJson1 = """
             "vimeo": {
                 "id": "234961067"
             }
+        },
+        {
+            "hosted": {
+                "url": "https://example.com/video.mp4"
+            }
         }
     ]
 }
 """.data(using: .utf8)!
 
-let videoJson2 = """
+let videoJson3_2 = """
 {
     "name": "Conference talks",
     "videos": [
         {
-            "type": "youTube"
+            "type": "youtube"
         },
         {
             "type": "vimeo",
-            "id": "234961067"
+            "ID": "234961067"
         },
         {
             "type": "hosted",
@@ -549,9 +554,21 @@ let videoJson2 = """
 }
 """.data(using: .utf8)!
 
+@Codable
 enum Video3: Codable {
+    @CodingCase(match: .string("youtube"), .string("type.youtube"))
     case youTube
+    
+    @CodingCase(
+        match: .string("vimeo"), .string("type.vimeo"),
+        values: [.init(label: "id", keys: "ID")]
+    )
     case vimeo(id: String)
+    
+    @CodingCase(
+        match: .string("hosted"), .string("type.hosted"),
+        values: [.init(label: "url", keys: "url")]
+    )
     case hosted(url: URL)
 }
 struct Resp3: Codable {
