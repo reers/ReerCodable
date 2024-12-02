@@ -5,6 +5,7 @@ struct AssociatedValue {
     var label: String?
     var type: String
     var index: Int
+    var defaultValue: String?
     
     var variableName: String {
         return label ?? "_\(index)"
@@ -87,7 +88,8 @@ struct TypeInfo {
                     caseElement.parameterClause?.parameters.forEach {
                         let label = $0.firstName?.trimmedDescription
                         let type = $0.type.trimmedDescription
-                        associated.append(.init(label: label, type: type, index: paramIndex))
+                        let defaultValue = $0.defaultValue?.value.trimmedDescription
+                        associated.append(.init(label: label, type: type, index: paramIndex, defaultValue: defaultValue))
                         paramIndex += 1
                     }
                     enumCases.append(.init(caseName: name, rawValue: raw, associated: associated))
@@ -115,7 +117,7 @@ struct TypeInfo {
                                         var label: String?
                                         var indexArg: String?
                                         var keys: [String] = []
-                                        for (index, arg) in expression.arguments.enumerated() {
+                                        for arg in expression.arguments {
                                             if arg.label?.trimmedDescription == "label" {
                                                 label = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription
                                             }
