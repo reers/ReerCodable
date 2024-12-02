@@ -555,16 +555,25 @@ extension TypeInfo {
     private func generateEnumDecoderAssignments() -> String {
         if hasEnumAssociatedValue {
             var index = -1
-            let findCase = enumCases.compactMap {
+            let findCase = enumCases.compactMap { theCase in
                 index += 1
                 return """
-                    \(index > 0 ? "else " : "")if let nestedContainer = try? container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)")) {
-                        \($0.associated.compactMap { value in
-                        """
-                        let \(value.variableName) = try nestedContainer.decode(\(value.type).self, forKey: AnyCodingKey("\(value.variableName)"))
+                    \(index > 0 ? "else " : "")if let nestedContainer = try? container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\(theCase.caseName)")) {
+                        \(theCase.associated.compactMap { value in
+                        var keys: [String] = []
+                        if let label = value.label {
+                            keys = theCase.associatedMatch.first { $0.label == "\"\(label)\"" }?.keys ?? []
+                        } else {
+                            keys = theCase.associatedMatch.first { $0.index == "\(value.index)" }?.keys ?? []
+                        }
+                        keys.append("\"\(value.variableName)\"")
+                        keys.removeDuplicates()
+                        let hasDefault = value.defaultValue != nil
+                        return """
+                        let \(value.variableName) = (try\(hasDefault ? "?" : "") nestedContainer.decode(type: \(value.type).self, keys: [\(keys.joined(separator: ", "))]))\(hasDefault ? " ?? (\(value.defaultValue!))" : "")
                         """
                         }.joined(separator: "\n    "))
-                        self = \($0.initText)
+                        self = \(theCase.initText)
                     } 
                     """
             }.joined(separator: "\n")
@@ -694,5 +703,15 @@ extension Dictionary {
         }
         
         return result
+    }
+}
+
+extension Array where Element: Hashable {
+    mutating func removeDuplicates() {
+        self = reduce(into: [Element]()) {
+            if !$0.contains($1) {
+                $0.append($1)
+            }
+        }
     }
 }

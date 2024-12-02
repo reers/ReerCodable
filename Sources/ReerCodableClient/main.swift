@@ -561,9 +561,9 @@ enum Video3: Codable {
     
     @CodingCase(
         match: .string("vimeo"), .nested("type.vimeo"),
-        values: [.init(label: "id", keys: "ID")]
+        values: [CaseValue(label: "id", keys: "ID", "Id"), .init(index: 2, keys: "minutes")]
     )
-    case vimeo(id: String, duration: TimeInterval = 0)
+    case vimeo(id: String, duration: TimeInterval = 33, Int?)
     
     @CodingCase(
         match: .string("hosted"), .nested("type.hosted"),
