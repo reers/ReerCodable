@@ -71,26 +71,24 @@ public enum CaseMatcher {
     case int(Int)
     case double(Double)
     case string(String)
+    case nested(String) // TODO: check 单独使用/String 需要携带至少一个 `.`
 }
 
 public struct CaseValue {
     let label: String?
     let keys: [String]
     let index: Int?
-    let defaultValue: Any?
     
-    public init(label: String, keys: String..., default: Any? = nil) {
+    public init(label: String, keys: String...) {
         self.label = label
         self.keys = keys
         self.index = nil
-        self.defaultValue = `default`
     }
     
-    public init(index: Int, keys: String..., default: Any? = nil) {
+    public init(index: Int, keys: String...) {
         self.keys = keys
         self.index = index
         self.label = nil
-        self.defaultValue = `default`
     }
 }
 

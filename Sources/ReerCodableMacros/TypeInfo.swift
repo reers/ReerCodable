@@ -11,11 +11,18 @@ struct AssociatedValue {
     }
 }
 
+struct AssociatedMatch {
+    let label: String?
+    let keys: [String]
+    let index: String?
+}
+
 struct EnumCase {
     var caseName: String
     var rawValue: String
     // [Type: Value]
     var matches: [String: [String]] = [:]
+    var associatedMatch: [AssociatedMatch] = []
     var associated: [AssociatedValue] = []
     
     var initText: String {
@@ -79,7 +86,7 @@ struct TypeInfo {
                     var paramIndex = 0
                     caseElement.parameterClause?.parameters.forEach {
                         let label = $0.firstName?.trimmedDescription
-                        let type = $0.type.as(IdentifierTypeSyntax.self)!.name.trimmedDescription
+                        let type = $0.type.trimmedDescription
                         associated.append(.init(label: label, type: type, index: paramIndex))
                         paramIndex += 1
                     }
@@ -89,15 +96,43 @@ struct TypeInfo {
                 
                 if let attribute = $0.decl.as(EnumCaseDeclSyntax.self)?.attributes.first?.as(AttributeSyntax.self),
                    attribute.attributeName.as(IdentifierTypeSyntax.self)?.name.trimmedDescription == "CodingCase" {
-                    if let arguments = attribute.arguments?.as(LabeledExprListSyntax.self),
-                       arguments.first?.label?.trimmedDescription == "match" {
+                    if let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) {
                         arguments.forEach {
-                            if let matchString = $0.expression.as(FunctionCallExprSyntax.self)?.trimmedDescription,
+                            if $0.label?.trimmedDescription == "match",
+                               let matchString = $0.expression.as(FunctionCallExprSyntax.self)?.trimmedDescription,
                                let tuple = parseEnumCaseMatchString(matchString) {
                                 var last = enumCases.removeLast()
                                 var values = last.matches[tuple.type] ?? []
                                 values.append(tuple.value)
                                 last.matches[tuple.type] = values
+                                enumCases.append(last)
+                            }
+                            if $0.label?.trimmedDescription == "values",
+                               let values = $0.expression.as(ArrayExprSyntax.self) {
+                                let valueMatches = values.elements.compactMap { match in
+                                    if let expression = match.expression.as(FunctionCallExprSyntax.self) {
+                                        
+                                        var label: String?
+                                        var indexArg: String?
+                                        var keys: [String] = []
+                                        for (index, arg) in expression.arguments.enumerated() {
+                                            if arg.label?.trimmedDescription == "label" {
+                                                label = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription
+                                            }
+                                            else if arg.label?.trimmedDescription == "index" {
+                                                indexArg = arg.expression.as(IntegerLiteralExprSyntax.self)?.trimmedDescription
+                                            }
+                                            else if let keyArg = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription {
+                                                keys.append(keyArg)
+                                            }
+                                        }
+                                        return AssociatedMatch(label: label, keys: keys, index: indexArg)
+                                    } else {
+                                        return nil
+                                    }
+                                }
+                                var last = enumCases.removeLast()
+                                last.associatedMatch = valueMatches
                                 enumCases.append(last)
                             }
                         }

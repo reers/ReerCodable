@@ -556,20 +556,20 @@ let videoJson3_2 = """
 
 @Codable
 enum Video3: Codable {
-    @CodingCase(match: .string("youtube"), .string("type.youtube"))
+    @CodingCase(match: .string("youtube"), .nested("type.youtube"))
     case youTube
     
     @CodingCase(
-        match: .string("vimeo"), .string("type.vimeo"),
+        match: .string("vimeo"), .nested("type.vimeo"),
         values: [.init(label: "id", keys: "ID")]
     )
-    case vimeo(id: String)
+    case vimeo(id: String, duration: TimeInterval = 0)
     
     @CodingCase(
-        match: .string("hosted"), .string("type.hosted"),
+        match: .string("hosted"), .nested("type.hosted"),
         values: [.init(label: "url", keys: "url")]
     )
-    case hosted(url: URL)
+    case hosted(url: URL, tag: String?)
 }
 struct Resp3: Codable {
     let name: String
