@@ -12,6 +12,18 @@ extension String {
         contains(".")
     }
     
+    /// "head.middle.tail" -> ("head.middle", "tail")
+    var containerAndKey: (String, String)? {
+        guard let lastDotIndex = self.lastIndex(of: ".") else {
+            return nil
+        }
+        
+        let container = String(self[..<lastDotIndex])
+        let key = String(self[self.index(after: lastDotIndex)...])
+        
+        return (container, key)
+    }
+    
     public var re_base64DecodedData: Data {
         get throws {
             if let data = Data(base64Encoded: self, options: .ignoreUnknownCharacters) {

@@ -36,7 +36,6 @@ struct EnumCase {
 }
 
 struct TypeInfo {
-    let context: MacroExpansionContext
     let decl: DeclGroupSyntax
     var isEnum = false
     var enumRawType: String?
@@ -44,9 +43,8 @@ struct TypeInfo {
     var caseStyles: [CaseStyle] = []
     var properties: [PropertyInfo] = []
     
-    init(decl: DeclGroupSyntax, context: some MacroExpansionContext) throws {
+    init(decl: DeclGroupSyntax) throws {
         self.decl = decl
-        self.context = context
         if let enumDecl = decl.as(EnumDeclSyntax.self) {
             self.isEnum = true
             let availableRawTypes = [
@@ -100,7 +98,7 @@ struct TypeInfo {
                    attribute.attributeName.as(IdentifierTypeSyntax.self)?.name.trimmedDescription == "CodingCase" {
                     if let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) {
                         arguments.forEach {
-                            if $0.label?.trimmedDescription == "match",
+                            if ($0.label?.trimmedDescription == "match" || $0.label == nil),
                                let matchString = $0.expression.as(FunctionCallExprSyntax.self)?.trimmedDescription,
                                let tuple = parseEnumCaseMatchString(matchString) {
                                 var last = enumCases.removeLast()
@@ -554,15 +552,28 @@ extension TypeInfo {
     
     private func generateEnumDecoderAssignments() -> String {
         if hasEnumAssociatedValue {
+            let hasNested = enumCases.contains { $0.matches["Nested"] != nil }
             var index = -1
             let findCase = enumCases.compactMap { theCase in
                 index += 1
-                var keys = theCase.matches["String"] ?? []
-                keys.append("\"\(theCase.caseName)\"")
-                keys.removeDuplicates()
                 let hasAssociated = !theCase.associated.isEmpty
+                var condition: String
+                if hasNested {
+                    let keyPaths = theCase.matches["Nested"]!
+                    condition = """
+                        container.match(keyPaths: [\(keyPaths.joined(separator: ", "))])
+                        """
+                } else {
+                    var keys = theCase.matches["String"] ?? []
+                    keys.append("\"\(theCase.caseName)\"")
+                    keys.removeDuplicates()
+                    condition = """
+                        let \(hasAssociated ? "nestedContainer" : "_") = try? container.nestedContainer(forKeys: \(keys.joined(separator: ", ")))
+                        """
+                }
+                
                 return """
-                    \(index > 0 ? "else " : "")if let \(hasAssociated ? "nestedContainer" : "_") = try? container.nestedContainer(forKeys: \(keys.joined(separator: ", "))) {
+                    \(index > 0 ? "else " : "")if \(condition) {
                         \(theCase.associated.compactMap { value in
                         var keys: [String] = []
                         if let label = value.label {
@@ -574,7 +585,7 @@ extension TypeInfo {
                         keys.removeDuplicates()
                         let hasDefault = value.defaultValue != nil
                         return """
-                        let \(value.variableName) = (try\(hasDefault ? "?" : "") nestedContainer.decode(type: \(value.type).self, keys: [\(keys.joined(separator: ", "))]))\(hasDefault ? " ?? (\(value.defaultValue!))" : "")
+                        let \(value.variableName) = (try\(hasDefault ? "?" : "") \(hasNested ? "container" : "nestedContainer").decode(type: \(value.type).self, keys: [\(keys.joined(separator: ", "))]))\(hasDefault ? " ?? (\(value.defaultValue!))" : "")
                         """
                         }.joined(separator: "\n    "))
                         self = \(theCase.initText)
@@ -583,7 +594,7 @@ extension TypeInfo {
             }.joined(separator: "\n")
             
             return """
-                guard container.allKeys.count == 1 else { throw ReerCodableError(text: "Invalid number of keys found, expected one.") }
+                \(hasNested ? "" : "guard container.allKeys.count == 1 else { throw ReerCodableError(text: \"Invalid number of keys found, expected one.\") }")
                 \(findCase)
                 else {
                     throw ReerCodableError(text: "Key not found for \\(String(describing: Self.self)).")

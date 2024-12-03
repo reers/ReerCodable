@@ -542,11 +542,14 @@ let videoJson3_2 = """
     "name": "Conference talks",
     "videos": [
         {
-            "type": "youtube"
+            "type": {
+                "middle": "youtube"
+            }
         },
         {
             "type": "vimeo",
-            "ID": "234961067"
+            "ID": "234961067",
+            "minutes": 999999
         },
         {
             "type": "hosted",
@@ -558,6 +561,24 @@ let videoJson3_2 = """
 
 @Codable
 enum Video3: Codable {
+    @CodingCase(match: .nested("type.middle.youtube"))
+    case youTube
+    
+    @CodingCase(
+        match: .nested("type.vimeo"),
+        values: [CaseValue(label: "id", keys: "ID", "Id"), .init(index: 2, keys: "minutes")]
+    )
+    case vimeo(id: String, duration: TimeInterval = 33, Int)
+    
+    @CodingCase(
+        match: .nested("type.hosted"),
+        values: [.init(label: "url", keys: "url")]
+    )
+    case hosted(url: URL, tag: String?)
+}
+
+@Codable
+enum Video4: Codable {
     @CodingCase(match: .string("youtube"))
     case youTube
     
@@ -575,7 +596,7 @@ enum Video3: Codable {
 }
 struct Resp3: Codable {
     let name: String
-    let videos: [Video3]
+    let videos: [Video4]
 }
 
 let result3 = try! Resp3.decoded(from: videoJson3_1)

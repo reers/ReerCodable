@@ -42,17 +42,17 @@ final class ReerCodableTests: XCTestCase {
             """
             @Codable
             enum Video3: Codable {
-                @CodingCase(match: .string("youtube"), .nested("type.youtube"))
+                @CodingCase(match: .nested("type.youtube"))
                 case youTube
                 
                 @CodingCase(
-                    match: .string("vimeo"), .nested("type.vimeo"),
+                    match: .nested("type.vimeo"),
                     values: [CaseValue(label: "id", keys: "ID", "Id"), .init(index: 2, keys: "minutes")]
                 )
-                case vimeo(id: String, duration: TimeInterval = 0, Int)
+                case vimeo(id: String, duration: TimeInterval = 33, Int)
                 
                 @CodingCase(
-                    match: .string("hosted"), .nested("type.hosted"),
+                    match: .nested("type.hosted"),
                     values: [.init(label: "url", keys: "url")]
                 )
                 case hosted(url: URL, tag: String?)
