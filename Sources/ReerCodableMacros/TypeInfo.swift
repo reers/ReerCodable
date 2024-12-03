@@ -399,8 +399,9 @@ extension TypeInfo {
         var shouldAddDidDecode = true
         var assignments: String
         if isEnum {
-            assignments = generateEnumDecoderAssignments()
-            shouldAddDidDecode = false
+            let (code, addDidDecode) = generateEnumDecoderAssignments()
+            assignments = code
+            shouldAddDidDecode = addDidDecode
         } else {
             assignments = try properties
                 .compactMap { property in
@@ -599,7 +600,8 @@ extension TypeInfo {
         return initializer
     }
     
-    private func generateEnumDecoderAssignments() -> String {
+    /// Return: (assignments, shouldAddDidDecode)
+    private func generateEnumDecoderAssignments() -> (String, Bool) {
         if hasEnumAssociatedValue {
             let hasNested = enumCases.contains { $0.matches["Nested"] != nil }
             var index = -1
@@ -642,13 +644,14 @@ extension TypeInfo {
                     """
             }.joined(separator: "\n")
             
-            return """
+            return (
+                """
                 \(hasNested ? "" : "guard container.allKeys.count == 1 else { throw ReerCodableError(text: \"Invalid number of keys found, expected one.\") }")
                 \(findCase)
                 else {
                     throw ReerCodableError(text: "Key not found for \\(String(describing: Self.self)).")
                 }
-                """
+                """, true)
         } else {
             if enumCases.contains(where: { !$0.matches.isEmpty }) {
                 let dict = processEnumCases(enumCases)
@@ -673,15 +676,16 @@ extension TypeInfo {
                     }
                     try self.didDecode(from: decoder)
                     """
-                return tryDecode.joined(separator: "\n") + "\n" + tryRaw
+                return (tryDecode.joined(separator: "\n") + "\n" + tryRaw, false)
             } else {
-                return """
+                return (
+                    """
                     let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
                     switch value {
                     \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
                     default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
                     }
-                    """
+                    """, true)
             }
         }
     }
