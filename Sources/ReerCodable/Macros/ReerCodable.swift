@@ -19,7 +19,6 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-
 @attached(extension, conformances: Codable, ReerCodableDelegate, names: arbitrary)
 @attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
 public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "Codable")
@@ -71,7 +70,7 @@ public enum CaseMatcher {
     case int(Int)
     case double(Double)
     case string(String)
-    case nested(String) // TODO: check 单独使用/String 需要携带至少一个 `.`
+    case nested(String)
 }
 
 public struct CaseValue {
