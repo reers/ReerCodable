@@ -58,7 +58,7 @@ extension Codable: MemberMacro {
             }
         }
         
-        let typeInfo = try TypeInfo(decl: declaration, context: context)
+        let typeInfo = try TypeInfo(decl: declaration)
         let decoder = try typeInfo.generateDecoderInit()
         let encoder = try typeInfo.generateEncoderFunc()
         

@@ -65,6 +65,28 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         return container.tryDecodeWithNormalKey(type: type, key: lastKey)
     }
     
+    public func match(keyPaths: [String]) -> Bool {
+        for keyPath in keyPaths {
+            if let containerAndKey = keyPath.containerAndKey,
+               let foundValue = try? decode(type: String.self, keys: [containerAndKey.0]),
+               foundValue == containerAndKey.1 {
+                return true
+            }
+        }
+        return false
+    }
+    
+//    public func nestedContainer(forKeyPaths keyPaths: String...) throws -> KeyedDecodingContainer<AnyCodingKey>? {
+//        for keyPath in keyPaths {
+//            let key = keyPath.components(separatedBy: ".")
+//            guard !key.isEmpty else { return nil }
+//            if let container = try? nestedContainer(path: key) {
+//                return container
+//            }
+//        }
+//        return nil
+//    }
+    
     public func nestedContainer(path: [String]) throws -> KeyedDecodingContainer<AnyCodingKey>? {
         guard let first = path.first else { return self }
         guard let key = AnyCodingKey(stringValue: first) else {

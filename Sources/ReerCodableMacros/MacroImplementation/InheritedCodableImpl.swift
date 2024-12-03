@@ -17,7 +17,7 @@ public struct InheritedCodable: MemberMacro {
         guard declaration.is(ClassDeclSyntax.self) else {
             throw MacroError(text: "`@InheritedCodable` must be used on a subclass.")
         }
-        let typeInfo = try TypeInfo(decl: declaration, context: context)
+        let typeInfo = try TypeInfo(decl: declaration)
         let decoder = try typeInfo.generateDecoderInit(isOverride: true)
         let encoder = try typeInfo.generateEncoderFunc(isOverride: true)
         return [decoder, encoder]
