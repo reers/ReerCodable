@@ -42,7 +42,7 @@ final class ReerCodableTests: XCTestCase {
             """
             @Codable
             enum Video3: Codable {
-                @CodingCase(match: .nested("type.youtube"))
+                @CodingCase(match: .nested("type.middle.youtube"))
                 case youTube
                 
                 @CodingCase(
