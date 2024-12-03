@@ -511,33 +511,9 @@ let phoneData = """
 let resp2 = try! Resp2.decoded(from: phoneData)
 print(resp2)
 
-let videoJson3_1 = """
-{
-    "name": "Conference talks",
-    "videos": [
-        {
-            "youtube": {
-                "id": "ujOc3a7Hav0",
-                "_1": 44.5
-            }
-        },
-        {
-            "vimeo": {
-                "ID": "234961067",
-                "minutes": 999999
-            }
-        },
-        {
-            "hosted": {
-                "url": "https://example.com/video.mp4",
-                "tag": "Art"
-            }
-        }
-    ]
-}
-""".data(using: .utf8)!
 
-let videoJson3_2 = """
+
+let videoJson3 = """
 {
     "name": "Conference talks",
     "videos": [
@@ -577,6 +553,32 @@ enum Video3: Codable {
     case hosted(url: URL, tag: String?)
 }
 
+let videoJson4 = """
+{
+    "name": "Conference talks",
+    "videos": [
+        {
+            "youtube": {
+                "id": "ujOc3a7Hav0",
+                "_1": 44.5
+            }
+        },
+        {
+            "vimeo": {
+                "ID": "234961067",
+                "minutes": 999999
+            }
+        },
+        {
+            "hosted": {
+                "url": "https://example.com/video.mp4",
+                "tag": "Art"
+            }
+        }
+    ]
+}
+""".data(using: .utf8)!
+
 @Codable
 enum Video4: Codable {
     @CodingCase(match: .string("youtube"))
@@ -599,5 +601,9 @@ struct Resp3: Codable {
     let videos: [Video4]
 }
 
-let result3 = try! Resp3.decoded(from: videoJson3_1)
+let result3 = try! Resp3.decoded(from: videoJson4)
 print(result3)
+let string = try! result3.encodedString()
+print(string)
+let final: Resp3 = try! string.decoded()
+print(final)

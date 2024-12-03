@@ -47,6 +47,13 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
         }
         return container
     }
+    
+    public mutating func encode(keyPath: String) throws {
+        guard let containerAndKey = keyPath.containerAndKey else {
+            return
+        }
+        try encode(value: containerAndKey.1, key: containerAndKey.0, treatDotAsNested: true)
+    }
 }
 
 // MARK: - Encode Date
