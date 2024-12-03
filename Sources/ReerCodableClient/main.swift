@@ -45,7 +45,7 @@ public final class Test {
 //    @Base64Coding
 //    let height: [UInt8]?
     
-    @IgnoreCoding
+    @CodingIgnored
     var ignore: Set<String>
     
     @Base64Coding

@@ -29,7 +29,7 @@ struct ReerCodablePlugin: CompilerPlugin {
         InheritedCodable.self,
         CodingKey.self,
         EncodingKey.self,
-        IgnoreCoding.self,
+        CodingIgnored.self,
         Base64Coding.self,
         DateCoding.self,
         CompactDecoding.self,
