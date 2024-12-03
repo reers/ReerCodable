@@ -692,17 +692,28 @@ extension TypeInfo {
     
     private func generateEnumEncoderEncoding() -> String {
         if hasEnumAssociatedValue {
+            let hasNested = enumCases.contains { $0.matches["Nested"] != nil }
             let encodeCase = """
                 \(enumCases.compactMap {
                     let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
                     let hasAssociated = !$0.associated.isEmpty
+                    let encodeCase = if hasNested, let keyPath = $0.matches["Nested"]?.first {
+                        """
+                        try container.encode(keyPath: \(keyPath))
+                        """
+                        }
+                        else {
+                        """
+                        var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)"))
+                        """
+                        }
                     return """
                     case\(hasAssociated ? " let" : "") .\($0.caseName)\(postfix):
-                        var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)"))
+                        \(encodeCase)
                         \($0.associated.compactMap { value in
                         """
-                        try nestedContainer.encode(\(value.variableName), forKey: AnyCodingKey("\(value.variableName)"))
+                        try \(hasNested ? "container" : "nestedContainer").encode(\(value.variableName), forKey: AnyCodingKey("\(value.variableName)"))
                         """
                         }.joined(separator: "\n    "))
                     """
