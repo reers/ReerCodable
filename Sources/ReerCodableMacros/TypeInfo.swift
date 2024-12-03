@@ -557,8 +557,12 @@ extension TypeInfo {
             var index = -1
             let findCase = enumCases.compactMap { theCase in
                 index += 1
+                var keys = theCase.matches["String"] ?? []
+                keys.append("\"\(theCase.caseName)\"")
+                keys.removeDuplicates()
+                let hasAssociated = !theCase.associated.isEmpty
                 return """
-                    \(index > 0 ? "else " : "")if let nestedContainer = try? container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\(theCase.caseName)")) {
+                    \(index > 0 ? "else " : "")if let \(hasAssociated ? "nestedContainer" : "_") = try? container.nestedContainer(forKeys: \(keys.joined(separator: ", "))) {
                         \(theCase.associated.compactMap { value in
                         var keys: [String] = []
                         if let label = value.label {
@@ -628,8 +632,9 @@ extension TypeInfo {
                 \(enumCases.compactMap {
                     let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
+                    let hasAssociated = !$0.associated.isEmpty
                     return """
-                    case let .\($0.caseName)\(postfix):
+                    case\(hasAssociated ? " let" : "") .\($0.caseName)\(postfix):
                         var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)"))
                         \($0.associated.compactMap { value in
                         """

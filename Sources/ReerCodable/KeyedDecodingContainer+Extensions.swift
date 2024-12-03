@@ -57,7 +57,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         
         guard
             let lastKey = keyPath.last,
-            let container = try? getNestedContainer(path: keyPath.dropLast())
+            let container = try? nestedContainer(path: keyPath.dropLast())
         else {
             return nil
         }
@@ -65,13 +65,22 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         return container.tryDecodeWithNormalKey(type: type, key: lastKey)
     }
     
-    public func getNestedContainer(path: [String]) throws -> KeyedDecodingContainer<AnyCodingKey>? {
+    public func nestedContainer(path: [String]) throws -> KeyedDecodingContainer<AnyCodingKey>? {
         guard let first = path.first else { return self }
         guard let key = AnyCodingKey(stringValue: first) else {
             return nil
         }
         let nestedContainer = try nestedContainer(keyedBy: AnyCodingKey.self, forKey: key)
-        return try nestedContainer.getNestedContainer(path: Array(path.dropFirst()))
+        return try nestedContainer.nestedContainer(path: Array(path.dropFirst()))
+    }
+    
+    public func nestedContainer(forKeys keys: String...) throws -> KeyedDecodingContainer<AnyCodingKey>? {
+        for key in keys {
+            if let container = try? nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(key)) {
+                return container
+            }
+        }
+        return nil
     }
 }
 
@@ -169,7 +178,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         }
         guard
             let lastKey = keyPath.last,
-            let container = try? getNestedContainer(path: keyPath.dropLast())
+            let container = try? nestedContainer(path: keyPath.dropLast())
         else {
             throw ReerCodableError(text: "Get nested container failed.")
         }
@@ -215,7 +224,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         }
         guard
             let lastKey = keyPath.last,
-            let container = try? getNestedContainer(path: keyPath.dropLast())
+            let container = try? nestedContainer(path: keyPath.dropLast())
         else {
             throw ReerCodableError(text: "Get nested container failed.")
         }

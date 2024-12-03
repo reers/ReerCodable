@@ -30,7 +30,7 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
         guard let lastKey = keyPath.last, !lastKey.isEmpty else {
             throw ReerCodableError(text: "Nested key (\(key)) invalid.")
         }
-        var container = try getNestedContainer(path: keyPath.dropLast())
+        var container = try nestedContainer(path: keyPath.dropLast())
         try container.encode(value, forNormalKey: lastKey)
     }
     
@@ -39,7 +39,7 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
         try encode(value, forKey: codingKey)
     }
     
-    private mutating func getNestedContainer(path: [String]) throws -> KeyedEncodingContainer<AnyCodingKey> {
+    private mutating func nestedContainer(path: [String]) throws -> KeyedEncodingContainer<AnyCodingKey> {
         var container = self
         for pathKey in path {
             let codingKey = AnyCodingKey(stringValue: pathKey)!
