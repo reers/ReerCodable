@@ -219,7 +219,7 @@ extension TypeInfo {
                 }
                 property.caseStyles = propertyCaseStyles.uniqueMerged(with: caseStyles)
                 // ignore coding
-                if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
+                if variable.attributes.firstAttribute(named: "CodingIgnored") != nil {
                     property.isIgnored = true
                 }
                 // base64 coding

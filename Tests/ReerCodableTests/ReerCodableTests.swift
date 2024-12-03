@@ -13,7 +13,7 @@ let testMacros: [String: Macro.Type] = [
     "InheritedCodable": InheritedCodable.self,
     "CodingKey": CodingKey.self,
     "EncodingKey": EncodingKey.self,
-    "IgnoreCoding": IgnoreCoding.self,
+    "CodingIgnored": CodingIgnored.self,
     "Base64Coding": Base64Coding.self,
     "DateCoding": DateCoding.self,
     "CompactDecoding": CompactDecoding.self,
@@ -81,10 +81,10 @@ final class ReerCodableTests: XCTestCase {
                 var userAge: Int = 18
                 var name: String
                 let height: Float?
-                @IgnoreCoding
+                @CodingIgnored
                 var set: Set<Int>
 
-                @IgnoreCoding
+                @CodingIgnored
                 var ignore: [Int]
             
                 @DateCoding(.secondsSince1970)

@@ -22,7 +22,7 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-public struct IgnoreCoding: PeerMacro {
+public struct CodingIgnored: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
@@ -32,10 +32,10 @@ public struct IgnoreCoding: PeerMacro {
             let variable = declaration.as(VariableDeclSyntax.self),
             let name = variable.name
         else {
-            throw MacroError(text: "@IgnoreCoding macro is only for property.")
+            throw MacroError(text: "@CodingIgnored macro is only for property.")
         }
         
-        if variable.attributes.firstAttribute(named: "IgnoreCoding") != nil {
+        if variable.attributes.firstAttribute(named: "CodingIgnored") != nil {
             if variable.isOptional {
                 return []
             }

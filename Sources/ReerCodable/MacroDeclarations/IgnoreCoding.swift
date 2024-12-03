@@ -20,4 +20,4 @@
 //  THE SOFTWARE.
 
 @attached(peer)
-public macro IgnoreCoding() = #externalMacro(module: "ReerCodableMacros", type: "IgnoreCoding")
+public macro CodingIgnored() = #externalMacro(module: "ReerCodableMacros", type: "CodingIgnored")
