@@ -338,6 +338,55 @@ extension TypeInfo {
                     matchMap[type]?[value] = enumCase.caseName
                 }
             }
+            
+            try enumCase.associatedMatch.forEach {
+                if let matchLabel = $0.label, !enumCase.associated.contains(where: {
+                    guard let label = $0.label else { return false }
+                    return "\"\(label)\"" == matchLabel
+                }) {
+                    throw MacroError(text: "Can not found an associated value named \(matchLabel) in case '\(enumCase.caseName)'.")
+                }
+                if let index = $0.index, let int = Int(index) {
+                    if int >= enumCase.associated.count {
+                        throw MacroError(text: "Can not found an associated value at index \(int) in case '\(enumCase.caseName)'.")
+                    } else if let label = enumCase.associated[int].label {
+                        var keysFromMatchLabel = enumCase.associatedMatch.first { $0.label == "\"\(label)\"" }?.keys ?? []
+                        keysFromMatchLabel.append(contentsOf: $0.keys)
+                        throw MacroError(text: "Associated value in case '\(enumCase.caseName)' at index \(int) has a label, use '.init(label: \"\(label)\", keys: \(keysFromMatchLabel.joined(separator: ", ")))' instead.")
+                    }
+                }
+            }
+            
+            var usedLabels: Set<String> = []
+            var usedIndices: Set<Int> = []
+                
+            for match in enumCase.associatedMatch {
+                if let label = match.label {
+                    if !usedLabels.insert(label).inserted {
+                        throw MacroError(text: "Duplicate CaseValue label \(label) found in case '\(enumCase.caseName)'")
+                    }
+                }
+                
+                if let indexStr = match.index,
+                   let index = Int(indexStr) {
+                    if !usedIndices.insert(index).inserted {
+                        throw MacroError(text: "Duplicate CaseValue index '\(index)' found in case '\(enumCase.caseName)'")
+                    }
+                }
+            }
+        }
+        
+        let flated = cases.flatMap { $0.matches }
+        let hasNested = flated.contains { $0.key == "Nested" }
+        let hasOtherTypes = flated.contains { $0.key != "Nested" }
+        if hasNested && hasOtherTypes {
+            throw MacroError(text: "Invalid usage: .nested() cannot be used with other match patterns like .string(), .int()...")
+        }
+        
+        let hasAssociated = cases.contains { !$0.associated.isEmpty }
+        let hasNonStringOrNested = flated.contains { !($0.key == "Nested" || $0.key == "String") }
+        if hasAssociated && hasNonStringOrNested {
+            throw MacroError(text: "Only .nested() and .string() patterns are allowed for enum cases with associated values")
         }
     }
 }
@@ -362,7 +411,7 @@ extension TypeInfo {
                         } else if let defaultValue = property.defaultValue {
                             return "self.\(property.name) = \(defaultValue)"
                         }
-                        throw MacroError(text: "The ignored property `\(property.name)` should have a default value, or be set as an optional type.")
+                        throw MacroError(text: "The ignored property '\(property.name)' should have a default value, or be set as an optional type.")
                     }
                     var body: String
                     // base64
@@ -404,7 +453,7 @@ extension TypeInfo {
                                 }()
                                 """
                         } else {
-                            throw MacroError(text: "Can not handle property `\(property.name)` with @CompactDecoding.")
+                            throw MacroError(text: "Can not handle property '\(property.name)' with @CompactDecoding.")
                         }
                     }
                     // custom decode
