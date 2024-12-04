@@ -21,6 +21,47 @@
 
 /// The `@Codable` macro provides automatic implementation of `Codable` protocol for Swift types.
 ///
+/// Important Notes:
+/// - In Xcode, only `@Codable` and `@InheritedCodable` macros can be expanded using "Expand Macro".
+///   Other macros (like `@CodingKey`, `@DateCoding`, etc.) are markers for code generation and
+///   won't show any expansion in Xcode.
+/// - All types marked with `@Codable` automatically conform to `ReerCodableDelegate` protocol,
+///   which provides hooks for custom coding logic:
+///   ```swift
+///   protocol ReerCodableDelegate {
+///       // Called after decoding is complete
+///       func didDecode(from decoder: any Decoder) throws
+///       // Called before encoding begins
+///       func willEncode(to encoder: any Encoder) throws
+///   }
+///   ```
+///   Example usage:
+///   ```swift
+///   @Codable
+///   struct User {
+///       var name: String
+///       var createdAt: Date
+///       
+///       func didDecode(from decoder: any Decoder) throws {
+///           // Perform post-decode validation
+///           guard !name.isEmpty else {
+///               throw DecodingError.dataCorrupted(...)
+///           }
+///           // Or change model values by your custom logic
+///           name = name.uppercased()
+///       }
+///       
+///       func willEncode(to encoder: any Encoder) throws {
+///           // Prepare data before encoding
+///           if createdAt > Date() {
+///               throw EncodingError.invalidValue(...)
+///           }
+///           // Or change model values by your custom logic
+///           name = name.lowercased()
+///       }
+///   }
+///   ```
+///
 /// This macro can be applied to:
 /// - `struct`
 /// - `class`
