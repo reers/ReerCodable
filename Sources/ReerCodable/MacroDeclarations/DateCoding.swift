@@ -19,5 +19,36 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+/// The `@DateCoding` macro provides flexible date encoding and decoding strategies.
+///
+/// This macro supports various date formatting strategies:
+/// - Timestamp-based strategies (seconds or milliseconds since epoch)
+/// - ISO8601 standard format
+/// - Custom date formatter
+///
+/// Example usage:
+/// ```swift
+/// @Codable
+/// struct Event {
+///     @DateCoding(.millisecondsSince1970)
+///     var timestamp: Date?  // Encoded as milliseconds timestamp
+///     
+///     @DateCoding(.iso8601)
+///     var createdAt: Date  // Encoded as ISO8601 string
+///     
+///     @DateCoding(.formatted(formatter))  // formatter is a DateFormatter instance
+///     var customDate: Date  // Encoded using custom format
+/// }
+/// ```
+///
+/// Available strategies:
+/// - `.timeIntervalSince1970`: Seconds since 1970 as Double
+/// - `.timeIntervalSince2001`: Seconds since 2001 as Double (same as timeIntervalSinceReferenceDate)
+/// - `.secondsSince1970`: Seconds since 1970 as Int64
+/// - `.millisecondsSince1970`: Milliseconds since 1970 as Int64
+/// - `.iso8601`: ISO8601/RFC3339 formatted string
+/// - `.formatted(DateFormatter)`: Custom format using provided formatter
+///
+/// - Parameter strategy: The strategy to use for date encoding/decoding
 @attached(peer)
 public macro DateCoding(_ strategy: DateCodingStrategy) = #externalMacro(module: "ReerCodableMacros", type: "DateCoding")
