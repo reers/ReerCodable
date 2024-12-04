@@ -19,5 +19,29 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+/// The `@CompactDecoding` macro filters out nil values during decoding, similar to `compactMap`.
+///
+/// This macro can be applied to collection types:
+/// - Array
+/// - Dictionary
+/// - Set
+///
+/// When decoding, any nil or failed-to-decode elements will be automatically removed
+/// from the final collection, instead of causing a decoding error.
+///
+/// Example usage:
+/// ```swift
+/// @Codable
+/// struct Response {
+///     @CompactDecoding
+///     var items: [Item]  // JSON: [{"id": 1}, null, {"id": 2}, {"invalid": true}] -> Result: [Item(id: 1), Item(id: 2)]
+///     
+///     @CompactDecoding
+///     var dict: [String: User]  // JSON: {"a": {"name": "Alice"}, "b": null, "c": {"invalid": true}} -> Result: ["a": User(name: "Alice")]
+///     
+///     @CompactDecoding
+///     var uniqueIds: Set<String>  // JSON: ["a", null, "b", "a"] -> Result: Set(["a", "b"])
+/// }
+/// ```
 @attached(peer)
 public macro CompactDecoding() = #externalMacro(module: "ReerCodableMacros", type: "CompactDecoding")

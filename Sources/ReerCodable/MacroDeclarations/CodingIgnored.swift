@@ -1,5 +1,5 @@
 //
-//  Copyright © 2024 reers.
+//  Copyright 2024 reers.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -19,5 +19,22 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+/// The `@CodingIgnored` macro marks a property to be ignored during encoding and decoding.
+///
+/// When applied to a property in a type marked with `@Codable`, this property will be:
+/// - Skipped during encoding (not written to the encoded data)
+/// - Skipped during decoding (not read from the encoded data)
+/// - Initialized with its default value or nil if optional
+///
+/// Example usage:
+/// ```swift
+/// @Codable
+/// struct User {
+///     let id: String
+///     let name: String
+///     @CodingIgnored
+///     var temporaryCache: [String: Any]? // This property will be ignored during coding
+/// }
+/// ```
 @attached(peer)
 public macro CodingIgnored() = #externalMacro(module: "ReerCodableMacros", type: "CodingIgnored")

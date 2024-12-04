@@ -19,19 +19,72 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+/// The `@CustomCoding` macro provides custom encoding and decoding logic for properties.
+///
+/// Using inline closure parameters:
+/// ```swift
+/// @CustomCoding<Int>(
+///     decode: { decoder in
+///         let temp: Int = try decoder.value(forKeys: "custom")
+///         return temp * 1000  // Custom transformation during decoding
+///     },
+///     encode: { encoder, value in
+///         try encoder.set(value, forKey: "custom")
+///     }
+/// )
+/// var customValue: Int
+/// ```
 @attached(peer)
 public macro CustomCoding<Value>(
     decode: ((_ decoder: Decoder) throws -> Value)? = nil,
     encode: ((_ encoder: Encoder, _ value: Value) throws -> Void)? = nil
 ) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
 
+/// Protocol for defining custom coding logic in a separate type.
+///
+/// Implement this protocol to create reusable coding transformations
+/// that can be applied to multiple properties using `@CustomCoding`.
 public protocol CodingCustomizable {
+    /// The type of value being encoded and decoded
     associatedtype Value: Codable
     
+    /// Custom decoding implementation
+    /// - Parameter decoder: The decoder to read values from
+    /// - Returns: The decoded value after custom transformation
     static func decode(by decoder: Decoder) throws -> Value
+    
+    /// Custom encoding implementation
+    /// - Parameters:
+    ///   - encoder: The encoder to write values to
+    ///   - value: The value to encode
     static func encode(by encoder: Encoder, _ value: Value) throws
 }
 
+/// The `@CustomCoding` macro with type-based customization.
+///
+/// Use this version when you have a type conforming to `CodingCustomizable`
+/// that encapsulates your custom coding logic.
+///
+/// Example usage:
+/// ```swift
+/// struct IntTransformer: CodingCustomizable {
+///     typealias Value = Int
+///     
+///     static func decode(by decoder: Decoder) throws -> Int {
+///         let temp: Int = try decoder.value(forKeys: "custom")
+///         return temp * 1000
+///     }
+///     
+///     static func encode(by encoder: Encoder, _ value: Int) throws {
+///         try encoder.set(value, forKey: "custom_by")
+///     }
+/// }
+///
+/// @CustomCoding(IntTransformer.self)
+/// var customValue: Int
+/// ```
+///
+/// - Parameter customCodingType: A type conforming to `CodingCustomizable`
 @attached(peer)
 public macro CustomCoding(
     _ customCodingType: any CodingCustomizable.Type

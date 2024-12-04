@@ -19,5 +19,30 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+/// The `@Base64Coding` macro that provides automatic Base64 encoding and decoding functionality.
+///
+/// This macro can be applied to properties of type `Data` or `[UInt8]` to automatically handle
+/// Base64 string conversion during encoding and decoding:
+/// - When decoding: converts Base64 encoded strings to `Data` or `[UInt8]`
+/// - When encoding: converts `Data` or `[UInt8]` to Base64 encoded strings
+///
+/// Example usage:
+/// ```swift
+/// @Codable
+/// struct User {
+///     @Base64Coding
+///     var data: Data?          // Stored as Base64 string in JSON
+///
+///     @Base64Coding
+///     var bytes: [UInt8]?      // Stored as Base64 string in JSON
+/// }
+/// ```
+///
+/// The macro can be combined with other property wrappers like `@CodingKey`:
+/// ```swift
+/// @CodingKey("data.data2")
+/// @Base64Coding
+/// var data2: Data?
+/// ```
 @attached(peer)
 public macro Base64Coding() = #externalMacro(module: "ReerCodableMacros", type: "Base64Coding")
