@@ -24,9 +24,9 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-public struct Codable {}
+public struct RECodable {}
 
-extension Codable: ExtensionMacro {
+extension RECodable: ExtensionMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         attachedTo declaration: some SwiftSyntax.DeclGroupSyntax,
@@ -55,7 +55,7 @@ extension Codable: ExtensionMacro {
     }
 }
 
-extension Codable: MemberMacro {
+extension RECodable: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,

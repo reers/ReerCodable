@@ -86,7 +86,7 @@
 /// ```
 @attached(extension, conformances: Codable, ReerCodableDelegate, names: arbitrary)
 @attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
-public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "Codable")
+public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "RECodable")
 
 /// The `@InheritedCodable` macro provides automatic implementation of `Codable` protocol for classes
 /// that inherit from a `Codable` conforming superclass.
