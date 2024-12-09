@@ -46,7 +46,7 @@ let package = Package(
         .testTarget(
             name: "ReerCodableTests",
             dependencies: [
-                "ReerCodableMacros",
+                "ReerCodable",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
         ),

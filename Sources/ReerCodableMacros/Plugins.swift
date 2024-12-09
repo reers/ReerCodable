@@ -25,7 +25,7 @@ import SwiftSyntaxMacros
 @main
 struct ReerCodablePlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
-        Codable.self,
+        RECodable.self,
         InheritedCodable.self,
         CodingKey.self,
         EncodingKey.self,
