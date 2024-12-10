@@ -42,7 +42,7 @@ public enum DateCodingStrategy {
     /// Encodes dates according to the ISO 8601 and RFC 3339 standards
     case iso8601
     
-    /// Encodes a String, according to the provided formatter
+    /// Encodes a String, according to the provided static or global formatter
     case formatted(DateFormatter)
     
     static let iso8601Formatter: ISO8601DateFormatter = {
