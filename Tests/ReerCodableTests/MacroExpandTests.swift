@@ -39,6 +39,25 @@ let testMacros: [String: Macro.Type] = [
 
 final class ReerCodableTests: XCTestCase {
     
+    func testInheritedCodable() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacroExpansion(
+            """
+            @InheritedCodable
+            class LLLA: Equatable {
+                
+            }
+            """,
+            expandedSource: """
+            
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
     func testEnumMacro() throws {
         #if canImport(ReerCodableMacros)
         assertMacroExpansion(
