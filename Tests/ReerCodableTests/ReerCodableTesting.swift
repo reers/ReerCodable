@@ -18,7 +18,7 @@ struct Child: Equatable {
 }
 
 @Codable
-struct Person1: Codable {
+class Person1: Codable {
     @CodingKey("user_name")
     let name: String
     
@@ -53,6 +53,16 @@ struct Person1: Codable {
     
     // Optional enum decoding will not throw a error if not exist
     var bloodType: BloodType?
+    
+    func didDecode(from decoder: any Decoder) throws {
+        if age < 0 {
+            throw ReerCodableError(text: "wrong age")
+        }
+    }
+    
+    func willEncode(to encoder: any Encoder) throws {
+        age = 18
+    }
 }
 
 let jsonData = """
@@ -81,7 +91,7 @@ struct TestReerCodable {
     @Test
     func person1() throws {
         // Decode
-        var model = try JSONDecoder().decode(Person1.self, from: jsonData)
+        let model = try JSONDecoder().decode(Person1.self, from: jsonData)
         #expect(model.name == "phoenix")
         #expect(model.age == 33)
         #expect(model.weight == 75.0)
@@ -104,7 +114,7 @@ struct TestReerCodable {
         }
         
         #expect(dict.string("user_name") == "phoenix")
-        #expect(dict.int("age") == 33)
+        #expect(dict.int("age") == 18)
         let otherInfo = dict?["other_info"] as? [String: Any]
         #expect(otherInfo.double("weight") == 75.0)
         #expect(dict.string("a.b") == "abtest")
