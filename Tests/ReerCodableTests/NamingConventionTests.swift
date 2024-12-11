@@ -36,3 +36,86 @@ extension TestReerCodable {
         #expect(dict.string("avatar_url") == "http://abc.com/image.png")
     }
 }
+
+
+@Codable
+@FlatCase
+@UpperCase
+@CamelCase
+@PascalCase
+@SnakeCase
+@KebabCase
+@CamelSnakeCase
+@PascalSnakeCase
+@ScreamingSnakeCase
+@CamelKebabCase
+@PascalKebabCase
+@ScreamingKebabCase
+struct Model {
+    @EncodingKey("two#words")
+    var twoWords: String
+}
+
+extension TestReerCodable {
+    @Test(
+        arguments: [
+            "twowords", "TWOWORDS", "twoWords", "TwoWords", "two_words", "two-words",
+            "two_Words", "Two_Words", "TWO_WORDS", "two-Words", "Two-Words", "TWO-WORDS"
+        ]
+    )
+    func allCases(caseString: String) throws {
+        let caseJsonData = "{\"\(caseString)\": \"Hit\"}".data(using: .utf8)!
+        // Decode
+        let model = try JSONDecoder().decode(Model.self, from: caseJsonData)
+        #expect(model.twoWords == "Hit")
+        
+        // Encode
+        let modelData = try JSONEncoder().encode(model)
+        let dict = modelData.stringAnyDictionary
+        if let dict {
+            print(dict)
+        }
+        #expect(dict.string("two#words") == "Hit")
+    }
+}
+
+@Codable
+struct Model2 {
+    @FlatCase
+    @UpperCase
+    @CamelCase
+    @PascalCase
+    @SnakeCase
+    @KebabCase
+    @CamelSnakeCase
+    @PascalSnakeCase
+    @ScreamingSnakeCase
+    @CamelKebabCase
+    @PascalKebabCase
+    @ScreamingKebabCase
+    @EncodingKey("two#words")
+    var twoWords: String
+}
+
+extension TestReerCodable {
+    @Test(
+        arguments: [
+            "twowords", "TWOWORDS", "twoWords", "TwoWords", "two_words", "two-words",
+            "two_Words", "Two_Words", "TWO_WORDS", "two-Words", "Two-Words", "TWO-WORDS"
+        ]
+    )
+    func allCases2(caseString: String) throws {
+        let caseJsonData = "{\"\(caseString)\": \"Hit\"}".data(using: .utf8)!
+        // Decode
+        let model = try JSONDecoder().decode(Model2.self, from: caseJsonData)
+        #expect(model.twoWords == "Hit")
+        
+        // Encode
+        let modelData = try JSONEncoder().encode(model)
+        let dict = modelData.stringAnyDictionary
+        if let dict {
+            print(dict)
+        }
+        #expect(dict.string("two#words") == "Hit")
+    }
+}
