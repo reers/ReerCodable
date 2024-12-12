@@ -76,13 +76,13 @@ extension TestReerCodable {
 
 @Codable
 enum Phone: Codable {
-    @CodingCase(match: .bool(true), .int(8), .int(10), .string("iphone"), .string("Apple"))
+    @CodingCase(match: .bool(true), .int(8), .int(10), .string("iphone"), .string("Apple"), .intRange(22...30))
     case iPhone
     
-    @CodingCase(match: .int(12), .string("MI"), .double(22.5), .string("xiaomi"))
+    @CodingCase(match: .int(12), .string("MI"), .double(22.5), .string("xiaomi"), .doubleRange(50...60))
     case xiaomi
     
-    @CodingCase(match: .bool(false), .string("oppo"))
+    @CodingCase(match: .bool(false), .string("oppo"), .stringRange("o"..."q"))
     case oppo
 }
 
@@ -97,7 +97,8 @@ extension TestReerCodable {
             "{\"phone\": 8}",
             "{\"phone\": 10}",
             "{\"phone\": \"iphone\"}",
-            "{\"phone\": \"Apple\"}"
+            "{\"phone\": \"Apple\"}",
+            "{\"phone\": 25}",
         ]
     )
     func enumiPhone(jsonString: String) throws {
@@ -119,7 +120,8 @@ extension TestReerCodable {
             "{\"phone\": 12}",
             "{\"phone\": 22.5}",
             "{\"phone\": \"MI\"}",
-            "{\"phone\": \"xiaomi\"}"
+            "{\"phone\": \"xiaomi\"}",
+            "{\"phone\": 55.5}"
         ]
     )
     func enumMI(jsonString: String) throws {
@@ -139,7 +141,8 @@ extension TestReerCodable {
     @Test(
         arguments: [
             "{\"phone\": false}",
-            "{\"phone\": \"oppo\"}"
+            "{\"phone\": \"oppo\"}",
+            "{\"phone\": \"p\"}",
         ]
     )
     func enumOppo(jsonString: String) throws {

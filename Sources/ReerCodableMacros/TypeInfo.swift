@@ -291,7 +291,7 @@ extension TypeInfo {
             return properties
         }
     }
-    // .int(8) -> (Int, 8)
+    // .int(8) -> (Int, "8")
     func parseEnumCaseMatchString(_ string: String) -> (type: String, value: String)? {
         let cleaned = string.trimmingCharacters(in: .whitespaces)
         
@@ -307,7 +307,7 @@ extension TypeInfo {
         let valueStr = cleaned[range.upperBound..<endRange.lowerBound]
             .trimmingCharacters(in: .whitespaces)
         
-        typeStr = typeStr.prefix(1).uppercased() + typeStr.dropFirst()
+        typeStr = typeStr.prefix(1).uppercased() + typeStr.removingSuffix("Range").dropFirst()
         
         return (typeStr, valueStr)
     }
@@ -826,5 +826,12 @@ extension Array where Element: Hashable {
                 $0.append($1)
             }
         }
+    }
+}
+
+extension String {
+    func removingSuffix(_ suffix: String) -> String {
+        guard self.hasSuffix(suffix) else { return self }
+        return String(self.dropLast(suffix.count))
     }
 }

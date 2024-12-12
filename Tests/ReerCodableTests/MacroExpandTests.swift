@@ -63,21 +63,15 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            enum Video3: Codable {
-                @CodingCase(match: .nested("type.middle.youtube"))
-                case youTube
+            enum Phone: Codable {
+                @CodingCase(match: .bool(true), .int(8), .int(10), .intRange(12...22), .string("youtube"), .string("Apple"))
+                case apple
                 
-                @CodingCase(
-                    match: .nested("type.vimeo"),
-                    values: [CaseValue.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
-                )
-                case vimeo(id: String, duration: TimeInterval = 33, Int)
+                @CodingCase(match: .int(12), .string("MI"), .string("xiaomi"))
+                case mi
                 
-                @CodingCase(
-                    match: .nested("type.hosted"),
-                    values: [.label("url", keys: "url")]
-                )
-                case hosted(url: URL, tag: String?)
+                @CodingCase(match: .bool(false), .stringRange("o"..."q"))
+                case oppo
             }
             """,
             expandedSource: """

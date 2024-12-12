@@ -489,13 +489,13 @@ print(respdict)
 //}
 @Codable
 enum Phone: Codable {
-    @CodingCase(match: .bool(true), .int(8), .int(10), .string("youtube"), .string("Apple"))
+    @CodingCase(match: .bool(true), .int(8), .int(10), .intRange(5...22), .string("youtube"), .string("Apple"))
     case apple
     
     @CodingCase(match: .int(12), .string("MI"), .string("xiaomi"))
     case mi
     
-    @CodingCase(match: .bool(false))
+    @CodingCase(match: .bool(false), .stringRange("o"..."q"))
     case oppo
 }
 
@@ -607,3 +607,13 @@ let string = try! result3.encodedString()
 print(string)
 let final: Resp3 = try! string.decoded()
 print(final)
+
+let fd = 5
+switch fd {
+case 5:
+    print(1)
+case 2...6:
+    print(2)
+default:
+    break
+}
