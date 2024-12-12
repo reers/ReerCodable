@@ -9,6 +9,7 @@ struct User {
     let rawInt: RawInt
     let rawDouble: RawDouble
     let rawDouble2: RawDouble2
+    let rawString: RawString
 }
 
 @Codable
@@ -41,7 +42,8 @@ let enumJSONData1 = """
     "gender": "female",
     "rawInt": 3,
     "rawDouble": 100.0,
-    "rawDouble2": 2.2
+    "rawDouble2": 2.2,
+    "rawString": "helloworld"
 }
 """.data(using: .utf8)!
 
@@ -54,6 +56,7 @@ extension TestReerCodable {
         #expect(model.rawInt == .three)
         #expect(model.rawDouble == .other)
         #expect(model.rawDouble2 == .two)
+        #expect(model.rawString == .other)
         
         // Encode
         let modelData = try JSONEncoder().encode(model)
@@ -65,6 +68,7 @@ extension TestReerCodable {
         #expect(dict.int("rawInt") == 3)
         #expect(dict.double("rawDouble") == 100)
         #expect(dict.double("rawDouble2") == 2.2)
+        #expect(dict.string("rawString") == "helloworld")
     }
 }
 
