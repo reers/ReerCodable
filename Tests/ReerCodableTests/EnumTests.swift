@@ -67,3 +67,88 @@ extension TestReerCodable {
         #expect(dict.double("rawDouble2") == 2.2)
     }
 }
+
+
+
+@Codable
+enum Phone: Codable {
+    @CodingCase(match: .bool(true), .int(8), .int(10), .string("iphone"), .string("Apple"))
+    case iPhone
+    
+    @CodingCase(match: .int(12), .string("MI"), .double(22.5), .string("xiaomi"))
+    case xiaomi
+    
+    @CodingCase(match: .bool(false), .string("oppo"))
+    case oppo
+}
+
+struct User2: Codable {
+    let phone: Phone
+}
+
+extension TestReerCodable {
+    @Test(
+        arguments: [
+            "{\"phone\": true}",
+            "{\"phone\": 8}",
+            "{\"phone\": 10}",
+            "{\"phone\": \"iphone\"}",
+            "{\"phone\": \"Apple\"}"
+        ]
+    )
+    func enumiPhone(jsonString: String) throws {
+        // Decode
+        let model = try User2.decoded(from: jsonString.data(using: .utf8)!)
+        #expect(model.phone == .iPhone)
+        
+        // Encode
+        let modelData = try JSONEncoder().encode(model)
+        let dict = modelData.stringAnyDictionary
+        if let dict {
+            print(dict)
+        }
+        #expect(dict.string("phone") == "iPhone")
+    }
+    
+    @Test(
+        arguments: [
+            "{\"phone\": 12}",
+            "{\"phone\": 22.5}",
+            "{\"phone\": \"MI\"}",
+            "{\"phone\": \"xiaomi\"}"
+        ]
+    )
+    func enumMI(jsonString: String) throws {
+        // Decode
+        let model = try User2.decoded(from: jsonString.data(using: .utf8)!)
+        #expect(model.phone == .xiaomi)
+        
+        // Encode
+        let modelData = try JSONEncoder().encode(model)
+        let dict = modelData.stringAnyDictionary
+        if let dict {
+            print(dict)
+        }
+        #expect(dict.string("phone") == "xiaomi")
+    }
+    
+    @Test(
+        arguments: [
+            "{\"phone\": false}",
+            "{\"phone\": \"oppo\"}"
+        ]
+    )
+    func enumOppo(jsonString: String) throws {
+        // Decode
+        let model = try User2.decoded(from: jsonString.data(using: .utf8)!)
+        #expect(model.phone == .oppo)
+        
+        // Encode
+        let modelData = try JSONEncoder().encode(model)
+        let dict = modelData.stringAnyDictionary
+        if let dict {
+            print(dict)
+        }
+        #expect(dict.string("phone") == "oppo")
+    }
+}
