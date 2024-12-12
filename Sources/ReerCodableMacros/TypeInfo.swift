@@ -141,15 +141,22 @@ struct TypeInfo {
                                         var label: String?
                                         var indexArg: String?
                                         var keys: [String] = []
-                                        for arg in expression.arguments {
-                                            if arg.label?.trimmedDescription == "label" {
-                                                label = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription
+                                        let labelOrIndex = expression.calledExpression.as(MemberAccessExprSyntax.self)?.declName.trimmedDescription
+                                        if labelOrIndex == "label" {
+                                            for (idx, arg) in expression.arguments.enumerated() {
+                                                if idx == 0 {
+                                                    label = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription
+                                                } else if let keyArg = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription {
+                                                    keys.append(keyArg)
+                                                }
                                             }
-                                            else if arg.label?.trimmedDescription == "index" {
-                                                indexArg = arg.expression.as(IntegerLiteralExprSyntax.self)?.trimmedDescription
-                                            }
-                                            else if let keyArg = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription {
-                                                keys.append(keyArg)
+                                        } else if labelOrIndex == "index" {
+                                            for (idx, arg) in expression.arguments.enumerated() {
+                                                if idx == 0 {
+                                                    indexArg = arg.expression.as(IntegerLiteralExprSyntax.self)?.trimmedDescription
+                                                } else if let keyArg = arg.expression.as(StringLiteralExprSyntax.self)?.trimmedDescription {
+                                                    keys.append(keyArg)
+                                                }
                                             }
                                         }
                                         return AssociatedMatch(label: label, keys: keys, index: indexArg)

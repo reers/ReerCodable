@@ -63,8 +63,21 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            enum RawDouble: Double {
-                case one, two, three, other
+            enum Video3: Codable {
+                @CodingCase(match: .nested("type.middle.youtube"))
+                case youTube
+                
+                @CodingCase(
+                    match: .nested("type.vimeo"),
+                    values: [CaseValue.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
+                )
+                case vimeo(id: String, duration: TimeInterval = 33, Int)
+                
+                @CodingCase(
+                    match: .nested("type.hosted"),
+                    values: [.label("url", keys: "url")]
+                )
+                case hosted(url: URL, tag: String?)
             }
             """,
             expandedSource: """

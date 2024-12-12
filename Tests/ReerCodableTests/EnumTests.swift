@@ -166,13 +166,13 @@ enum Video: Codable {
     
     @CodingCase(
         match: .string("vimeo"),
-        values: [CaseValue(label: "id", keys: "ID", "Id"), .init(index: 2, keys: "minutes")]
+        values: [CaseValue.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
     )
     case vimeo(id: String, duration: TimeInterval = 33, Int)
     
     @CodingCase(
         match: .string("tiktok"),
-        values: [.init(label: "url", keys: "url")]
+        values: [.label("url", keys: "url")]
     )
     case tiktok(url: URL, tag: String?)
 }
@@ -252,13 +252,13 @@ enum Video1: Codable {
     
     @CodingCase(
         match: .nested("type.vimeo"),
-        values: [CaseValue(label: "id", keys: "ID", "Id"), .init(index: 2, keys: "minutes")]
+        values: [.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
     )
     case vimeo(id: String, duration: TimeInterval = 33, Int)
     
     @CodingCase(
         match: .nested("type.tiktok"),
-        values: [.init(label: "url", keys: "media")]
+        values: [.label("url", keys: "media")]
     )
     case tiktok(url: URL, tag: String?)
 }

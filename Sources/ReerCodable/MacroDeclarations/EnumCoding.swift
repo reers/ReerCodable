@@ -49,7 +49,11 @@ public struct CaseValue {
     /// - Parameters:
     ///   - label: The associated value's label in the enum case
     ///   - keys: The JSON keys to try for decoding this value
-    public init(label: String, keys: String...) {
+    public static func label(_ label: String, keys: String...) -> CaseValue {
+        return .init(label: label, keys: keys)
+    }
+    
+    private init(label: String, keys: [String]) {
         self.label = label
         self.keys = keys
         self.index = nil
@@ -59,7 +63,11 @@ public struct CaseValue {
     /// - Parameters:
     ///   - index: The position of the associated value in the enum case
     ///   - keys: The JSON keys to try for decoding this value
-    public init(index: Int, keys: String...) {
+    public static func index(_ index: Int, keys: String...) -> CaseValue {
+        return .init(index: index, keys: keys)
+    }
+    
+    private init(index: Int, keys: [String]) {
         self.keys = keys
         self.index = index
         self.label = nil
