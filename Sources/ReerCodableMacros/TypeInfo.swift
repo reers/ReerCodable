@@ -80,23 +80,27 @@ struct TypeInfo {
             }
             
             var index = 0
-            var lastRawValue: Double = 0.0
+            var lastIntRawValue: Int = 0
             try enumDecl.memberBlock.members.forEach {
                 try $0.decl.as(EnumCaseDeclSyntax.self)?.elements.forEach { caseElement in
                     let name = caseElement.name.trimmedDescription
                     var raw: String
-                    if let rawValue = caseElement.rawValue?.value.trimmedDescription {
+                    if let rawValueExpr = caseElement.rawValue?.value {
+                        let rawValue = rawValueExpr.trimmedDescription
                         raw = rawValue
-                        lastRawValue = Double(raw)!
+                        if let intRaw = rawValueExpr.as(IntegerLiteralExprSyntax.self) {
+                            lastIntRawValue = Int(intRaw.trimmedDescription) ?? 0
+                        }
                     } else if let enumRawType {
                         switch enumRawType {
                         case "Int", "Int8", "Int16", "Int32", "Int64", "UInt", "UInt8", "UInt16", "UInt32", "UInt64":
-                            raw = if index == 0 { "0" } else { String(Int(lastRawValue) + 1) }
-                            lastRawValue = Double(raw)!
+                            raw = if index == 0 { "0" } else { String(lastIntRawValue + 1) }
+                            lastIntRawValue = Int(raw) ?? lastIntRawValue + 1
                         case "String":
-                            raw = name
+                            raw = "\"\(name)\""
                         case "Double", "Float":
-                            raw = if index == 0 { "0.0" } else { String(Double(lastRawValue) + 1) }
+                            raw = if index == 0 { "0" } else { String(lastIntRawValue + 1) }
+                            lastIntRawValue = Int(raw) ?? lastIntRawValue + 1
                         default:
                             throw MacroError(text: "Can not handle enum raw type: \(enumRawType)")
                         }
