@@ -28,10 +28,16 @@ public enum CaseMatcher {
     case bool(Bool)
     /// Match an integer value
     case int(Int)
+    /// Match an integer range
+    case intRange(any RangeExpression<Int>)
     /// Match a double value
     case double(Double)
+    /// Match an double range
+    case doubleRange(any RangeExpression<Double>)
     /// Match a string value
     case string(String)
+    /// Match an string range
+    case stringRange(any RangeExpression<String>)
     /// Match a nested path using dot notation (e.g., "type.middle.youtube")
     case nested(String)
 }
