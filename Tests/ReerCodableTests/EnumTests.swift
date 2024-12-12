@@ -156,3 +156,164 @@ extension TestReerCodable {
         #expect(dict.string("phone") == "oppo")
     }
 }
+
+
+
+@Codable
+enum Video: Codable {
+    @CodingCase(match: .string("youtube"), .string("YOUTUBE"))
+    case youTube
+    
+    @CodingCase(
+        match: .string("vimeo"),
+        values: [CaseValue(label: "id", keys: "ID", "Id"), .init(index: 2, keys: "minutes")]
+    )
+    case vimeo(id: String, duration: TimeInterval = 33, Int)
+    
+    @CodingCase(
+        match: .string("tiktok"),
+        values: [.init(label: "url", keys: "url")]
+    )
+    case tiktok(url: URL, tag: String?)
+}
+
+extension TestReerCodable {
+    @Test(arguments: [
+        """
+        {
+            "youtube": {
+                "id": "ujOc3a7Hav0",
+                "_1": 44.5
+            }
+        }
+        """,
+        """
+        {
+            "YOUTUBE": {
+                "id": "ujOc3a7Hav0",
+                "_1": 44.5
+            }
+        }
+        """,
+        """
+        {
+            "vimeo": {
+                "ID": "234961067",
+                "minutes": 999999
+            }
+        }
+        """,
+        """
+        {
+            "tiktok": {
+                "url": "https://example.com/video.mp4",
+                "tag": "Art"
+            }
+        }
+        """
+    ])
+    func eunmWithAssociated(json: String) throws {
+        let model = try Video.decoded(from: json.data(using: .utf8)!)
+        
+        switch model {
+        case .youTube:
+            if json.lowercased().contains("youtube") {
+                #expect(true)
+            } else {
+                Issue.record("Expected youtube")
+            }
+        case .vimeo(id: let id, duration: let duration, let minutes):
+            if json.lowercased().contains("vimeo"),
+               id == "234961067",
+               duration == 33,
+               minutes == 999999 {
+                #expect(true)
+            } else {
+                Issue.record("Expected vimeo")
+            }
+        case .tiktok(url: let url, tag: let tag):
+            if json.lowercased().contains("tiktok"),
+               url.absoluteString == "https://example.com/video.mp4",
+               tag == "Art" {
+                #expect(true)
+            } else {
+                Issue.record("Expected tiktok")
+            }
+        }
+    }
+}
+
+
+
+@Codable
+enum Video1: Codable {
+    @CodingCase(match: .nested("type.middle.youtube"))
+    case youTube
+    
+    @CodingCase(
+        match: .nested("type.vimeo"),
+        values: [CaseValue(label: "id", keys: "ID", "Id"), .init(index: 2, keys: "minutes")]
+    )
+    case vimeo(id: String, duration: TimeInterval = 33, Int)
+    
+    @CodingCase(
+        match: .nested("type.tiktok"),
+        values: [.init(label: "url", keys: "media")]
+    )
+    case tiktok(url: URL, tag: String?)
+}
+
+extension TestReerCodable {
+    @Test(arguments: [
+        """
+        {
+            "type": {
+                "middle": "youtube"
+            }
+        }
+        """,
+        """
+        {
+            "type": "vimeo",
+            "ID": "234961067",
+            "minutes": 999999
+        }
+        """,
+        """
+        {
+            "type": "tiktok",
+            "media": "https://example.com/video.mp4",
+            "tag": "Art"
+        }
+        """
+    ])
+    func eunmWithAssociated1(json: String) throws {
+        let model = try Video1.decoded(from: json.data(using: .utf8)!)
+        
+        switch model {
+        case .youTube:
+            if json.lowercased().contains("youtube") {
+                #expect(true)
+            } else {
+                Issue.record("Expected youtube")
+            }
+        case .vimeo(id: let id, duration: let duration, let minutes):
+            if json.lowercased().contains("vimeo"),
+               id == "234961067",
+               duration == 33,
+               minutes == 999999 {
+                #expect(true)
+            } else {
+                Issue.record("Expected vimeo")
+            }
+        case .tiktok(url: let url, tag: let tag):
+            if json.lowercased().contains("tiktok"),
+               url.absoluteString == "https://example.com/video.mp4",
+               tag == "Art" {
+                #expect(true)
+            } else {
+                Issue.record("Expected tiktok")
+            }
+        }
+    }
+}
