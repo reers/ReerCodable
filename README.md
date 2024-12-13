@@ -37,6 +37,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 在 Decode `Array`, `Dictionary`, `Set` 时, 通过 `@CompactDecoding` 可以忽略 `null` 值, 而不是抛出错误
 - 支持通过 `@DateCoding` 实现对 `Date` 的各种编解码
 - 支持通过 `@CustomCoding` 实现自定义编解码逻辑
+- 通过使用 `@InheritedCodable` 对子类有更好的支持
 - 对各类 `enum` 提供简单而丰富的编解码能力
 - 支持通过 `ReerCodableDelegate` 来编解码生命周期, 如 `didDecode`, `willEncode`
 - 提供扩展, 支持使用 JSON String, `Dictionary`, `Array` 直接作为参数进行编解码
