@@ -608,12 +608,15 @@ print(string)
 let final: Resp3 = try! string.decoded()
 print(final)
 
-let fd = 5
-switch fd {
-case 5:
-    print(1)
-case 2...6:
-    print(2)
-default:
-    break
+@Codable
+struct Test3 {
+    var name: String = "phoenix"
 }
+let json = """
+{
+"age": 10
+}
+""".data(using: .utf8)!
+
+let ret33 = try! JSONDecoder().decode(Test3.self, from: json)
+print(ret33)

@@ -94,7 +94,7 @@ public struct CaseValue {
 /// ```swift
 /// @Codable
 /// enum Phone {
-///     @CodingCase(match: .bool(true), .int(8), .string("apple"))
+///     @CodingCase(match: .bool(true), .int(8), .string("apple"), .intRange(10...20))
 ///     case apple
 ///     
 ///     @CodingCase(match: .string("MI"), .string("xiaomi"))
@@ -125,8 +125,8 @@ public struct CaseValue {
 ///     @CodingCase(
 ///         match: .nested("type.vimeo"),
 ///         values: [
-///             CaseValue(label: "id", keys: "ID", "Id"),
-///             .init(index: 2, keys: "minutes")
+///             .label("id", keys: "ID", "Id"),
+///             .index(2, keys: "minutes")
 ///         ]
 ///     )
 ///     case vimeo(id: String, duration: TimeInterval = 33, Int)
@@ -158,8 +158,8 @@ public struct CaseValue {
 ///     @CodingCase(
 ///         match: .string("vimeo"),
 ///         values: [
-///             CaseValue(label: "id", keys: "ID"),
-///             .init(label: "duration", keys: "minutes")
+///             .label("id", keys: "ID"),
+///             .label("duration", keys: "minutes")
 ///         ]
 ///     )
 ///     case vimeo(id: String, duration: TimeInterval)
