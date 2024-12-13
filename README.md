@@ -38,6 +38,10 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 支持通过 `@DateCoding` 实现对 `Date` 的各种编解码
 - 支持通过 `@CustomCoding` 实现自定义编解码逻辑
 - 对各类 `enum` 提供简单而丰富的编解码能力
+- 支持通过 `ReerCodableDelegate` 来编解码生命周期, 如 `didDecode`, `willEncode`
+- 提供扩展, 支持使用 JSON String, `Dictionary`, `Array` 直接作为参数进行编解码
+- 支持 `Bool`, `String`, `Double`, `Int`, `CGFloat` 等基本数据类型互相转换
+- 支持通过 `AnyCodable` 来实现对 `Any` 的编解码, 如 `var dict = [String: AnyCodable]`
 
 
 # Requirements
