@@ -138,5 +138,35 @@ final class ReerCodableTests: XCTestCase {
         #endif
     }
 
-    
+    func testExpand() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacroExpansion(
+            """
+            @Codable
+            struct Test {
+                @KebabCase
+                var user_name: String
+            
+                @SnakeCase
+                var imageURLString: String
+                        
+                @SnakeCase
+                var infoJSON: String
+            
+                @KebabCase
+                var resetTTSData: String
+            }
+            """,
+            expandedSource: """
+            struct Test {}
+            
+            extension Test: Codable {
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
 }
