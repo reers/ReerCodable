@@ -22,7 +22,7 @@ struct User {
 }
 ```
 
-# Overview
+# 概述
 ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable 实现。该框架的核心是 @Codable() 宏，它可以在其他宏提供的数据标记下生成具体的实现(⚠️ 在 XCode 中进行宏展开时也只能展开 `@Cdable` 宏, 展开其他宏是没有响应的)
 
 主要包含以下 feature:
@@ -46,9 +46,74 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 支持通过 `AnyCodable` 来实现对 `Any` 的编解码, 如 `var dict = [String: AnyCodable]`
 
 
-# Requirements
+# 环境要求
+XCode 16.0+
 
-# Installation
+iOS 13.0+, macOS 10.15+, tvOS 13.0+, visionOS 1.0+, watchOS 6.0+
 
-# Usage
+Swift 5.10+
+
+swift-syntax 600.0.0+
+
+# 安装
+<details>
+<summary>Swift Package Manager</summary>
+</br>
+<p>你可以使用 <a href="https://swift.org/package-manager">The Swift Package Manager</a> 来安装 ReerCodable，请在你的 <code>Package.swift</code> 文件中添加正确的描述:</p>
+<pre><code class="swift language-swift">import PackageDescription
+let package = Package(
+    name: "YOUR_PROJECT_NAME",
+    targets: [],
+    dependencies: [
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.0.0")
+    ]
+)
+</code></pre>
+<p>接下来，将 <code>ReerCodable</code> 添加到您的 targets 依赖项中，如下所示:</p>
+<pre><code class="swift language-swift">.product(name: "ReerCodable", package: "ReerCodable"),</code></pre>
+<p>然后运行 <code>swift package update</code>。</p>
+</details>
+
+<details>
+<summary>CocoaPods</summary>
+</br>
+<p>由于 CocoaPods 不支持直接使用 Swift Macro, 可以将宏实现编译为二进制提供使用, 接入方式如下, 需要设置<code>s.pod_target_xcconfig</code>来加载宏实现的二进制插件:</p>
+<pre><code class="ruby language-ruby">
+Pod::Spec.new do |s|
+  s.name             = 'YourPod'
+  s.dependency 'ReerCodable', '1.0.0'
+  # 复制以下 config 到你的 pod
+  s.pod_target_xcconfig = {
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
+  }
+end
+</code></pre>
+
+<p>或者, 如果不使用<code>s.pod_target_xcconfig</code>和<code>s.user_target_xcconfig</code>, 也可以在 podfile 中添加如下脚本统一处理:</p>
+<pre><code class="ruby language-ruby">
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    rhea_dependency = target.dependencies.find { |d| ['RheaTime', 'RheaExtension'].include?(d.name) }
+    if rhea_dependency
+      puts "Adding ReerCodable Swift flags to target: #{target.name}"
+      target.build_configurations.each do |config|
+        swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] ||= ['$(inherited)']
+        
+        plugin_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
+        
+        unless swift_flags.join(' ').include?(plugin_flag)
+          swift_flags.concat(plugin_flag.split)
+        end
+        
+        config.build_settings['OTHER_SWIFT_FLAGS'] = swift_flags
+      end
+    end
+  end
+end
+
+</code></pre>
+
+</details>
+
+# 使用
 
