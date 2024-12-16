@@ -22,6 +22,7 @@ let testMacros: [String: Macro.Type] = [
     "CompactDecoding": CompactDecoding.self,
     "CustomCoding": CustomCoding.self,
     "CodingCase": CodingCase.self,
+    "CodingContainer": CodingContainer.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,
@@ -143,18 +144,10 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            struct Test {
-                @KebabCase
-                var user_name: String
-            
-                @SnakeCase
-                var imageURLString: String
-                        
-                @SnakeCase
-                var infoJSON: String
-            
-                @KebabCase
-                var resetTTSData: String
+            @CodingContainer("data.info", workForEncoding: true)
+            struct Person3 {
+                var name: String
+                var age: Int
             }
             """,
             expandedSource: """

@@ -19,34 +19,27 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-import SwiftCompilerPlugin
+import SwiftSyntax
 import SwiftSyntaxMacros
 
-@main
-struct ReerCodablePlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
-        RECodable.self,
-        InheritedCodable.self,
-        CodingKey.self,
-        EncodingKey.self,
-        CodingIgnored.self,
-        Base64Coding.self,
-        DateCoding.self,
-        CompactDecoding.self,
-        CustomCoding.self,
-        CodingCase.self,
-        CodingContainer.self,
-        FlatCase.self,
-        UpperCase.self,
-        CamelCase.self,
-        SnakeCase.self,
-        PascalCase.self,
-        KebabCase.self,
-        CamelSnakeCase.self,
-        PascalSnakeCase.self,
-        ScreamingSnakeCase.self,
-        CamelKebabCase.self,
-        PascalKebabCase.self,
-        ScreamingKebabCase.self,
-    ]
+public struct CodingContainer: PeerMacro {
+    public static func expansion(
+        of node: SwiftSyntax.AttributeSyntax,
+        providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.DeclSyntax] {
+        guard
+            declaration.is(StructDeclSyntax.self)
+            || declaration.is(ClassDeclSyntax.self)
+        else {
+            throw MacroError(text: "@CodingContainer macro is only for `struct` or `class`.")
+        }
+        let keyPath = node.arguments?.as(LabeledExprListSyntax.self)?
+            .first?.expression.as(StringLiteralExprSyntax.self)?
+            .segments.first
+        guard let keyPath, !keyPath.trimmedDescription.isEmpty else {
+            throw MacroError(text: "@CodingContainer macro requires at least one key path.")
+        }
+        return []
+    }
 }
