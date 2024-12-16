@@ -100,6 +100,18 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         return try nestedContainer.nestedContainer(path: Array(path.dropFirst()))
     }
     
+    public func nestedContainer(keyPath: String) throws -> KeyedDecodingContainer<AnyCodingKey> {
+        let path = keyPath.components(separatedBy: ".")
+        guard let first = path.first else { return self }
+        let key = AnyCodingKey(first)
+        let nestedContainer = try nestedContainer(keyedBy: AnyCodingKey.self, forKey: key)
+        if let result = try nestedContainer.nestedContainer(path: Array(path.dropFirst())) {
+            return result
+        } else {
+            throw ReerCodableError(text: "Nested container not found for key path \(keyPath)")
+        }
+    }
+    
     public func nestedContainer(forKeys keys: String...) throws -> KeyedDecodingContainer<AnyCodingKey>? {
         for key in keys {
             if let container = try? nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(key)) {

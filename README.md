@@ -30,6 +30,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 支持通过字符串表达嵌套的 `CodingKey`, 如 `@CodingKey("nested.key")`
 - 允许使用多个 `CodingKey` 来进行 Decode, 如 `@CodingKey("key1", "key2")`
 - 支持使用 `@SnakeCase`, `KebabCase` 等来标记类型或属性来方便地实现命名转换
+- 通过使用 `@CodingContainer` 自定义 Coding 时的嵌套容器 
 - 支持 Encode 时指定的 `CodingKey`, 如 `EncodingKey("encode_key")`
 - 允许解码失败时使用默认值, 从而避免 `keyNotFound` 错误发生
 - 允许使用 `@CodingIgnored` 在编解码过程中忽略特定属性

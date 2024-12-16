@@ -64,6 +64,8 @@ struct TypeInfo {
     var enumCases: [EnumCase] = []
     var caseStyles: [CaseStyle] = []
     var properties: [PropertyInfo] = []
+    var codingContainer: String?
+    var codingContainerWorkForEncoding = false
     
     init(decl: DeclGroupSyntax) throws {
         self.decl = decl
@@ -186,7 +188,16 @@ struct TypeInfo {
             }
             return nil
         }
-        
+        if let attribute = decl.attributes.firstAttribute(named: "CodingContainer"),
+           let arguments = attribute.as(AttributeSyntax.self)?.arguments?.as(LabeledExprListSyntax.self) {
+            codingContainer = arguments
+                .first?.expression.as(StringLiteralExprSyntax.self)?
+                .segments.trimmedDescription
+            if arguments.last?.label?.trimmedDescription == "workForEncoding",
+               arguments.last?.expression.trimmedDescription == "true" {
+                codingContainerWorkForEncoding = true
+            }
+        }
         properties = try parseProperties()
     }
 }
@@ -524,9 +535,18 @@ extension TypeInfo {
         if isOverride {
             needRequired = true
         }
-        let container = isEnum && !hasEnumAssociatedValue
+        let hasCodingNested = codingContainer != nil
+        var container = isEnum && !hasEnumAssociatedValue
             ? "let container = try decoder.singleValueContainer()"
-            : "let container = try decoder.container(keyedBy: AnyCodingKey.self)"
+            : "\(hasCodingNested ? "var" : "let") container = try decoder.container(keyedBy: AnyCodingKey.self)"
+        if let codingContainer {
+            container.append(
+                """
+                
+                container = try container.nestedContainer(keyPath: "\(codingContainer)")
+                """
+            )
+        }
         let decoder: DeclSyntax = """
         \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
             \(raw: container)
@@ -593,9 +613,17 @@ extension TypeInfo {
                 }
                 .joined(separator: "\n")
         }
-        let container = isEnum && !hasEnumAssociatedValue
+        var container = isEnum && !hasEnumAssociatedValue
             ? "var container = encoder.singleValueContainer()"
             : "var container = encoder.container(keyedBy: AnyCodingKey.self)"
+        if codingContainerWorkForEncoding, let codingContainer {
+            container.append(
+                """
+                
+                container = try container.nestedContainer(keyPath: "\(codingContainer)")
+                """
+            )
+        }
         let accessable = if isOpen { "open " } else if isPublic || hasPublicOrOpenProperty { "public " } else { "" }
         let encoder: DeclSyntax = """
         \(raw: accessable)\(raw: isOverride ? "override " : "")func encode(to encoder: Encoder) throws {
