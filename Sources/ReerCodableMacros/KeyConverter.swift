@@ -79,12 +79,32 @@ struct KeyConverter {
         while i < preparedString.count {
             let index = preparedString.index(preparedString.startIndex, offsetBy: i)
             let character = preparedString[index]
-            var hasHaddedSeparator = false
+            var hasAddedSeparator = false
 
-            if i >= 1, (!character.isAlphaNumeric || (character.isUppercase && !isAllCaps)) {
-                resultString += separator.rawValue
-                hasHaddedSeparator = true
+            // 检查是否需要添加分隔符
+            if i > 0 {
+                let previousIndex = preparedString.index(before: index)
+                let previousCharacter = preparedString[previousIndex]
+
+                // 如果当前字符是大写字母，且不是连续大写字母的开头，则添加分隔符
+                // 连续大写字母的开头指：前一个字符不是大写字母或前一个字符不是字母数字
+                // 另外，如果当前是大写，下一个是小写，也要添加分隔符
+                if character.isUppercase && (!isAllCaps && ( !previousCharacter.isUppercase || !previousCharacter.isAlphaNumeric)) {
+                    resultString += separator.rawValue
+                    hasAddedSeparator = true
+                } else if !character.isAlphaNumeric {
+                    resultString += separator.rawValue
+                    hasAddedSeparator = true
+                } else if character.isUppercase && i + 1 < preparedString.count {
+                    let nextIndex = preparedString.index(after: index)
+                    let nextCharacter = preparedString[nextIndex]
+                    if nextCharacter.isLowercase {
+                        resultString += separator.rawValue
+                        hasAddedSeparator = true
+                    }
+                }
             }
+
 
             guard let nextCharacter = {
                 if character.isAlphaNumeric {
@@ -98,17 +118,18 @@ struct KeyConverter {
             }() else {
                 continue
             }
+
             switch wordCase {
             case .lowerCase:
                 resultString += String(nextCharacter).lowercased()
             case .upperCase:
                 resultString += String(nextCharacter).uppercased()
             case .camelCase:
-                resultString += hasHaddedSeparator
+                resultString += hasAddedSeparator
                     ? String(nextCharacter).uppercased()
                     : String(nextCharacter).lowercased()
             case .pascalCase:
-                resultString += hasHaddedSeparator || i == 0
+                resultString += hasAddedSeparator || i == 0
                     ? String(nextCharacter).uppercased()
                     : String(nextCharacter).lowercased()
             }
