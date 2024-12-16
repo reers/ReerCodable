@@ -91,26 +91,25 @@ end
 
 <p>或者, 如果不使用<code>s.pod_target_xcconfig</code>和<code>s.user_target_xcconfig</code>, 也可以在 podfile 中添加如下脚本统一处理:</p>
 <pre><code class="ruby language-ruby">
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    rhea_dependency = target.dependencies.find { |d| ['RheaTime', 'RheaExtension'].include?(d.name) }
-    if rhea_dependency
-      puts "Adding ReerCodable Swift flags to target: #{target.name}"
-      target.build_configurations.each do |config|
-        swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] ||= ['$(inherited)']
-        
-        plugin_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
-        
-        unless swift_flags.join(' ').include?(plugin_flag)
-          swift_flags.concat(plugin_flag.split)
+    post_install do |installer|
+      installer.pods_project.targets.each do |target|
+        rhea_dependency = target.dependencies.find { |d| ['ReerCodable'].include?(d.name) }
+        if rhea_dependency
+          puts "Adding ReerCodable Swift flags to target: #{target.name}"
+          target.build_configurations.each do |config|
+            swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] ||= ['$(inherited)']
+            
+            plugin_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
+            
+            unless swift_flags.join(' ').include?(plugin_flag)
+              swift_flags.concat(plugin_flag.split)
+            end
+            
+            config.build_settings['OTHER_SWIFT_FLAGS'] = swift_flags
+          end
         end
-        
-        config.build_settings['OTHER_SWIFT_FLAGS'] = swift_flags
       end
     end
-  end
-end
-
 </code></pre>
 
 </details>
