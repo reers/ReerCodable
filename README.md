@@ -23,7 +23,7 @@ struct User {
 ```
 
 # Overview
-ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable 实现。该框架的核心是 @Codable() 宏，它可以在其他宏提供的数据标记下生成具体的实现。
+ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable 实现。该框架的核心是 @Codable() 宏，它可以在其他宏提供的数据标记下生成具体的实现(⚠️ 在 XCode 中进行宏展开时也只能展开 `@Cdable` 宏, 展开其他宏是没有响应的)
 
 主要包含以下 feature:
 - 通过 `@CodingKey("key")` 为每个属性声明自定义的 `CodingKey` 值, 无需编写所有的 `CodingKey` 值.
