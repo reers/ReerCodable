@@ -1,3 +1,5 @@
+[简体中文](README_CN.md)
+
 # ReerCodable
 Extension of `Codable` using Swift macros to make serialization simpler with declarative annotations!
 
