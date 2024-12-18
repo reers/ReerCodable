@@ -45,7 +45,7 @@ public enum DateCodingStrategy {
     /// Encodes a String, according to the provided static or global formatter
     case formatted(DateFormatter)
     
-    static let iso8601Formatter: ISO8601DateFormatter = {
+    nonisolated(unsafe) static let iso8601Formatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = .withInternetDateTime
         return formatter
