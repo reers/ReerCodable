@@ -290,7 +290,7 @@ struct User {
 }
 ```
 
-### 9. Base64 Encoding
+### 9. Base64 Coding
 
 Automatically handle conversion between base64 strings and `Data`, `[UInt8]` types:
 
@@ -317,7 +317,7 @@ struct User {
 }
 ```
 
-### 11. Date Encoding
+### 11. Date Coding
 
 Support various date format encoding/decoding:
 
