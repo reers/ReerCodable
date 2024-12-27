@@ -421,16 +421,16 @@ extension TypeInfo {
         }
         
         let flated = cases.flatMap { $0.matches }
-        let hasNested = flated.contains { $0.key == "Nested" }
-        let hasOtherTypes = flated.contains { $0.key != "Nested" }
-        if hasNested && hasOtherTypes {
-            throw MacroError(text: "Invalid usage: .nested() cannot be used with other match patterns like .string(), .int()...")
+        let hasPathValue = flated.contains { $0.key == "PathValue" }
+        let hasOtherTypes = flated.contains { $0.key != "PathValue" }
+        if hasPathValue && hasOtherTypes {
+            throw MacroError(text: "Invalid usage: .pathValue() cannot be used with other match patterns like .string(), .int()...")
         }
         
         let hasAssociated = cases.contains { !$0.associated.isEmpty }
-        let hasNonStringOrNested = flated.contains { !($0.key == "Nested" || $0.key == "String") }
+        let hasNonStringOrNested = flated.contains { !($0.key == "PathValue" || $0.key == "String") }
         if hasAssociated && hasNonStringOrNested {
-            throw MacroError(text: "Only .nested() and .string() patterns are allowed for enum cases with associated values")
+            throw MacroError(text: "Only .pathValue() and .string() patterns are allowed for enum cases with associated values")
         }
     }
 }
@@ -664,14 +664,14 @@ extension TypeInfo {
     /// Return: (assignments, shouldAddDidDecode)
     private func generateEnumDecoderAssignments() -> (String, Bool) {
         if hasEnumAssociatedValue {
-            let hasNested = enumCases.contains { $0.matches["Nested"] != nil }
+            let hasPathValue = enumCases.contains { $0.matches["PathValue"] != nil }
             var index = -1
             let findCase = enumCases.compactMap { theCase in
                 index += 1
                 let hasAssociated = !theCase.associated.isEmpty
                 var condition: String
-                if hasNested {
-                    let keyPaths = theCase.matches["Nested"]!
+                if hasPathValue {
+                    let keyPaths = theCase.matches["PathValue"]!
                     condition = """
                         container.match(keyPaths: [\(keyPaths.joined(separator: ", "))])
                         """
@@ -697,7 +697,7 @@ extension TypeInfo {
                         keys.removeDuplicates()
                         let hasDefault = value.defaultValue != nil
                         return """
-                        let \(value.variableName) = (try\(hasDefault ? "?" : "") \(hasNested ? "container" : "nestedContainer").decode(type: \(value.type).self, keys: [\(keys.joined(separator: ", "))]))\(hasDefault ? " ?? (\(value.defaultValue!))" : "")
+                        let \(value.variableName) = (try\(hasDefault ? "?" : "") \(hasPathValue ? "container" : "nestedContainer").decode(type: \(value.type).self, keys: [\(keys.joined(separator: ", "))]))\(hasDefault ? " ?? (\(value.defaultValue!))" : "")
                         """
                         }.joined(separator: "\n    "))
                         self = \(theCase.initText)
@@ -707,7 +707,7 @@ extension TypeInfo {
             
             return (
                 """
-                \(hasNested ? "" : "guard container.allKeys.count == 1 else { throw ReerCodableError(text: \"Invalid number of keys found, expected one.\") }")
+                \(hasPathValue ? "" : "guard container.allKeys.count == 1 else { throw ReerCodableError(text: \"Invalid number of keys found, expected one.\") }")
                 \(findCase)
                 else {
                     throw ReerCodableError(text: "Key not found for \\(String(describing: Self.self)).")
@@ -753,13 +753,13 @@ extension TypeInfo {
     
     private func generateEnumEncoderEncoding() -> String {
         if hasEnumAssociatedValue {
-            let hasNested = enumCases.contains { $0.matches["Nested"] != nil }
+            let hasPathValue = enumCases.contains { $0.matches["PathValue"] != nil }
             let encodeCase = """
                 \(enumCases.compactMap {
                     let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
                     let hasAssociated = !$0.associated.isEmpty
-                    let encodeCase = if hasNested, let keyPath = $0.matches["Nested"]?.first {
+                    let encodeCase = if hasPathValue, let keyPath = $0.matches["PathValue"]?.first {
                         """
                         try container.encode(keyPath: \(keyPath))
                         """
@@ -774,7 +774,7 @@ extension TypeInfo {
                         \(encodeCase)
                         \($0.associated.compactMap { value in
                         """
-                        try \(hasNested ? "container" : "nestedContainer").encode(\(value.variableName), forKey: AnyCodingKey("\(value.variableName)"))
+                        try \(hasPathValue ? "container" : "nestedContainer").encode(\(value.variableName), forKey: AnyCodingKey("\(value.variableName)"))
                         """
                         }.joined(separator: "\n    "))
                     """
