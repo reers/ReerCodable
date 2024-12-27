@@ -43,10 +43,10 @@ public struct CodingCase: PeerMacro {
         try node.arguments?.as(LabeledExprListSyntax.self)?.forEach {
             if ($0.label?.trimmedDescription == "match" || $0.label == nil),
                let functionCall = $0.expression.as(FunctionCallExprSyntax.self),
-               functionCall.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.trimmedDescription == "nested",
+               functionCall.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.trimmedDescription == "pathValue",
                let param = functionCall.arguments.first?.expression.as(StringLiteralExprSyntax.self)?.segments.first?.trimmedDescription,
                !param.contains("."){
-                throw MacroError(text: ".nested(\(param)) requires its param contains at least one dot `.`")
+                throw MacroError(text: ".pathValue(\(param)) requires its param contains at least one dot `.`")
             }
         }
         

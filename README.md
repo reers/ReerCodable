@@ -541,7 +541,7 @@ enum Phone: Codable {
         case tiktok(url: URL, tag: String?)
     }
     ```
-    - The second is where enum values and their associated values are at the same level or have custom matching structures, using `.nested()` for custom path value matching
+    - The second is where enum values and their associated values are at the same level or have custom matching structures, using `.pathValue()` for custom path value matching
     ```swift
     @Codable
     enum Video1: Codable {
@@ -550,7 +550,7 @@ enum Phone: Codable {
         ///         "middle": "youtube"
         ///     }
         /// }
-        @CodingCase(match: .nested("type.middle.youtube"))
+        @CodingCase(match: .pathValue("type.middle.youtube"))
         case youTube
         
         /// {
@@ -559,7 +559,7 @@ enum Phone: Codable {
         ///     "minutes": 999999
         /// }
         @CodingCase(
-            match: .nested("type.vimeo"),
+            match: .pathValue("type.vimeo"),
             values: [.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
         )
         case vimeo(id: String, duration: TimeInterval = 33, Int)
@@ -570,7 +570,7 @@ enum Phone: Codable {
         ///     "tag": "Art"
         /// }
         @CodingCase(
-            match: .nested("type.tiktok"),
+            match: .pathValue("type.tiktok"),
             values: [.label("url", keys: "media")]
         )
         case tiktok(url: URL, tag: String?)

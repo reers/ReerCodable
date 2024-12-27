@@ -21,8 +21,8 @@
 
 /// Matchers for enum case decoding.
 ///
-/// Note: `.nested` cannot be used together with other matchers (`.string`, `.int`, etc.).
-/// For enums with associated values, only `.nested` or `.string` can be used.
+/// Note: `.pathValue` cannot be used together with other matchers (`.string`, `.int`, etc.).
+/// For enums with associated values, only `.pathValue` or `.string` can be used.
 public enum CaseMatcher {
     /// Match a boolean value
     case bool(Bool)
@@ -38,8 +38,8 @@ public enum CaseMatcher {
     case string(String)
     /// Match an string range
     case stringRange(any RangeExpression<String>)
-    /// Match a nested path using dot notation (e.g., "type.middle.youtube")
-    case nested(String)
+    /// Match a nested path value using dot notation (e.g. "type.tiktok", "type.middle.youtube")
+    case pathValue(String)
 }
 
 /// Configuration for associated values in enum cases.
@@ -87,8 +87,8 @@ public struct CaseValue {
 /// 2. Complex enum cases with associated values
 ///
 /// Important restrictions:
-/// - `.nested` matcher cannot be combined with other matchers
-/// - For enums with any associated values, only `.nested` or `.string` matchers can be used
+/// - `.pathValue` matcher cannot be combined with other matchers
+/// - For enums with any associated values, only `.pathValue` or `.string` matchers can be used
 ///
 /// Example 1: Simple enum without associated values:
 /// ```swift
@@ -102,7 +102,7 @@ public struct CaseValue {
 /// }
 /// ```
 ///
-/// Example 2: Enum with associated values using nested matching:
+/// Example 2: Enum with associated values using path value matching:
 /// ```
 /// {
 ///     "type": {
@@ -119,11 +119,11 @@ public struct CaseValue {
 /// ```swift
 /// @Codable
 /// enum Video {
-///     @CodingCase(match: .nested("type.middle.youtube"))
+///     @CodingCase(match: .pathValue("type.middle.youtube"))
 ///     case youTube
 ///     
 ///     @CodingCase(
-///         match: .nested("type.vimeo"),
+///         match: .pathValue("type.vimeo"),
 ///         values: [
 ///             .label("id", keys: "ID", "Id"),
 ///             .index(2, keys: "minutes")
