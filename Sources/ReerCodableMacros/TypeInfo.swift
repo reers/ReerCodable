@@ -510,7 +510,7 @@ extension TypeInfo {
                     // custom decode by type
                     else if let customByType = property.customByType {
                         body = """
-                            \(customByType).decode(by: decoder)
+                            \(customByType).decode(by: decoder, keys: [\(property.codingKeys.joined(separator: ", "))])
                             """
                     }
                     // normal
@@ -603,7 +603,7 @@ extension TypeInfo {
                     // custom encode by type
                     else if let customByType = property.customByType {
                         return """
-                        try \(customByType).encode(by: encoder, self.\(property.name))
+                        try \(customByType).encode(by: encoder, key: \(encodingKey), value: self.\(property.name))
                         """
                     }
                     // normal

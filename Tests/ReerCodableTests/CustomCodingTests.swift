@@ -4,16 +4,17 @@ import Foundation
 
 // 1st 2nd 3rd 4th 5th  -> 1 2 3 4 5
 struct RankTransformer: CodingCustomizable {
+    
     typealias Value = UInt
     
-    static func decode(by decoder: any Decoder) throws -> UInt {
-        var temp: String = try decoder.value(forKeys: "rank")
+    static func decode(by decoder: any Decoder, keys: [String]) throws -> UInt {
+        var temp: String = try decoder.value(forKeys: keys)
         temp.removeLast(2)
         return UInt(temp) ?? 0
     }
     
-    static func encode(by encoder: any Encoder, _ value: UInt) throws {
-        try encoder.set(value, forKey: "rank")
+    static func encode(by encoder: Encoder, key: String, value: Value) throws {
+        try encoder.set(value, forKey: key)
     }
 }
 
