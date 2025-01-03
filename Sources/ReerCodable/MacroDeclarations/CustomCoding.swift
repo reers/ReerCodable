@@ -49,15 +49,18 @@ public protocol CodingCustomizable {
     associatedtype Value: Codable
     
     /// Custom decoding implementation
-    /// - Parameter decoder: The decoder to read values from
+    /// - Parameters:
+    ///   - decoder: The decoder to read values from
+    ///   - keys: property name and converted keys.
     /// - Returns: The decoded value after custom transformation
-    static func decode(by decoder: Decoder) throws -> Value
+    static func decode(by decoder: Decoder, keys: [String]) throws -> Value
     
     /// Custom encoding implementation
     /// - Parameters:
     ///   - encoder: The encoder to write values to
+    ///   - key: property name.
     ///   - value: The value to encode
-    static func encode(by encoder: Encoder, _ value: Value) throws
+    static func encode(by encoder: Encoder, key: String, value: Value) throws
 }
 
 /// The `@CustomCoding` macro with type-based customization.

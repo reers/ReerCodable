@@ -34,15 +34,6 @@ public struct CustomCoding: PeerMacro {
         guard variable.attributes.count == 1 else {
             throw MacroError(text: "@CustomCoding macro cannot be used with other attributes.")
         }
-        /*
-        guard
-            node.attributeName.as(IdentifierTypeSyntax.self)?
-                .genericArgumentClause?.arguments.first?
-                .argument.trimmedDescription == variable.type
-        else {
-            throw MacroError(text: "@CustomCoding macro requires a generic type declaration.")
-        }
-         */
         return []
     }
 }
