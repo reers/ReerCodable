@@ -596,6 +596,20 @@ class User {
         // Process before encoding
     }
 }
+
+@Codable
+struct Child: Equatable {
+    var name: String
+    
+    mutating func didDecode(from decoder: any Decoder) throws {
+        name = "reer"
+    }
+    
+    func willEncode(to encoder: any Encoder) throws {
+        print(name)
+    }
+}
+
 ```
 
 ### 16. JSON Extension Support

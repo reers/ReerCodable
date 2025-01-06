@@ -595,6 +595,20 @@ class User {
         // 在编码前进行处理
     }
 }
+
+@Codable
+struct Child: Equatable {
+    var name: String
+    
+    mutating func didDecode(from decoder: any Decoder) throws {
+        name = "reer"
+    }
+    
+    func willEncode(to encoder: any Encoder) throws {
+        print(name)
+    }
+}
+
 ```
 
 ### 16. JSON 扩展支持
