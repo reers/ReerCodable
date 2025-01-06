@@ -10,6 +10,14 @@ enum BloodType {
 @Codable
 struct Child: Equatable {
     var name: String
+    
+    mutating func didDecode(from decoder: any Decoder) throws {
+        name = "reer"
+    }
+    
+    func willEncode(to encoder: any Encoder) throws {
+        print(name)
+    }
 }
 
 @Codable
@@ -91,7 +99,7 @@ struct TestReerCodable {
         #expect(model.age == 33)
         #expect(model.weight == 75.0)
         #expect(model.a_b == "abtest")
-        #expect(model.childs == [Child(name: "nic")])
+        #expect(model.childs == [Child(name: "reer")])
         #expect(model.spouse == "NYC")
         #expect(model.isMale == true)
         #expect(model.ignore == [])

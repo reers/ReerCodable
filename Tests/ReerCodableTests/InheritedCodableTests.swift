@@ -5,11 +5,26 @@ import Foundation
 @Codable
 class Animal {
     var name: String
+    func didDecode(from decoder: any Decoder) throws {
+        
+    }
+    
+    func willEncode(to encoder: any Encoder) throws {
+        
+    }
 }
 
 @InheritedCodable
 class Cat: Animal {
     var color: String
+    
+    override func didDecode(from decoder: any Decoder) throws {
+        try super.didDecode(from: decoder)
+    }
+    
+    override func willEncode(to encoder: any Encoder) throws {
+        try super.willEncode(to: encoder)
+    }
 }
 
 let jsonData3 = """
