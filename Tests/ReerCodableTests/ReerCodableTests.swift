@@ -2,6 +2,8 @@
 import Testing
 import Foundation
 
+// MARK: - Normal
+
 @Codable
 enum BloodType {
     case A, B, AB, O
@@ -153,5 +155,152 @@ struct TestReerCodable {
         #expect(dict?["ignore"] == nil)
         #expect(dict.string("data") == "aGVsbG8gd29ybGQ=")
         #expect(dict?["i_am_array"] as? [String] == ["a", "b", "c"])
+    }
+}
+
+// MARK: - Recursive
+
+
+@Codable
+class Person4 {
+    var name: String = ""
+    var parent: Person4?
+}
+ 
+let json4: [String: Any] = [
+    "name": "Jack",
+    "parent": ["name": "Jim"]
+]
+
+extension TestReerCodable {
+    @Test
+    func recursive() throws {
+        // Decode
+        let model = try Person4.decoded(from: json4)
+        #expect(model.name == "Jack")
+        #expect(model.parent?.name == "Jim")
+        
+        // Encode
+        let dict = try model.encodedDict()
+        #expect(dict.string("name") == "Jack")
+        #expect(dict["parent"] as! [String : String] == ["name": "Jim"])
+        print(dict)
+    }
+}
+
+// MARK: - Generic Type
+
+@Codable
+struct NetResponse<Element: Codable> {
+    let data: Element?
+    let msg: String
+    private(set) var code: Int = 0
+}
+
+@Codable
+struct User4 {
+    let id: String
+    let nickName: String
+}
+
+@Codable
+struct Goods {
+    private(set) var price: CGFloat = 0.0
+    let name: String
+}
+ 
+let json1 = """
+{
+    "data": {"nickName": "phoenix", "id": 123123},
+    "msg": "success",
+    "code" : 200
+}
+"""
+
+let json2 = """
+{
+    "data": [
+        {"price": "6199", "name": "iPhone XR"},
+        {"price": "8199", "name": "iPhone XS"},
+        {"price": "9099", "name": "iPhone Max"}
+    ],
+    "msg": "success",
+    "code" : 200
+}
+"""
+
+extension TestReerCodable {
+    @Test
+    func generic1() throws {
+        // Decode
+        let model = try NetResponse<User4>.decoded(from: json1)
+        #expect(model.msg == "success")
+        #expect(model.code == 200)
+        #expect(model.data?.nickName == "phoenix")
+        #expect(model.data?.id == "123123")
+        
+        
+        // Encode
+        let dict = try model.encodedDict()
+        #expect(dict.string("msg") == "success")
+        #expect(dict.int("code") == 200)
+        if let data = dict["data"] as? [String : Any] {
+            #expect(data.string("nickName") == "phoenix")
+            #expect(data.string("id") == "123123")
+        }
+        print(dict)
+    }
+    
+    @Test
+    func generic2() throws {
+        // Decode
+        let model = try NetResponse<[Goods]>.decoded(from: json2)
+        #expect(model.msg == "success")
+        #expect(model.code == 200)
+        
+        #expect(model.data?.count == 3)
+        #expect(model.data?[0].price == 6199)
+        #expect(model.data?[0].name == "iPhone XR")
+        #expect(model.data?[1].price == 8199)
+        #expect(model.data?[1].name == "iPhone XS")
+        #expect(model.data?[2].price == 9099)
+        #expect(model.data?[2].name == "iPhone Max")
+        
+        // Encode
+        let dict = try model.encodedDict()
+        #expect(dict.string("msg") == "success")
+        #expect(dict.int("code") == 200)
+        if let data = dict["data"] as? [[String : Any]] {
+            #expect(data[0].double("price") == 6199)
+            #expect(data[1].double("price") == 8199)
+            #expect(data[2].double("price") == 9099)
+            
+            #expect(data[0].string("name") == "iPhone XR")
+            #expect(data[1].string("name") == "iPhone XS")
+            #expect(data[2].string("name") == "iPhone Max")
+        }
+        print(dict)
+    }
+}
+
+// MARK: - Model Array
+
+@Codable
+struct Car {
+    var name: String = ""
+    var price: Double = 0.0
+}
+let json5: [[String: Any]] = [
+    ["name": "Benz", "price": 98.6],
+    ["name": "Bently", "price": 305.7],
+    ["name": "Audi", "price": 64.7]
+]
+
+extension TestReerCodable {
+    @Test
+    func modelArray() throws {
+        let models = try [Car].decoded(from: json5)
+        #expect(models[2].name == "Audi")
+        #expect(models[1].price == 305.7)
     }
 }

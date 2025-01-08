@@ -68,3 +68,20 @@ extension Optional where Wrapped == [String: Any] {
         return self[key] as? String
     }
 }
+extension [String: Any] {
+    func int(_ key: String) -> Int? {
+        return self[key] as? Int
+    }
+    
+    func bool(_ key: String) -> Bool? {
+        return self[key] as? Bool
+    }
+    
+    func double(_ key: String) -> Double? {
+        return self[key] as? Double
+    }
+    
+    func string(_ key: String) -> String? {
+        return self[key] as? String
+    }
+}
