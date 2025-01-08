@@ -203,7 +203,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             if let element = try? arrayContainer.decode(Element.self) {
                 tempArray.append(element)
             } else {
-                _ = try? arrayContainer.decodeNil()
+                _ = try? arrayContainer.superDecoder()
             }
         }
         return tempArray

@@ -21,6 +21,16 @@ struct Child: Equatable {
 }
 
 @Codable
+struct Item: Equatable {
+    let id: Int
+}
+
+@Codable
+struct User3: Equatable {
+    let name: String
+}
+
+@Codable
 class Person1: Codable {
     @CodingKey("user_name")
     let name: String
@@ -54,6 +64,15 @@ class Person1: Codable {
     @CompactDecoding
     var array: [String]
     
+    @CompactDecoding
+    var items: [Item]
+    
+    @CompactDecoding
+    var dict: [String: User3]
+    
+    @CompactDecoding
+    var uniqueIds: Set<String>
+    
     // Optional enum decoding will not throw a error if not exist
     var bloodType: BloodType?
     
@@ -84,7 +103,10 @@ let jsonData = """
     ],
     "spouse": "NYC",
     "is_male": "1",
-    "data": "aGVsbG8gd29ybGQ="
+    "data": "aGVsbG8gd29ybGQ=",
+    "items": [{"id": 1},  {"id": 2}, {"invalid": true}],
+    "dict": {"a": {"name": "Alice"}, "b": null, "c": {"invalid": true}},
+    "uniqueIds": ["a", null, "b", "a"]
 }
 """.data(using: .utf8)!
 
@@ -106,6 +128,9 @@ struct TestReerCodable {
         #expect(model.data?.utf8String == "hello world")
         #expect(model.array == ["a", "b", "c"])
         #expect(model.bloodType == nil)
+        #expect(model.items == [.init(id: 1), .init(id: 2)])
+        #expect(model.dict == ["a": .init(name: "Alice")])
+        #expect(model.uniqueIds == ["a", "b"])
         
         model.ignore = Set(arrayLiteral: "1", "2")
         
@@ -122,7 +147,7 @@ struct TestReerCodable {
         #expect(otherInfo.double("weight") == 75.0)
         #expect(dict.string("a.b") == "abtest")
         let childs = (dict?["childs"] as? [[String:Any]])?.first
-        #expect(childs.string("name") == "nic")
+        #expect(childs.string("name") == "reer")
         #expect(dict.string("spouse") == "NYC")
         #expect(dict.int("is_male") == 1)
         #expect(dict?["ignore"] == nil)
