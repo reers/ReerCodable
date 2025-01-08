@@ -304,3 +304,26 @@ extension TestReerCodable {
         #expect(models[1].price == 305.7)
     }
 }
+
+// MARK: - Nested Model
+
+enum Top {
+    @Codable
+    struct User {
+        let name: String
+    }
+}
+let json6 = [
+    "name": "phoenix"
+]
+extension TestReerCodable {
+    @Test
+    func nestedModel() throws {
+        let model = try Top.User.decoded(from: json6)
+        #expect(model.name == "phoenix")
+        
+        let dict = try model.encodedDict()
+        #expect(dict.string("name") == "phoenix")
+    }
+}
+
