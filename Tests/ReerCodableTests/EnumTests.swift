@@ -222,6 +222,10 @@ extension TestReerCodable {
         case .youTube:
             if json.lowercased().contains("youtube") {
                 #expect(true)
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let index = modelData.stringAnyDictionary?.index(forKey: "youTube")
+                #expect(index != nil)
             } else {
                 Issue.record("Expected youtube")
             }
@@ -231,6 +235,13 @@ extension TestReerCodable {
                duration == 33,
                minutes == 999999 {
                 #expect(true)
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary?["vimeo"] as? [String: Any]
+                #expect(dict != nil)
+                #expect(dict.string("id") == "234961067")
+                #expect(dict.int("_2") == 999999)
+                #expect(dict.int("duration") == 33)
             } else {
                 Issue.record("Expected vimeo")
             }
@@ -239,6 +250,12 @@ extension TestReerCodable {
                url.absoluteString == "https://example.com/video.mp4",
                tag == "Art" {
                 #expect(true)
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary?["tiktok"] as? [String: Any]
+                #expect(dict != nil)
+                #expect(dict.string("url") == "https://example.com/video.mp4")
+                #expect(dict.string("tag") == "Art")
             } else {
                 Issue.record("Expected tiktok")
             }
@@ -297,6 +314,11 @@ extension TestReerCodable {
         case .youTube:
             if json.lowercased().contains("youtube") {
                 #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary?["type"] as? [String: Any]
+                #expect(dict.string("middle") == "youtube")
             } else {
                 Issue.record("Expected youtube")
             }
@@ -306,6 +328,14 @@ extension TestReerCodable {
                duration == 33,
                minutes == 999999 {
                 #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary
+                #expect(dict.string("type") == "vimeo")
+                #expect(dict.double("duration") == 33)
+                #expect(dict.string("id") == "234961067")
+                #expect(dict.int("_2") == 999999)
             } else {
                 Issue.record("Expected vimeo")
             }
@@ -314,6 +344,13 @@ extension TestReerCodable {
                url.absoluteString == "https://example.com/video.mp4",
                tag == "Art" {
                 #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary
+                #expect(dict.string("type") == "tiktok")
+                #expect(dict.string("url") == "https://example.com/video.mp4")
+                #expect(dict.string("tag") == "Art")
             } else {
                 Issue.record("Expected tiktok")
             }
