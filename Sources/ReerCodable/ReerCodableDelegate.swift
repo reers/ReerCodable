@@ -19,8 +19,21 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+/// Protocol that provides hooks to perform custom actions during decode/encode lifecycle
+/// - Note: Implementers can use this protocol to perform additional setup after decoding
+///         or preparation before encoding
 public protocol ReerCodableDelegate {
+    
+    /// Called after decoding is complete but before the object is fully initialized
+    /// - Parameter decoder: The decoder that was used to decode the object
+    /// - Throws: Any error that occurs during post-decode processing
+    /// - Important: ⚠️ This method can be marked as `mutating` to modify self if needed
     func didDecode(from decoder: any Decoder) throws
+    
+    /// Called just before encoding begins
+    /// - Parameter encoder: The encoder that will be used to encode the object
+    /// - Throws: Any error that occurs during pre-encode processing
+    /// - Important: ⚠️ This method must NOT modify self if self is a Value type - `mutating` are not allowed
     func willEncode(to encoder: any Encoder) throws
 }
 
