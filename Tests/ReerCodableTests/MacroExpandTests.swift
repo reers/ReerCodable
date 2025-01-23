@@ -23,6 +23,7 @@ let testMacros: [String: Macro.Type] = [
     "CustomCoding": CustomCoding.self,
     "CodingCase": CodingCase.self,
     "CodingContainer": CodingContainer.self,
+    "DefaultInstance": DefaultInstance.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,
@@ -44,9 +45,11 @@ final class ReerCodableTests: XCTestCase {
         #if canImport(ReerCodableMacros)
         assertMacroExpansion(
             """
-            @InheritedCodable
-            class LLLA: Equatable {
-                
+            @Codable(memberwiseInit: false)
+            @DefaultInstance
+            struct Model {
+                @EncodingKey("two#words")
+                var twoWords: String
             }
             """,
             expandedSource: """

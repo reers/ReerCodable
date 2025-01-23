@@ -91,9 +91,30 @@ extension RECodable: MemberMacro {
             hasMemberwiseInit = false
         }
         
+        var hasDefaultInstance = false
+        if let structDecl = declaration.as(StructDeclSyntax.self),
+           structDecl.attributes.containsAttribute(named: "DefaultInstance") {
+            hasDefaultInstance = true
+        }
+        if let classDecl = declaration.as(ClassDeclSyntax.self),
+           classDecl.attributes.containsAttribute(named: "DefaultInstance") {
+            hasDefaultInstance = true
+        }
+        if let enumDecl = declaration.as(EnumDeclSyntax.self),
+           enumDecl.attributes.containsAttribute(named: "DefaultInstance") {
+            hasDefaultInstance = true
+        }
+        
+        if hasDefaultInstance && !hasMemberwiseInit {
+            throw MacroError(text: "@DefaultInstance requires 'memberwiseInit' is 'true'")
+        }
+        
         var decls = [decoder, encoder]
         if hasMemberwiseInit, !declaration.is(EnumDeclSyntax.self) {
             decls.append(try typeInfo.generateMemberwiseInit())
+        }
+        if hasDefaultInstance {
+            decls.append(try typeInfo.generateDefaultInstance())
         }
         return decls
     }

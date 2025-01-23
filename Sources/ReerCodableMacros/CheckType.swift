@@ -159,4 +159,39 @@ extension String {
         }
         return trimmed
     }
+    
+    var typeDefaultValue: String? {
+        let trimmed = self.trimmingCharacters(in: .whitespaces)
+        if let defaultValue = Self.basicTypeDefaults[trimmed] {
+            return defaultValue
+        }
+        if (trimmed.hasPrefix("[") && trimmed.hasSuffix("]"))
+           || trimmed.hasPrefix("Set<") {
+            return ".init()"
+        }
+        return nil
+    }
+    
+    private static let basicTypeDefaults: [String: String] = [
+        "Int": "0",
+        "Int8": "0",
+        "Int16": "0",
+        "Int32": "0",
+        "Int64": "0",
+        "UInt": "0",
+        "UInt8": "0",
+        "UInt16": "0",
+        "UInt32": "0",
+        "UInt64": "0",
+        "Bool": "false",
+        "String": "\"\"",
+        "Float": "0.0",
+        "Double": "0.0",
+        
+        "Date": "Date()",
+        "Data": "Data()",
+        "URL": "URL(string: \"/\")!",
+        "UUID": "UUID()",
+        "Decimal": "Decimal(0)",
+    ]
 }
