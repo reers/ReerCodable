@@ -661,6 +661,50 @@ extension TypeInfo {
         return initializer
     }
     
+    func generateDefaultInstance() throws -> DeclSyntax {
+        let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
+        if isEnum, let firstCase = enumCases.first {
+            let associated = firstCase.associated.map { associated in
+                var text = ""
+                if let label = associated.label {
+                    text += "\(label): "
+                }
+                if let userDefineDefaultValue = associated.defaultValue {
+                    text += userDefineDefaultValue
+                } else if parseSwiftType(associated.type).isOptional {
+                    text += "nil"
+                } else if let typeDefaultValue = associated.type.nonOptionalType.typeDefaultValue {
+                    text += typeDefaultValue
+                } else {
+                    text += "\(associated.type.nonOptionalType).default"
+                }
+                return text
+            }
+            let associatedString = firstCase.associated.isEmpty ? "" : "(\(associated.joined(separator: ", ")))"
+            return """
+            \(raw: needPublic ? "public " : "")static let `default` = Self.\(raw: firstCase.caseName)\(raw: associatedString)
+            """ as DeclSyntax
+        } else {
+            let parameters = properties.map { property in
+                var text = "\(property.name): "
+                if let initExpr = property.initExpr {
+                    text += "\(initExpr)"
+                } else if property.isOptional {
+                    text += "nil"
+                } else if let defaultValue = property.defaultValue {
+                    text += "\(defaultValue)"
+                } else {
+                    text += "\(property.type).default"
+                }
+                return text
+            }
+            
+            return """
+            \(raw: needPublic ? "public " : "")static let `default` = Self(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n"))
+            """ as DeclSyntax
+        }
+    }
+    
     /// Return: (assignments, shouldAddDidDecode)
     private func generateEnumDecoderAssignments() -> (String, Bool) {
         if hasEnumAssociatedValue {
