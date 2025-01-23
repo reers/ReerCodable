@@ -109,12 +109,33 @@ extension RECodable: MemberMacro {
             throw MacroError(text: "@DefaultInstance requires 'memberwiseInit' is 'true'")
         }
         
+        var hasCopyable = false
+        if let structDecl = declaration.as(StructDeclSyntax.self),
+           structDecl.attributes.containsAttribute(named: "Copyable") {
+            hasCopyable = true
+        }
+        if let classDecl = declaration.as(ClassDeclSyntax.self),
+           classDecl.attributes.containsAttribute(named: "Copyable") {
+            hasCopyable = true
+        }
+        if let enumDecl = declaration.as(EnumDeclSyntax.self),
+           enumDecl.attributes.containsAttribute(named: "Copyable") {
+            hasCopyable = true
+        }
+        
+        if hasCopyable && !hasMemberwiseInit {
+            throw MacroError(text: "@Copyable requires 'memberwiseInit' is 'true'")
+        }
+        
         var decls = [decoder, encoder]
         if hasMemberwiseInit, !declaration.is(EnumDeclSyntax.self) {
             decls.append(try typeInfo.generateMemberwiseInit())
         }
         if hasDefaultInstance {
             decls.append(try typeInfo.generateDefaultInstance())
+        }
+        if hasCopyable {
+            decls.append(try typeInfo.generateCopy())
         }
         return decls
     }

@@ -705,6 +705,44 @@ extension TypeInfo {
         }
     }
     
+    func generateCopy() throws -> DeclSyntax {
+        let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
+        if isEnum {
+            return """
+            \(raw: needPublic ? "public " : "")func copy() -> Self { self }
+            """ as DeclSyntax
+        } else {
+            
+//            public func copy(
+//                name: String? = nil
+//            ) -> Self {
+//                .init(name: "")
+//            }
+            
+//            let parameters = properties.map { property in
+//                var text = property.name
+//                text += ": \(property.type)"
+//                if let initExpr = property.initExpr {
+//                    text += "= \(initExpr)"
+//                } else if property.isIgnored, let defaultValue = property.defaultValue {
+//                    text += "= \(defaultValue)"
+//                } else if property.isOptional {
+//                    text += "= nil"
+//                }
+//                return text
+//            }
+//
+//            let initializer: DeclSyntax = """
+//            \(raw: needPublic ? "public " : "")init(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n")) {
+//                \(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n"))
+//            }
+//            """
+            return """
+            \(raw: needPublic ? "public " : "")func copy
+            """ as DeclSyntax
+        }
+    }
+    
     /// Return: (assignments, shouldAddDidDecode)
     private func generateEnumDecoderAssignments() -> (String, Bool) {
         if hasEnumAssociatedValue {
