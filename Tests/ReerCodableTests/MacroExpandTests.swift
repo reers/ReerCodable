@@ -24,6 +24,7 @@ let testMacros: [String: Macro.Type] = [
     "CodingCase": CodingCase.self,
     "CodingContainer": CodingContainer.self,
     "DefaultInstance": DefaultInstance.self,
+    "Copyable": Copyable.self,
     "FlatCase": FlatCase.self,
     "UpperCase": UpperCase.self,
     "CamelCase": CamelCase.self,

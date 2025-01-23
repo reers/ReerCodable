@@ -19,36 +19,5 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-import SwiftCompilerPlugin
-import SwiftSyntaxMacros
-
-@main
-struct ReerCodablePlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
-        RECodable.self,
-        InheritedCodable.self,
-        CodingKey.self,
-        EncodingKey.self,
-        CodingIgnored.self,
-        Base64Coding.self,
-        DateCoding.self,
-        CompactDecoding.self,
-        CustomCoding.self,
-        CodingCase.self,
-        CodingContainer.self,
-        DefaultInstance.self,
-        Copyable.self,
-        FlatCase.self,
-        UpperCase.self,
-        CamelCase.self,
-        SnakeCase.self,
-        PascalCase.self,
-        KebabCase.self,
-        CamelSnakeCase.self,
-        PascalSnakeCase.self,
-        ScreamingSnakeCase.self,
-        CamelKebabCase.self,
-        PascalKebabCase.self,
-        ScreamingKebabCase.self,
-    ]
-}
+@attached(peer)
+public macro Copyable() = #externalMacro(module: "ReerCodableMacros", type: "Copyable")
