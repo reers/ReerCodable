@@ -85,8 +85,7 @@
 /// - For enums with associated values, it uses the first case with all default values
 /// - For enums without associated values, it uses the first case
 /// - Custom `default` implementations take precedence over generated ones
-///
-/// - Throws: `MacroError` if used without `@Codable` macro
+/// - Generic types is NOT supported.
 ///
 @attached(peer)
 public macro DefaultInstance() = #externalMacro(module: "ReerCodableMacros", type: "DefaultInstance")
