@@ -73,6 +73,7 @@
 /// - Conformance to `Codable` protocol
 /// - Conformance to `ReerCodableDelegate` protocol
 /// - Additional helper members as needed
+/// - Add a static `default` instance if used `DefaultInstance`
 ///
 /// - Parameter memberwiseInit: If true (default), generates a memberwise initializer for the type
 ///
@@ -85,7 +86,7 @@
 /// }
 /// ```
 @attached(extension, conformances: Codable, ReerCodableDelegate, names: arbitrary)
-@attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
+@attached(member, names: named(init(from:)), named(encode(to:)), named(default), arbitrary)
 public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "RECodable")
 
 /// The `@InheritedCodable` macro provides automatic implementation of `Codable` protocol for classes

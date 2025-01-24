@@ -47,6 +47,12 @@ Main features include:
 - Provide extensions to support using JSON String, `Dictionary`, `Array` directly as parameters for encoding/decoding
 - Support conversion between basic data types like `Bool`, `String`, `Double`, `Int`, `CGFloat`
 - Support encoding/decoding of `Any` through `AnyCodable`, like `var dict = [String: AnyCodable]`
+- Auto-generate default instances: 
+  Use `@DefaultInstance` to automatically create a default instance of your type, 
+  accessible through `Model.default`
+- Flexible copying with updates: 
+  The `@Copyable` macro generates a powerful `copy()` method that allows both 
+  full copies and selective property updates in a single call
 
 # Requirements
 XCode 16.0+
@@ -649,6 +655,110 @@ Implement encoding/decoding of `Any` type through `AnyCodable`:
 struct Response {
     var data: AnyCodable  // Can store data of any type
     var metadata: [String: AnyCodable]  // Equivalent to [String: Any] type
+}
+```
+
+### 19. Generate Default Instance
+
+```swift
+@Codable
+@DefaultInstance
+struct ImageModel {
+    var url: URL
+}
+
+@Codable
+@DefaultInstance
+struct User5 {
+    let name: String
+    var age: Int = 22
+    var uInt: UInt = 3
+    var data: Data
+    var date: Date
+    var decimal: Decimal = 8
+    var uuid: UUID
+    var avatar: ImageModel
+    var optional: String? = "123"
+    var optional2: String?
+}
+```
+
+Will generate the following instance:
+
+```swift
+static let `default` = User5(
+    name: "",
+    age: 22,
+    uInt: 3,
+    data: Data(),
+    date: Date(),
+    decimal: 8,
+    uuid: UUID(),
+    avatar: ImageModel.default,
+    optional: "123",
+    optional2: nil
+)
+```
+
+⚠️ Note: Properties with generic types are NOT supported with `@DefaultInstance`
+```swift
+@Codable
+struct NetResponse<Element: Codable> {
+    let data: Element?
+    let msg: String
+    private(set) var code: Int = 0
+}
+```
+
+### 20. Generate Copy Method
+Use `Copyable` to generate `copy` method for models
+
+```swift
+@Codable
+@Copyable
+public struct Model6 {
+    var name: String
+    let id: Int
+    var desc: String?
+}
+
+@Codable
+@Copyable
+class Model7<Element: Codable> {
+    var name: String
+    let id: Int
+    var desc: String?
+    var data: Element?
+}
+```
+
+Generates the following `copy` methods. As you can see, besides default copy, you can also update specific properties:
+
+```swift
+public func copy(
+    name: String? = nil,
+    id: Int? = nil,
+    desc: String? = nil
+) -> Model6 {
+    return .init(
+        name: name ?? self.name,
+        id: id ?? self.id,
+        desc: desc ?? self.desc
+    )
+}
+
+func copy(
+    name: String? = nil,
+    id: Int? = nil,
+    desc: String? = nil,
+    data: Element? = nil
+) -> Model7 {
+    return .init(
+        name: name ?? self.name,
+        id: id ?? self.id,
+        desc: desc ?? self.desc,
+        data: data ?? self.data
+    )
 }
 ```
 

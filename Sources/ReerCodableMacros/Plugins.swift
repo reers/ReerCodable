@@ -36,6 +36,8 @@ struct ReerCodablePlugin: CompilerPlugin {
         CustomCoding.self,
         CodingCase.self,
         CodingContainer.self,
+        DefaultInstance.self,
+        Copyable.self,
         FlatCase.self,
         UpperCase.self,
         CamelCase.self,
