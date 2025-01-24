@@ -59,6 +59,7 @@ struct EnumCase {
 
 struct TypeInfo {
     let decl: DeclGroupSyntax
+    let name: String
     var isEnum = false
     var enumRawType: String?
     var enumCases: [EnumCase] = []
@@ -69,6 +70,17 @@ struct TypeInfo {
     
     init(decl: DeclGroupSyntax) throws {
         self.decl = decl
+        
+        if let structDecl = decl.as(StructDeclSyntax.self) {
+            name = structDecl.name.trimmedDescription
+        } else if let classDecl = decl.as(ClassDeclSyntax.self) {
+            name = classDecl.name.trimmedDescription
+        } else if let enumDecl = decl.as(EnumDeclSyntax.self) {
+            name = enumDecl.name.trimmedDescription
+        } else {
+            throw MacroError(text: "Can not parse type name.")
+        }
+        
         if let enumDecl = decl.as(EnumDeclSyntax.self) {
             self.isEnum = true
             let availableRawTypes = [
@@ -682,7 +694,7 @@ extension TypeInfo {
             }
             let associatedString = firstCase.associated.isEmpty ? "" : "(\(associated.joined(separator: ", ")))"
             return """
-            \(raw: needPublic ? "public " : "")static let `default` = Self.\(raw: firstCase.caseName)\(raw: associatedString)
+            \(raw: needPublic ? "public " : "")static let `default` = \(raw: name).\(raw: firstCase.caseName)\(raw: associatedString)
             """ as DeclSyntax
         } else {
             let parameters = properties.map { property in
@@ -700,7 +712,7 @@ extension TypeInfo {
             }
             
             return """
-            \(raw: needPublic ? "public " : "")static let `default` = Self(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n"))
+            \(raw: needPublic ? "public " : "")static let `default` = \(raw: name)(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n"))
             """ as DeclSyntax
         }
     }
@@ -709,36 +721,22 @@ extension TypeInfo {
         let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
         if isEnum {
             return """
-            \(raw: needPublic ? "public " : "")func copy() -> Self { self }
+            \(raw: needPublic ? "public " : "")func copy() -> \(raw: name) { self }
             """ as DeclSyntax
         } else {
-            
-//            public func copy(
-//                name: String? = nil
-//            ) -> Self {
-//                .init(name: "")
-//            }
-            
-//            let parameters = properties.map { property in
-//                var text = property.name
-//                text += ": \(property.type)"
-//                if let initExpr = property.initExpr {
-//                    text += "= \(initExpr)"
-//                } else if property.isIgnored, let defaultValue = property.defaultValue {
-//                    text += "= \(defaultValue)"
-//                } else if property.isOptional {
-//                    text += "= nil"
-//                }
-//                return text
-//            }
-//
-//            let initializer: DeclSyntax = """
-//            \(raw: needPublic ? "public " : "")init(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n")) {
-//                \(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n"))
-//            }
-//            """
+            let parameters = properties.map { property in
+                var text = property.name
+                text += ": \(property.isOptional ? property.type : "\(property.type)?")"
+                text += "= nil"
+                return text
+            }
+            let arguments = properties.map { property in
+                return "\(property.name): \(property.name) ?? self.\(property.name)"
+            }
             return """
-            \(raw: needPublic ? "public " : "")func copy
+            \(raw: needPublic ? "public " : "")func copy(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n")) -> \(raw: name) {
+                return .init(\(raw: arguments.isEmpty ? "" : "\n")\(raw: arguments.joined(separator: ",\n"))\(raw: arguments.isEmpty ? "" : "\n"))
+            }
             """ as DeclSyntax
         }
     }

@@ -46,11 +46,11 @@ final class ReerCodableTests: XCTestCase {
         #if canImport(ReerCodableMacros)
         assertMacroExpansion(
             """
-            @Codable(memberwiseInit: false)
-            @DefaultInstance
-            struct Model {
-                @EncodingKey("two#words")
-                var twoWords: String
+            @Codable
+            struct NetResponse<Element: Codable> {
+                let data: Element?
+                let msg: String
+                private(set) var code: Int = 0
             }
             """,
             expandedSource: """
