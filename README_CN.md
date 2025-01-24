@@ -44,6 +44,10 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 提供扩展, 支持使用 JSON String, `Dictionary`, `Array` 直接作为参数进行编解码
 - 支持 `Bool`, `String`, `Double`, `Int`, `CGFloat` 等基本数据类型互相转换
 - 支持通过 `AnyCodable` 来实现对 `Any` 的编解码, 如 `var dict = [String: AnyCodable]`
+- 支持通过 `@DefaultInstance` 生成一个 `static let default: Model` 实例, `Model.default`
+- 支持通过 `@Copyable` 生成 `copy()` 方法, 并且支持部分属性值的 update
+- 自动生成默认实例：使用 `@DefaultInstance` 自动创建类型的默认实例, 可通过 Model.default 访问
+- 灵活的复制与更新：`@Copyable` 宏会生成一个 copy() 方法, 支持在一次调用中实现完整复制或选择性地更新属性值
 
 
 # 环境要求
@@ -648,6 +652,110 @@ struct User {
 struct Response {
     var data: AnyCodable  // 可以存储任意类型的数据
     var metadata: [String: AnyCodable]  // 相当于[String: Any]类型
+}
+```
+
+### 19. 生成默认实例
+
+```swift
+@Codable
+@DefaultInstance
+struct ImageModel {
+    var url: URL
+}
+
+@Codable
+@DefaultInstance
+struct User5 {
+    let name: String
+    var age: Int = 22
+    var uInt: UInt = 3
+    var data: Data
+    var date: Date
+    var decimal: Decimal = 8
+    var uuid: UUID
+    var avatar: ImageModel
+    var optional: String? = "123"
+    var optional2: String?
+}
+```
+
+会生成以下实例
+
+```swift
+static let `default` = User5(
+    name: "",
+    age: 22,
+    uInt: 3,
+    data: Data(),
+    date: Date(),
+    decimal: 8,
+    uuid: UUID(),
+    avatar: ImageModel.default,
+    optional: "123",
+    optional2: nil
+)
+```
+
+⚠️注意: 泛型类型的属性不支持使用 `@DefaultInstance`
+```swift
+@Codable
+struct NetResponse<Element: Codable> {
+    let data: Element?
+    let msg: String
+    private(set) var code: Int = 0
+}
+```
+
+### 20. 生成 copy 方法
+使用 `Copyable` 为模型生成 `copy` 方法
+
+```swift
+@Codable
+@Copyable
+public struct Model6 {
+    var name: String
+    let id: Int
+    var desc: String?
+}
+
+@Codable
+@Copyable
+class Model7<Element: Codable> {
+    var name: String
+    let id: Int
+    var desc: String?
+    var data: Element?
+}
+```
+
+生成如下 `copy` 方法, 可以看到, 除了默认 copy, 还可以对部分属性进行更新
+
+```swift
+public func copy(
+    name: String? = nil,
+    id: Int? = nil,
+    desc: String? = nil
+) -> Model6 {
+    return .init(
+        name: name ?? self.name,
+        id: id ?? self.id,
+        desc: desc ?? self.desc
+    )
+}
+
+func copy(
+    name: String? = nil,
+    id: Int? = nil,
+    desc: String? = nil,
+    data: Element? = nil
+) -> Model7 {
+    return .init(
+        name: name ?? self.name,
+        id: id ?? self.id,
+        desc: desc ?? self.desc,
+        data: data ?? self.data
+    )
 }
 ```
 
