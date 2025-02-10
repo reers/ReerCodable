@@ -43,6 +43,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 支持通过 `ReerCodableDelegate` 来编解码生命周期, 如 `didDecode`, `willEncode`
 - 提供扩展, 支持使用 JSON String, `Dictionary`, `Array` 直接作为参数进行编解码
 - 支持 `Bool`, `String`, `Double`, `Int`, `CGFloat` 等基本数据类型互相转换
+- 支持 BitInt `Int128`, `UInt128` (限 macOS 15+, iOS 13+)
 - 支持通过 `AnyCodable` 来实现对 `Any` 的编解码, 如 `var dict = [String: AnyCodable]`
 - 支持通过 `@DefaultInstance` 生成一个 `static let default: Model` 实例, `Model.default`
 - 支持通过 `@Copyable` 生成 `copy()` 方法, 并且支持部分属性值的 update
@@ -69,7 +70,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.1.6")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.1.7")
     ]
 )
 </code></pre>
@@ -85,7 +86,7 @@ let package = Package(
 <pre><code class="ruby language-ruby">
 Pod::Spec.new do |s|
   s.name             = 'YourPod'
-  s.dependency 'ReerCodable', '1.1.6'
+  s.dependency 'ReerCodable', '1.1.7'
   # 复制以下 config 到你的 pod
   s.pod_target_xcconfig = {
     'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
