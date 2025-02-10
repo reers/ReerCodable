@@ -46,6 +46,7 @@ Main features include:
 - Support encoding/decoding lifecycle through `ReerCodableDelegate`, like `didDecode`, `willEncode`
 - Provide extensions to support using JSON String, `Dictionary`, `Array` directly as parameters for encoding/decoding
 - Support conversion between basic data types like `Bool`, `String`, `Double`, `Int`, `CGFloat`
+- Support BitInt `Int128`, `UInt128` on macOS 15+, iOS 13+
 - Support encoding/decoding of `Any` through `AnyCodable`, like `var dict = [String: AnyCodable]`
 - Auto-generate default instances: 
   Use `@DefaultInstance` to automatically create a default instance of your type, 
@@ -73,7 +74,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.1.6")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.1.7")
     ]
 )
 </code></pre>
@@ -89,7 +90,7 @@ let package = Package(
 <pre><code class="ruby language-ruby">
 Pod::Spec.new do |s|
   s.name             = 'YourPod'
-  s.dependency 'ReerCodable', '1.1.6'
+  s.dependency 'ReerCodable', '1.1.7'
   # Copy the following config to your pod
   s.pod_target_xcconfig = {
     'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
