@@ -51,6 +51,17 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
     
     private mutating func encode(_ value: Encodable, forNormalKey key: String) throws {
         let codingKey = AnyCodingKey(stringValue: key)!
+        if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
+            if let int128 = value as? Int128 {
+                let stringValue = String(describing: int128)
+                try encode(stringValue, forKey: codingKey)
+                return
+            } else if let uint128 = value as? UInt128 {
+                let stringValue = String(describing: uint128)
+                try encode(stringValue, forKey: codingKey)
+                return
+            }
+        }
         try encode(value, forKey: codingKey)
     }
     

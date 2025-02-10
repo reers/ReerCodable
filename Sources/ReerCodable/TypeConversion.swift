@@ -63,6 +63,12 @@ extension UInt16: IntegerConvertable {}
 extension UInt32: IntegerConvertable {}
 extension UInt64: IntegerConvertable {}
 
+@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+extension Int128: IntegerConvertable {}
+
+@available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+extension UInt128: IntegerConvertable {}
+
 extension IntegerConvertable {
     static func convert(from object: Any) -> Self? {
         switch object {

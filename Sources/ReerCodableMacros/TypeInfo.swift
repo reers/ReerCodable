@@ -84,8 +84,8 @@ struct TypeInfo {
         if let enumDecl = decl.as(EnumDeclSyntax.self) {
             self.isEnum = true
             let availableRawTypes = [
-                "Int", "Int8", "Int16", "Int32", "Int64",
-                "UInt", "UInt8", "UInt16", "UInt32", "UInt64",
+                "Int", "Int8", "Int16", "Int32", "Int64", "Int128",
+                "UInt", "UInt8", "UInt16", "UInt32", "UInt64", "UInt128",
                 "String", "Float", "Double"
             ]
             if let rawTypeName = enumDecl.inheritanceClause?.inheritedTypes.first?.type.as(IdentifierTypeSyntax.self)?.name.trimmedDescription,
@@ -107,7 +107,7 @@ struct TypeInfo {
                         }
                     } else if let enumRawType {
                         switch enumRawType {
-                        case "Int", "Int8", "Int16", "Int32", "Int64", "UInt", "UInt8", "UInt16", "UInt32", "UInt64":
+                        case "Int", "Int8", "Int16", "Int32", "Int64", "Int128", "UInt", "UInt8", "UInt16", "UInt32", "UInt64", "UInt128":
                             raw = if index == 0 { "0" } else { String(lastIntRawValue + 1) }
                             lastIntRawValue = Int(raw) ?? lastIntRawValue + 1
                         case "String":

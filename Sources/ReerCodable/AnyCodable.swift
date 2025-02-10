@@ -104,7 +104,17 @@ public struct AnyCodable: Codable {
                 codingPath: container.codingPath,
                 debugDescription: "AnyEncodable value cannot be encoded"
             )
-            throw EncodingError.invalidValue(value, context)
+            if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
+                if let int128 = value as? Int128 {
+                    try container.encode(int128)
+                } else if let uint128 = value as? UInt128 {
+                    try container.encode(uint128)
+                } else {
+                    throw EncodingError.invalidValue(value, context)
+                }
+            } else {
+                throw EncodingError.invalidValue(value, context)
+            }
         }
     }
 }
@@ -147,7 +157,17 @@ extension AnyCodable: Equatable {
         case let (lhs as [AnyCodable], rhs as [AnyCodable]):
             return lhs == rhs
         default:
-            return false
+            if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
+                if let left = lhs.value as? Int128, let right = rhs.value as? Int128 {
+                    return left == right
+                } else if let left = lhs.value as? UInt128, let right = rhs.value as? UInt128 {
+                    return left == right
+                } else {
+                    return false
+                }
+            } else {
+                return false
+            }
         }
     }
 }
@@ -188,7 +208,17 @@ extension AnyCodable: Hashable {
         case let value as [AnyCodable]:
             hasher.combine(value)
         default:
-            break
+            if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
+                if let int128 = value as? Int128 {
+                    hasher.combine(int128)
+                } else if let uint128 = value as? UInt128 {
+                    hasher.combine(uint128)
+                } else {
+                    break
+                }
+            } else {
+                break
+            }
         }
     }
 }
