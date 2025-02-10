@@ -316,6 +316,12 @@ private struct KeyDecoder: Decoder {
         func decode(_ type: Float.Type) throws -> Float { Float(value) ?? 0 }
         func decode(_ type: Double.Type) throws -> Double { Double(value) ?? 0 }
         
+        @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+        func decode(_ type: Int128.Type) throws -> Int128 { Int128(value) ?? 0 }
+        
+        @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+        func decode(_ type: UInt128.Type) throws -> UInt128 { UInt128(value) ?? 0 }
+        
         func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
             throw DecodingError.typeMismatch(T.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Type not supported"))
         }

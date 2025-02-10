@@ -54,8 +54,8 @@ public struct CodingIgnored: PeerMacro {
     static func canGenerateDefaultValue(for type: String) -> Bool {
         let trimmed = type.trimmingCharacters(in: .whitespaces)
         let basicType = [
-            "Int", "Int8", "Int16", "Int32", "Int64",
-            "UInt", "UInt8", "UInt16", "UInt32", "UInt64",
+            "Int", "Int8", "Int16", "Int32", "Int64", "Int128",
+            "UInt", "UInt8", "UInt16", "UInt32", "UInt64", "UInt128",
             "Bool", "String", "Float", "Double"
         ].contains(trimmed)
         if basicType
