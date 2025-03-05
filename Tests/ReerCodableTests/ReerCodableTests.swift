@@ -55,6 +55,8 @@ class Person1: Codable {
     @CodingKey("is_male")
     var isMale: Bool
     
+    var withoutTypeDefine = 233
+    
     @CodingIgnored
     var ignore: Set<String>
     
@@ -126,6 +128,7 @@ struct TestReerCodable {
         #expect(model.childs == [Child(name: "reer")])
         #expect(model.spouse == "NYC")
         #expect(model.isMale == true)
+        #expect(model.withoutTypeDefine == 233)
         #expect(model.ignore == [])
         #expect(model.data?.utf8String == "hello world")
         #expect(model.array == ["a", "b", "c"])
@@ -152,6 +155,7 @@ struct TestReerCodable {
         #expect(childs.string("name") == "reer")
         #expect(dict.string("spouse") == "NYC")
         #expect(dict.int("is_male") == 1)
+        #expect(dict.int("withoutTypeDefine") == 233)
         #expect(dict?["ignore"] == nil)
         #expect(dict.string("data") == "aGVsbG8gd29ybGQ=")
         #expect(dict?["i_am_array"] as? [String] == ["a", "b", "c"])
