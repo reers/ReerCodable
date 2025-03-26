@@ -308,9 +308,9 @@ struct User {
 }
 ```
 
-### 10. 数组解码优化
+### 10. 集合类型解码优化
 
-使用 `@CompactDecoding` 在解码数组时自动过滤 null 值, 与 `compactMap` 是同样的意思:
+使用 `@CompactDecoding` 在解码数组时自动过滤 null 值, 与 `compactMap` 是相同的意思:
 
 ```swift
 @Codable
@@ -319,6 +319,7 @@ struct User {
     var tags: [String]  // ["a", null, "b"] 将被解码为 ["a", "b"]
 }
 ```
+同时, `Dictionary` 和 `Set`  也支持使用 `@CompactDecoding` 来优化
 
 ### 11. 日期编解码
 

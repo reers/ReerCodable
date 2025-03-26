@@ -312,7 +312,7 @@ struct User {
 }
 ```
 
-### 10. Array Decoding Optimization
+### 10. Collection Type Decoding Optimization
 
 Use `@CompactDecoding` to automatically filter null values when decoding arrays, same meaning as `compactMap`:
 
@@ -323,6 +323,7 @@ struct User {
     var tags: [String]  // ["a", null, "b"] will be decoded as ["a", "b"]
 }
 ```
+At the same time, both `Dictionary` and `Set` also support the use of `@CompactDecoding` for optimization.
 
 ### 11. Date Coding
 
