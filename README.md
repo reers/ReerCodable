@@ -46,7 +46,7 @@ Main features include:
 - Support encoding/decoding lifecycle through `ReerCodableDelegate`, like `didDecode`, `willEncode`
 - Provide extensions to support using JSON String, `Dictionary`, `Array` directly as parameters for encoding/decoding
 - Support conversion between basic data types like `Bool`, `String`, `Double`, `Int`, `CGFloat`
-- Support BitInt `Int128`, `UInt128` on macOS 15+, iOS 13+
+- Support BigInt `Int128`, `UInt128` on macOS 15+, iOS 13+
 - Support encoding/decoding of `Any` through `AnyCodable`, like `var dict = [String: AnyCodable]`
 - Auto-generate default instances: 
   Use `@DefaultInstance` to automatically create a default instance of your type, 
