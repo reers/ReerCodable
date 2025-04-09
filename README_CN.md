@@ -210,7 +210,7 @@ struct Person {
 
 ### 5. 自定义编解码容器
 
-使用 `@CodingContainer` 自定义编解码时的容器路径, 通常用于根层级的 model 解析：
+使用 `@CodingContainer` 自定义编解码时的容器路径, 通常用于JSON嵌套较多, 但 model 声明 想直接 match 子层级结构：
 
 <table>
 <tr>
@@ -421,7 +421,7 @@ struct HundredMeterRace {
     var rank: UInt
 }
 ```
-自定义实现过程中, 框架提供的方法也可以是编解码更加方便:
+自定义实现过程中, 框架提供的方法也可以使编解码更加方便:
 ```swift
 public extension Decoder {
     func value<Value: Decodable>(forKeys keys: String...) throws -> Value {
