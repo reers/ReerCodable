@@ -28,6 +28,8 @@ struct User {
 # Overview
 ReerCodable framework provides a series of custom macros for generating dynamic Codable implementations. The core of the framework is the @Codable() macro, which generates concrete implementations under data annotations provided by other macros (⚠️ Only the `@Codable` macro can be expanded in XCode macro expansion, expanding other macros will have no response)
 
+The framework has been fully tested using [Swift Testing](https://developer.apple.com/xcode/swift-testing/). 
+
 Main features include:
 - Declare custom `CodingKey` values for each property through `@CodingKey("key")`, without writing all `CodingKey` values.
 - Support nested `CodingKey` through string expressions, like `@CodingKey("nested.key")`
