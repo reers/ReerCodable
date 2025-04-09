@@ -214,7 +214,7 @@ struct Person {
 
 ### 5. Custom Coding Container
 
-Use `@CodingContainer` to customize container paths during encoding, typically used for root-level model parsing:
+Use `@CodingContainer` to customize the container path for encoding and decoding, typically used when dealing with heavily nested JSON structures while wanting the model declaration to directly match a sub-level structure:
 
 <table>
 <tr>
