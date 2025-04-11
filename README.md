@@ -276,11 +276,12 @@ Default values can be used when decoding fails. Native `Codable` throws an excep
 struct User {
     var age: Int = 33
     var name: String = "phoenix"
-    // If gender is not included in JSON, native Codable will throw an exception, ReerCodable won't, it will set it to nil
+    // If the `gender` field in the JSON is neither `male` nor `female`, the native Codable will throw an exception, whereas ReerCodable will not and instead set it to nil. For example, with `{"gender": "other"}`, this scenario might occur when the client has defined an enum but the server has added new fields in a business context.
     var gender: Gender?
 }
 
-enum Gender {
+@Codable
+enum Gender: String {
     case male, female
 }
 ```
