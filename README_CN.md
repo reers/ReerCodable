@@ -270,11 +270,12 @@ struct User {
 struct User {
     var age: Int = 33
     var name: String = "phoenix"
-    // 若 JSON 中不包含 gender, 原生 Codable 会抛出异常, ReerCodable 不会, 会设置其为 nil
+    // 若 JSON 中 gender 字段不是 `male` 或 `female`, 原生 Codable 会抛出异常, ReerCodable 不会, 会设置其为 nil,  如 {"gender": "other"}, 可能出现在客户端定义了枚举, 但服务端新增了字段的业务场景
     var gender: Gender?
 }
 
-enum Gender {
+@Codable
+enum Gender: String {
     case male, female
 }
 ```
