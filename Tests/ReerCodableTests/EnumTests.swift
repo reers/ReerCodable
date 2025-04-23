@@ -267,17 +267,17 @@ extension TestReerCodable {
 
 @Codable
 enum Video1: Codable {
-    @CodingCase(match: .pathValue("type.middle.youtube"))
+    @CodingCase(match: .string("youtube", at: "type.middle"))
     case youTube
     
     @CodingCase(
-        match: .pathValue("type.vimeo"),
+        match: .string("vimeo", at: "type"),
         values: [.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
     )
     case vimeo(id: String, duration: TimeInterval = 33, Int)
     
     @CodingCase(
-        match: .pathValue("type.tiktok"),
+        match: .string("tiktok", at: "type"),
         values: [.label("url", keys: "media")]
     )
     case tiktok(url: URL, tag: String?)
