@@ -105,7 +105,7 @@ final class ReerCodableTests: XCTestCase {
                 case vimeo(id: String, duration: TimeInterval = 33, Int)
                 
                 @CodingCase(
-                    match: .string("tiktok", at: "type"), .string("asdf"),
+                    match: .intRange(20...25, at: "type"),
                     values: [.label("url", keys: "media")]
                 )
                 case tiktok(url: URL, tag: String?)
