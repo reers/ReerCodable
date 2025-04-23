@@ -318,7 +318,7 @@ extension TestReerCodable {
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
                 let dict = modelData.stringAnyDictionary?["type"] as? [String: Any]
-                #expect(dict.string("middle") == "youtube")
+                #expect(dict.string("middle") == "youTube")
             } else {
                 Issue.record("Expected youtube")
             }
