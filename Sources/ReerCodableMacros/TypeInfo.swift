@@ -48,6 +48,10 @@ struct PathValueMatch {
     var tupleString: String {
         return "(\(path), \(value), \(valueType).self)"
     }
+    
+    var isRange: Bool {
+        return value.contains("...") || value.contains("..<")
+    }
 }
 
 struct EnumCase {
@@ -153,7 +157,7 @@ struct TypeInfo {
                                let functionCall = $0.expression.as(FunctionCallExprSyntax.self) {
                                 if let lastArg = functionCall.arguments.last,
                                    lastArg.label?.trimmedDescription == "at",
-                                   let type = functionCall.calledExpression.as(MemberAccessExprSyntax.self)?.declName.trimmedDescription.capitalized,
+                                   let type = functionCall.calledExpression.as(MemberAccessExprSyntax.self)?.declName.trimmedDescription.removingSuffix("Range").capitalized,
                                    let value = functionCall.arguments.first?.trimmedDescription.removingSuffix(",").trimmed {
                                     // key path value
                                     var last = enumCases.removeLast()
@@ -866,10 +870,17 @@ extension TypeInfo {
                     let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
                     let hasAssociated = !$0.associated.isEmpty
-                    let encodeCase = if hasPathValue, let keyPathValue = $0.keyPathMatches.first {
-                        """
-                        try container.encode(keyPath: \(keyPathValue.path), value: \(keyPathValue.value))
-                        """
+                    let encodeCase = if hasPathValue {
+                            if let keyPathValue = $0.keyPathMatches.first(where: { !$0.isRange }) {
+                            """
+                            try container.encode(keyPath: \(keyPathValue.path), value: \(keyPathValue.value))
+                            """
+                            } else {
+                            // use case name as value when keyPathMatches only contains range matcher
+                            """
+                            try container.encode(keyPath: \($0.keyPathMatches.first!.path), value: "\($0.caseName)")
+                            """
+                            }
                         }
                         else {
                         """
