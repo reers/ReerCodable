@@ -48,10 +48,6 @@ struct PathValueMatch {
     var tupleString: String {
         return "(\(path), \(value), \(valueType).self)"
     }
-    
-    var isRange: Bool {
-        return value.contains("...") || value.contains("..<")
-    }
 }
 
 struct EnumCase {
@@ -871,16 +867,9 @@ extension TypeInfo {
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
                     let hasAssociated = !$0.associated.isEmpty
                     let encodeCase = if hasPathValue {
-                            if let keyPathValue = $0.keyPathMatches.first(where: { !$0.isRange }) {
-                            """
-                            try container.encode(keyPath: \(keyPathValue.path), value: \(keyPathValue.value))
-                            """
-                            } else {
-                            // use case name as value when keyPathMatches only contains range matcher
-                            """
-                            try container.encode(keyPath: \($0.keyPathMatches.first!.path), value: "\($0.caseName)")
-                            """
-                            }
+                        """
+                        try container.encode(keyPath: \($0.keyPathMatches.first!.path), value: "\($0.caseName)")
+                        """
                         }
                         else {
                         """
