@@ -408,7 +408,7 @@ extension TypeInfo {
                     } else if let label = enumCase.associated[int].label {
                         var keysFromMatchLabel = enumCase.associatedMatch.first { $0.label == "\"\(label)\"" }?.keys ?? []
                         keysFromMatchLabel.append(contentsOf: $0.keys)
-                        throw MacroError(text: "Associated value in case '\(enumCase.caseName)' at index \(int) has a label, use '.init(label: \"\(label)\", keys: \(keysFromMatchLabel.joined(separator: ", ")))' instead.")
+                        throw MacroError(text: "Associated value in case '\(enumCase.caseName)' at index \(int) has a label, use '.label(\"\(label)\", keys: \(keysFromMatchLabel.joined(separator: ", ")))' instead.")
                     }
                 }
             }
