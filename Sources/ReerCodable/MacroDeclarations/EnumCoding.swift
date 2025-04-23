@@ -19,10 +19,16 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-/// Matchers for enum case decoding.
+/// Matchers for enum case coding.
 ///
-/// Note: CaseMatcher with key path cannot be used together with other matchers (`.string`, `.int`, etc.).
-/// For enums with associated values, only CaseMatcher with key path or `.string` can be used.
+/// These matchers are used to identify which enum case should be decoded from JSON data or how to encode to JSON data.
+///
+/// Important constraints:
+/// - Matchers with key paths cannot be combined with other matcher types (`.string`, `.int`, etc.).
+/// - For enums with associated values, only key path matchers or `.string` matchers can be used
+/// - Duplicate exact matchers (e.g., two cases both using `.int(8)`) will result in compile-time errors
+/// - Range matchers (e.g., `.intRange`, `.doubleRange`) do not have overlap detection - developers
+///   must ensure ranges don't overlap between different cases to avoid ambiguous decoding
 public enum CaseMatcher {
     /// Match a boolean value
     case bool(Bool)
@@ -39,22 +45,22 @@ public enum CaseMatcher {
     /// Match an string range
     case stringRange(any RangeExpression<String>)
     
-    // Match a value at the key path (using dot notation)
+    // Match values at specific paths in the JSON structure (using dot notation)
     // e.g. `.string("youtube", at: "type.middle)`, `.string("tiktok", at: "type")`
     
-    /// Match a boolean value at key path
+    /// Match a boolean value at specified key path
     case bool(Bool, at: String)
-    /// Match an integer value at key path
+    /// Match an integer value at specified key path
     case int(Int, at: String)
-    /// Match an integer range at key path
+    /// Match an integer range at specified key path
     case intRange(any RangeExpression<Int>, at: String)
-    /// Match a double value at key path
+    /// Match a double value at specified key path
     case double(Double, at: String)
-    /// Match an double range at key path
+    /// Match an double range at specified key path
     case doubleRange(any RangeExpression<Double>, at: String)
-    /// Match a string value at key path
+    /// Match a string value at specified key path
     case string(String, at: String)
-    /// Match an string range at key path
+    /// Match an string range at specified key path
     case stringRange(any RangeExpression<String>, at: String)
 }
 
