@@ -43,10 +43,10 @@ public struct CodingCase: PeerMacro {
         try node.arguments?.as(LabeledExprListSyntax.self)?.forEach {
             if ($0.label?.trimmedDescription == "match" || $0.label == nil),
                let functionCall = $0.expression.as(FunctionCallExprSyntax.self),
-               functionCall.calledExpression.as(MemberAccessExprSyntax.self)?.declName.baseName.trimmedDescription == "pathValue",
-               let param = functionCall.arguments.first?.expression.as(StringLiteralExprSyntax.self)?.segments.first?.trimmedDescription,
-               !param.contains("."){
-                throw MacroError(text: ".pathValue(\(param)) requires its param contains at least one dot `.`")
+               functionCall.arguments.last?.label?.trimmedDescription == "at",
+               let param = functionCall.arguments.last?.expression.as(StringLiteralExprSyntax.self)?.segments.first?.trimmedDescription,
+               param.isEmpty {
+                throw MacroError(text: "\(functionCall.trimmedDescription) requires its `at` param not empty, please pass a valid key path.")
             }
         }
         

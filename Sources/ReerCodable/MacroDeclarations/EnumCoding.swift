@@ -21,8 +21,8 @@
 
 /// Matchers for enum case decoding.
 ///
-/// Note: `.pathValue` cannot be used together with other matchers (`.string`, `.int`, etc.).
-/// For enums with associated values, only `.pathValue` or `.string` can be used.
+/// Note: CaseMatcher with key path cannot be used together with other matchers (`.string`, `.int`, etc.).
+/// For enums with associated values, only CaseMatcher with key path or `.string` can be used.
 public enum CaseMatcher {
     /// Match a boolean value
     case bool(Bool)
@@ -38,8 +38,24 @@ public enum CaseMatcher {
     case string(String)
     /// Match an string range
     case stringRange(any RangeExpression<String>)
-    /// Match a nested path value using dot notation (e.g. "type.tiktok", "type.middle.youtube")
-    case pathValue(String)
+    
+    // Match a value at the key path (using dot notation)
+    // e.g. `.string("youtube", at: "type.middle)`, `.string("tiktok", at: "type")`
+    
+    /// Match a boolean value at key path
+    case bool(Bool, at: String)
+    /// Match an integer value at key path
+    case int(Int, at: String)
+    /// Match an integer range at key path
+    case intRange(any RangeExpression<Int>, at: String)
+    /// Match a double value at key path
+    case double(Double, at: String)
+    /// Match an double range at key path
+    case doubleRange(any RangeExpression<Double>, at: String)
+    /// Match a string value at key path
+    case string(String, at: String)
+    /// Match an string range at key path
+    case stringRange(any RangeExpression<String>, at: String)
 }
 
 /// Configuration for associated values in enum cases.
@@ -87,8 +103,8 @@ public struct AssociatedValue {
 /// 2. Complex enum cases with associated values
 ///
 /// Important restrictions:
-/// - `.pathValue` matcher cannot be combined with other matchers
-/// - For enums with any associated values, only `.pathValue` or `.string` matchers can be used
+/// - CaseMatcher with key path cannot be combined with other matchers
+/// - For enums with any associated values, only CaseMatcher with key path or `.string` matchers can be used
 ///
 /// Example 1: Simple enum without associated values:
 /// ```swift
@@ -119,11 +135,11 @@ public struct AssociatedValue {
 /// ```swift
 /// @Codable
 /// enum Video {
-///     @CodingCase(match: .pathValue("type.middle.youtube"))
+///     @CodingCase(match: .string("youtube", at: "type.middle"))
 ///     case youTube
 ///     
 ///     @CodingCase(
-///         match: .pathValue("type.vimeo"),
+///         match: .string("vimeo", at: "type"),
 ///         values: [
 ///             .label("id", keys: "ID", "Id"),
 ///             .index(2, keys: "minutes")
