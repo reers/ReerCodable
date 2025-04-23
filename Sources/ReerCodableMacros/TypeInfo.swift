@@ -419,14 +419,14 @@ extension TypeInfo {
             for match in enumCase.associatedMatch {
                 if let label = match.label {
                     if !usedLabels.insert(label).inserted {
-                        throw MacroError(text: "Duplicate CaseValue label \(label) found in case '\(enumCase.caseName)'")
+                        throw MacroError(text: "Duplicate AssociatedValue label \(label) found in case '\(enumCase.caseName)'")
                     }
                 }
                 
                 if let indexStr = match.index,
                    let index = Int(indexStr) {
                     if !usedIndices.insert(index).inserted {
-                        throw MacroError(text: "Duplicate CaseValue index '\(index)' found in case '\(enumCase.caseName)'")
+                        throw MacroError(text: "Duplicate AssociatedValue index '\(index)' found in case '\(enumCase.caseName)'")
                     }
                 }
             }
@@ -796,10 +796,10 @@ extension TypeInfo {
         } else {
             if enumCases.contains(where: { !$0.matches.isEmpty }) {
                 let dict = processEnumCases(enumCases)
-                let tryDecode = dict.compactMapWithLastKey("String") { type, caseValues in
+                let tryDecode = dict.compactMapWithLastKey("String") { type, associatedValues in
                     return """
                         if let value = try? container.decode(\(type).self) {\nswitch value {
-                        \(caseValues.compactMap {
+                        \(associatedValues.compactMap {
                         """
                         case \($0.valueString): self = .\($0.caseName); try self.didDecode(from: decoder); return;
                         """

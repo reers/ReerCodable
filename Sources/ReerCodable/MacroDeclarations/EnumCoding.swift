@@ -46,7 +46,7 @@ public enum CaseMatcher {
 ///
 /// Used to specify how associated values should be decoded from JSON.
 /// Can be initialized with either a label-based or index-based configuration.
-public struct CaseValue {
+public struct AssociatedValue {
     let label: String?
     let keys: [String]
     let index: Int?
@@ -55,7 +55,7 @@ public struct CaseValue {
     /// - Parameters:
     ///   - label: The associated value's label in the enum case
     ///   - keys: The JSON keys to try for decoding this value
-    public static func label(_ label: String, keys: String...) -> CaseValue {
+    public static func label(_ label: String, keys: String...) -> AssociatedValue {
         return .init(label: label, keys: keys)
     }
     
@@ -69,7 +69,7 @@ public struct CaseValue {
     /// - Parameters:
     ///   - index: The position of the associated value in the enum case
     ///   - keys: The JSON keys to try for decoding this value
-    public static func index(_ index: Int, keys: String...) -> CaseValue {
+    public static func index(_ index: Int, keys: String...) -> AssociatedValue {
         return .init(index: index, keys: keys)
     }
     
@@ -172,5 +172,5 @@ public struct CaseValue {
 @attached(peer)
 public macro CodingCase(
     match cases: CaseMatcher...,
-    values: [CaseValue] = []
+    values: [AssociatedValue] = []
 ) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")
