@@ -169,7 +169,7 @@ enum Video: Codable {
     
     @CodingCase(
         match: .string("vimeo"),
-        values: [CaseValue.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
+        values: [AssociatedValue.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
     )
     case vimeo(id: String, duration: TimeInterval = 33, Int)
     

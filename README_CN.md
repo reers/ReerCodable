@@ -509,7 +509,7 @@ enum Phone: Codable {
     case oppo
 }
 ```
-- 对于有关联值的枚举, 支持通用 `CaseValue` 来匹配关联值, 使用 `.label()` 来声明有标签的关联值的匹配逻辑, 使用 `.index()` 来声明没有标签的的关联值的匹配逻辑. `ReerCodable` 支持两种JSON 格式的枚举匹配
+- 对于有关联值的枚举, 支持通用 `AssociatedValue` 来匹配关联值, 使用 `.label()` 来声明有标签的关联值的匹配逻辑, 使用 `.index()` 来声明没有标签的的关联值的匹配逻辑. `ReerCodable` 支持两种JSON 格式的枚举匹配
     - 第一种是也是原生 `Codable` 支持的, 即枚举值和其关联值是父子级的结构:
     ```swift
     @Codable

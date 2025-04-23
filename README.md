@@ -514,7 +514,7 @@ enum Phone: Codable {
     case oppo
 }
 ```
-- For enums with associated values, support using `CaseValue` to match associated values, use `.label()` to declare matching logic for labeled associated values, use `.index()` to declare matching logic for unlabeled associated values. `ReerCodable` supports two JSON formats for enum matching
+- For enums with associated values, support using `AssociatedValue` to match associated values, use `.label()` to declare matching logic for labeled associated values, use `.index()` to declare matching logic for unlabeled associated values. `ReerCodable` supports two JSON formats for enum matching
     - The first is also supported by native `Codable`, where the enum value and its associated values have a parent-child structure:
     ```swift
     @Codable
