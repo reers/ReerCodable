@@ -80,12 +80,32 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         return container.tryDecodeWithNormalKey(type: type, key: lastKey)
     }
     
-    public func match(keyPaths: [String]) -> Bool {
-        for keyPath in keyPaths {
-            if let containerAndKey = keyPath.containerAndKey,
-               let foundValue = try? decode(type: String.self, keys: [containerAndKey.0]),
-               foundValue == containerAndKey.1 {
-                return true
+    public func match<T: Decodable & Equatable>(keyPathValues: [(String, Any, T.Type)]) -> Bool {
+        for (path, value, _) in keyPathValues {
+            var expectedValue: (any Equatable)?
+            var expectedRange: (any RangeExpression<T>)?
+            switch value {
+            case let boolValue as Bool:
+                expectedValue = boolValue
+            case let intValue as Int:
+                expectedValue = intValue
+            case let doubleValue as Double:
+                expectedValue = doubleValue
+            case let stringValue as String:
+                expectedValue = stringValue
+            case let range as any RangeExpression<T>:
+                expectedRange = range
+            default: return false
+            }
+            
+            if let foundValue = try? decode(type: T.self, keys: [path]) {
+                if let expectedValue = expectedValue as? T {
+                    return foundValue == expectedValue
+                } else if let expectedRange {
+                    return expectedRange.contains(foundValue)
+                } else {
+                    return true
+                }
             }
         }
         return false

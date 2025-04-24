@@ -19,10 +19,16 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-/// Matchers for enum case decoding.
+/// Matchers for enum case coding.
 ///
-/// Note: `.pathValue` cannot be used together with other matchers (`.string`, `.int`, etc.).
-/// For enums with associated values, only `.pathValue` or `.string` can be used.
+/// These matchers are used to identify which enum case should be decoded from JSON data or how to encode to JSON data.
+///
+/// Important constraints:
+/// - Matchers with key paths cannot be combined with other matcher types (`.string`, `.int`, etc.).
+/// - For enums with associated values, only key path matchers or `.string` matchers can be used
+/// - Duplicate exact matchers (e.g., two cases both using `.int(8)`) will result in compile-time errors
+/// - Range matchers (e.g., `.intRange`, `.doubleRange`) do not have overlap detection - developers
+///   must ensure ranges don't overlap between different cases to avoid ambiguous decoding
 public enum CaseMatcher {
     /// Match a boolean value
     case bool(Bool)
@@ -38,15 +44,31 @@ public enum CaseMatcher {
     case string(String)
     /// Match an string range
     case stringRange(any RangeExpression<String>)
-    /// Match a nested path value using dot notation (e.g. "type.tiktok", "type.middle.youtube")
-    case pathValue(String)
+    
+    // Match values at specific paths in the JSON structure (using dot notation)
+    // e.g. `.string("youtube", at: "type.middle)`, `.string("tiktok", at: "type")`
+    
+    /// Match a boolean value at specified key path
+    case bool(Bool, at: String)
+    /// Match an integer value at specified key path
+    case int(Int, at: String)
+    /// Match an integer range at specified key path
+    case intRange(any RangeExpression<Int>, at: String)
+    /// Match a double value at specified key path
+    case double(Double, at: String)
+    /// Match an double range at specified key path
+    case doubleRange(any RangeExpression<Double>, at: String)
+    /// Match a string value at specified key path
+    case string(String, at: String)
+    /// Match an string range at specified key path
+    case stringRange(any RangeExpression<String>, at: String)
 }
 
 /// Configuration for associated values in enum cases.
 ///
 /// Used to specify how associated values should be decoded from JSON.
 /// Can be initialized with either a label-based or index-based configuration.
-public struct CaseValue {
+public struct AssociatedValue {
     let label: String?
     let keys: [String]
     let index: Int?
@@ -55,7 +77,7 @@ public struct CaseValue {
     /// - Parameters:
     ///   - label: The associated value's label in the enum case
     ///   - keys: The JSON keys to try for decoding this value
-    public static func label(_ label: String, keys: String...) -> CaseValue {
+    public static func label(_ label: String, keys: String...) -> AssociatedValue {
         return .init(label: label, keys: keys)
     }
     
@@ -69,7 +91,7 @@ public struct CaseValue {
     /// - Parameters:
     ///   - index: The position of the associated value in the enum case
     ///   - keys: The JSON keys to try for decoding this value
-    public static func index(_ index: Int, keys: String...) -> CaseValue {
+    public static func index(_ index: Int, keys: String...) -> AssociatedValue {
         return .init(index: index, keys: keys)
     }
     
@@ -87,8 +109,8 @@ public struct CaseValue {
 /// 2. Complex enum cases with associated values
 ///
 /// Important restrictions:
-/// - `.pathValue` matcher cannot be combined with other matchers
-/// - For enums with any associated values, only `.pathValue` or `.string` matchers can be used
+/// - CaseMatcher with key path cannot be combined with other matchers
+/// - For enums with any associated values, only CaseMatcher with key path or `.string` matchers can be used
 ///
 /// Example 1: Simple enum without associated values:
 /// ```swift
@@ -119,11 +141,11 @@ public struct CaseValue {
 /// ```swift
 /// @Codable
 /// enum Video {
-///     @CodingCase(match: .pathValue("type.middle.youtube"))
+///     @CodingCase(match: .string("youtube", at: "type.middle"))
 ///     case youTube
 ///     
 ///     @CodingCase(
-///         match: .pathValue("type.vimeo"),
+///         match: .string("vimeo", at: "type"),
 ///         values: [
 ///             .label("id", keys: "ID", "Id"),
 ///             .index(2, keys: "minutes")
@@ -172,5 +194,5 @@ public struct CaseValue {
 @attached(peer)
 public macro CodingCase(
     match cases: CaseMatcher...,
-    values: [CaseValue] = []
+    values: [AssociatedValue] = []
 ) = #externalMacro(module: "ReerCodableMacros", type: "CodingCase")

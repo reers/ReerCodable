@@ -79,11 +79,8 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
         return try nestedContainer(path: path)
     }
     
-    public mutating func encode(keyPath: String) throws {
-        guard let containerAndKey = keyPath.containerAndKey else {
-            return
-        }
-        try encode(value: containerAndKey.1, key: containerAndKey.0, treatDotAsNested: true)
+    public mutating func encode(keyPath: String, value: any Encodable) throws {
+        try encode(value: value, key: keyPath, treatDotAsNested: true)
     }
 }
 

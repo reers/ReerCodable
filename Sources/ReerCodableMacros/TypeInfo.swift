@@ -40,11 +40,22 @@ struct AssociatedMatch {
     let index: String?
 }
 
+struct PathValueMatch {
+    let valueType: String
+    let value: String
+    let path: String
+    
+    var tupleString: String {
+        return "(\(path), \(value), \(valueType).self)"
+    }
+}
+
 struct EnumCase {
     var caseName: String
     var rawValue: String
     // [Type: Value]
     var matches: [String: [String]] = [:]
+    var keyPathMatches: [PathValueMatch] = []
     var associatedMatch: [AssociatedMatch] = []
     var associated: [AssociatedValue] = []
     
@@ -139,13 +150,29 @@ struct TypeInfo {
                     if let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) {
                         arguments.forEach {
                             if ($0.label?.trimmedDescription == "match" || $0.label == nil),
-                               let matchString = $0.expression.as(FunctionCallExprSyntax.self)?.trimmedDescription,
-                               let tuple = parseEnumCaseMatchString(matchString) {
-                                var last = enumCases.removeLast()
-                                var values = last.matches[tuple.type] ?? []
-                                values.append(tuple.value)
-                                last.matches[tuple.type] = values
-                                enumCases.append(last)
+                               let functionCall = $0.expression.as(FunctionCallExprSyntax.self) {
+                                if let lastArg = functionCall.arguments.last,
+                                   lastArg.label?.trimmedDescription == "at",
+                                   let type = functionCall.calledExpression.as(MemberAccessExprSyntax.self)?.declName.trimmedDescription.removingSuffix("Range").capitalized,
+                                   let value = functionCall.arguments.first?.trimmedDescription.removingSuffix(",").trimmed {
+                                    // key path value
+                                    var last = enumCases.removeLast()
+                                    last.keyPathMatches.append(
+                                        .init(
+                                            valueType: type,
+                                            value: value,
+                                            path: lastArg.expression.trimmedDescription
+                                        )
+                                    )
+                                    enumCases.append(last)
+                                } else if let tuple = parseEnumCaseMatchString(functionCall.trimmedDescription) {
+                                    // normal
+                                    var last = enumCases.removeLast()
+                                    var values = last.matches[tuple.type] ?? []
+                                    values.append(tuple.value)
+                                    last.matches[tuple.type] = values
+                                    enumCases.append(last)
+                                }
                             }
                             if $0.label?.trimmedDescription == "values",
                                let values = $0.expression.as(ArrayExprSyntax.self) {
@@ -408,7 +435,7 @@ extension TypeInfo {
                     } else if let label = enumCase.associated[int].label {
                         var keysFromMatchLabel = enumCase.associatedMatch.first { $0.label == "\"\(label)\"" }?.keys ?? []
                         keysFromMatchLabel.append(contentsOf: $0.keys)
-                        throw MacroError(text: "Associated value in case '\(enumCase.caseName)' at index \(int) has a label, use '.init(label: \"\(label)\", keys: \(keysFromMatchLabel.joined(separator: ", ")))' instead.")
+                        throw MacroError(text: "Associated value in case '\(enumCase.caseName)' at index \(int) has a label, use '.label(\"\(label)\", keys: \(keysFromMatchLabel.joined(separator: ", ")))' instead.")
                     }
                 }
             }
@@ -419,30 +446,30 @@ extension TypeInfo {
             for match in enumCase.associatedMatch {
                 if let label = match.label {
                     if !usedLabels.insert(label).inserted {
-                        throw MacroError(text: "Duplicate CaseValue label \(label) found in case '\(enumCase.caseName)'")
+                        throw MacroError(text: "Duplicate AssociatedValue label \(label) found in case '\(enumCase.caseName)'")
                     }
                 }
                 
                 if let indexStr = match.index,
                    let index = Int(indexStr) {
                     if !usedIndices.insert(index).inserted {
-                        throw MacroError(text: "Duplicate CaseValue index '\(index)' found in case '\(enumCase.caseName)'")
+                        throw MacroError(text: "Duplicate AssociatedValue index '\(index)' found in case '\(enumCase.caseName)'")
                     }
                 }
             }
         }
         
         let flated = cases.flatMap { $0.matches }
-        let hasPathValue = flated.contains { $0.key == "PathValue" }
-        let hasOtherTypes = flated.contains { $0.key != "PathValue" }
+        let hasPathValue = cases.contains { !$0.keyPathMatches.isEmpty }
+        let hasOtherTypes = !flated.isEmpty
         if hasPathValue && hasOtherTypes {
-            throw MacroError(text: "Invalid usage: .pathValue() cannot be used with other match patterns like .string(), .int()...")
+            throw MacroError(text: "Invalid usage: CaseMatcher with key path cannot be used with other match patterns without key path like .string(), .int()...")
         }
         
         let hasAssociated = cases.contains { !$0.associated.isEmpty }
-        let hasNonStringOrNested = flated.contains { !($0.key == "PathValue" || $0.key == "String") }
-        if hasAssociated && hasNonStringOrNested {
-            throw MacroError(text: "Only .pathValue() and .string() patterns are allowed for enum cases with associated values")
+        let hasNonString = flated.contains { $0.key != "String" }
+        if hasAssociated && hasNonString {
+            throw MacroError(text: "Only CaseMatcher with key path and .string() patterns are allowed for enum cases with associated values")
         }
     }
 }
@@ -744,16 +771,16 @@ extension TypeInfo {
     /// Return: (assignments, shouldAddDidDecode)
     private func generateEnumDecoderAssignments() -> (String, Bool) {
         if hasEnumAssociatedValue {
-            let hasPathValue = enumCases.contains { $0.matches["PathValue"] != nil }
+            let hasPathValue = enumCases.contains { !$0.keyPathMatches.isEmpty }
             var index = -1
             let findCase = enumCases.compactMap { theCase in
                 index += 1
                 let hasAssociated = !theCase.associated.isEmpty
                 var condition: String
                 if hasPathValue {
-                    let keyPaths = theCase.matches["PathValue"]!
+                    let keyPathValues = theCase.keyPathMatches
                     condition = """
-                        container.match(keyPaths: [\(keyPaths.joined(separator: ", "))])
+                        container.match(keyPathValues: [\(keyPathValues.map({ $0.tupleString }).joined(separator: ", "))])
                         """
                 } else {
                     var keys = theCase.matches["String"] ?? []
@@ -796,10 +823,10 @@ extension TypeInfo {
         } else {
             if enumCases.contains(where: { !$0.matches.isEmpty }) {
                 let dict = processEnumCases(enumCases)
-                let tryDecode = dict.compactMapWithLastKey("String") { type, caseValues in
+                let tryDecode = dict.compactMapWithLastKey("String") { type, associatedValues in
                     return """
                         if let value = try? container.decode(\(type).self) {\nswitch value {
-                        \(caseValues.compactMap {
+                        \(associatedValues.compactMap {
                         """
                         case \($0.valueString): self = .\($0.caseName); try self.didDecode(from: decoder); return;
                         """
@@ -833,15 +860,15 @@ extension TypeInfo {
     
     private func generateEnumEncoderEncoding() -> String {
         if hasEnumAssociatedValue {
-            let hasPathValue = enumCases.contains { $0.matches["PathValue"] != nil }
+            let hasPathValue = enumCases.contains { !$0.keyPathMatches.isEmpty }
             let encodeCase = """
                 \(enumCases.compactMap {
                     let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
                     let hasAssociated = !$0.associated.isEmpty
-                    let encodeCase = if hasPathValue, let keyPath = $0.matches["PathValue"]?.first {
+                    let encodeCase = if hasPathValue {
                         """
-                        try container.encode(keyPath: \(keyPath))
+                        try container.encode(keyPath: \($0.keyPathMatches.first!.path), value: "\($0.caseName)")
                         """
                         }
                         else {
@@ -941,5 +968,9 @@ extension String {
     func removingSuffix(_ suffix: String) -> String {
         guard self.hasSuffix(suffix) else { return self }
         return String(self.dropLast(suffix.count))
+    }
+    
+    var trimmed: String {
+        return trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
