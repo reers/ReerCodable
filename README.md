@@ -514,7 +514,7 @@ enum Phone: Codable {
     case oppo
 }
 ```
-- For enums with associated values, support using `CaseValue` to match associated values, use `.label()` to declare matching logic for labeled associated values, use `.index()` to declare matching logic for unlabeled associated values. `ReerCodable` supports two JSON formats for enum matching
+- For enums with associated values, support using `AssociatedValue` to match associated values, use `.label()` to declare matching logic for labeled associated values, use `.index()` to declare matching logic for unlabeled associated values. `ReerCodable` supports two JSON formats for enum matching
     - The first is also supported by native `Codable`, where the enum value and its associated values have a parent-child structure:
     ```swift
     @Codable
@@ -553,7 +553,7 @@ enum Phone: Codable {
         case tiktok(url: URL, tag: String?)
     }
     ```
-    - The second is where enum values and their associated values are at the same level or have custom matching structures, using `.pathValue()` for custom path value matching
+    - The second is where enum values and their associated values are at the same level or have custom matching structures, using CaseMatcher with key path for custom path value matching
     ```swift
     @Codable
     enum Video1: Codable {
@@ -562,7 +562,7 @@ enum Phone: Codable {
         ///         "middle": "youtube"
         ///     }
         /// }
-        @CodingCase(match: .pathValue("type.middle.youtube"))
+        @CodingCase(match: .string("youtube", at: "type.middle"))
         case youTube
         
         /// {
@@ -571,7 +571,7 @@ enum Phone: Codable {
         ///     "minutes": 999999
         /// }
         @CodingCase(
-            match: .pathValue("type.vimeo"),
+            match: .string("vimeo", at: "type"),
             values: [.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
         )
         case vimeo(id: String, duration: TimeInterval = 33, Int)
@@ -582,7 +582,7 @@ enum Phone: Codable {
         ///     "tag": "Art"
         /// }
         @CodingCase(
-            match: .pathValue("type.tiktok"),
+            match: .string("tiktok", at: "type"),
             values: [.label("url", keys: "media")]
         )
         case tiktok(url: URL, tag: String?)

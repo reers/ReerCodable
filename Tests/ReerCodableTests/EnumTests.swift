@@ -169,7 +169,7 @@ enum Video: Codable {
     
     @CodingCase(
         match: .string("vimeo"),
-        values: [CaseValue.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
+        values: [AssociatedValue.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
     )
     case vimeo(id: String, duration: TimeInterval = 33, Int)
     
@@ -267,17 +267,17 @@ extension TestReerCodable {
 
 @Codable
 enum Video1: Codable {
-    @CodingCase(match: .pathValue("type.middle.youtube"))
+    @CodingCase(match: .string("youtube", at: "type.middle"))
     case youTube
     
     @CodingCase(
-        match: .pathValue("type.vimeo"),
+        match: .string("vimeo", at: "type"),
         values: [.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
     )
     case vimeo(id: String, duration: TimeInterval = 33, Int)
     
     @CodingCase(
-        match: .pathValue("type.tiktok"),
+        match: .string("tiktok", at: "type"),
         values: [.label("url", keys: "media")]
     )
     case tiktok(url: URL, tag: String?)
@@ -318,7 +318,7 @@ extension TestReerCodable {
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
                 let dict = modelData.stringAnyDictionary?["type"] as? [String: Any]
-                #expect(dict.string("middle") == "youtube")
+                #expect(dict.string("middle") == "youTube")
             } else {
                 Issue.record("Expected youtube")
             }
@@ -354,6 +354,61 @@ extension TestReerCodable {
             } else {
                 Issue.record("Expected tiktok")
             }
+        }
+    }
+}
+
+
+@Codable
+enum Video5: Codable {
+    @CodingCase(match: .string("youtube", at: "type.middle"))
+    case youTube
+    
+    @CodingCase(
+        match: .string("vimeo", at: "type"),
+        values: [.label("id", keys: "ID", "Id"), .index(2, keys: "minutes")]
+    )
+    case vimeo(id: String, duration: TimeInterval = 33, Int)
+    
+    @CodingCase(
+        match: .intRange(20...24, at: "type.middle"),
+        values: [.label("url", keys: "media")]
+    )
+    case tiktok(url: URL, tag: String?)
+}
+
+extension TestReerCodable {
+    
+    @Test
+    func eunmWithAssociatedRange() throws {
+        let json = """
+        {
+            "type": {
+                "middle": 22
+            },
+            "media": "https://example.com/video.mp4",
+            "tag": "Art"
+        }
+        """
+        let model = try Video5.decoded(from: json.data(using: .utf8)!)
+        
+        switch model {
+        case .tiktok(url: let url, tag: let tag):
+            if json.lowercased().contains("22"),
+               url.absoluteString == "https://example.com/video.mp4",
+               tag == "Art" {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary
+                #expect((dict?["type"] as! [String: Any]).string("middle") == "tiktok")
+                #expect(dict.string("url") == "https://example.com/video.mp4")
+                #expect(dict.string("tag") == "Art")
+            } else {
+                Issue.record("Expected tiktok")
+            }
+        default: break
         }
     }
 }
