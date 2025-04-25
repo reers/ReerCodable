@@ -49,6 +49,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 支持通过 `@Copyable` 生成 `copy()` 方法, 并且支持部分属性值的 update
 - 自动生成默认实例：使用 `@DefaultInstance` 自动创建类型的默认实例, 可通过 Model.default 访问
 - 灵活的复制与更新：`@Copyable` 宏会生成一个 copy() 方法, 支持在一次调用中实现完整复制或选择性地更新属性值
+- 支持单独使用 `@Decodable` 或 `@Encodable`
 
 
 # 环境要求
@@ -759,6 +760,20 @@ func copy(
         desc: desc ?? self.desc,
         data: data ?? self.data
     )
+}
+```
+
+### 20. 单独使用 `@Decodable` 或 `@Encodable`
+
+```
+@Decodable
+struct Item: Equatable {
+    let id: Int
+}
+
+@Encodable
+struct User3: Equatable {
+    let name: String
 }
 ```
 
