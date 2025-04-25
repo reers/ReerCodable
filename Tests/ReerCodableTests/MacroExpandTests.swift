@@ -128,6 +128,7 @@ final class ReerCodableTests: XCTestCase {
             """
             @Codable
             @ScreamingKebabCase
+            @Copyable
             public final class Test {
                 @CodingKey("age__", "a.b")
                 @EncodingKey("a.b", treatDotAsNested: false)
@@ -180,6 +181,7 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
+            @DefaultInstance
             @CodingContainer("data.info", workForEncoding: true)
             struct Person3 {
                 var name: String
