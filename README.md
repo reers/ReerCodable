@@ -56,6 +56,7 @@ Main features include:
 - Flexible copying with updates: 
   The `@Copyable` macro generates a powerful `copy()` method that allows both 
   full copies and selective property updates in a single call
+- Support the use of `@Decodable` or `@Encodable` alone
 
 # Requirements
 XCode 16.0+
@@ -764,6 +765,20 @@ func copy(
         desc: desc ?? self.desc,
         data: data ?? self.data
     )
+}
+```
+
+### 20. Use `@Decodable` or `@Encodable` alone
+
+```
+@Decodable
+struct Item: Equatable {
+    let id: Int
+}
+
+@Encodable
+struct User3: Equatable {
+    let name: String
 }
 ```
 
