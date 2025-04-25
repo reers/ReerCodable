@@ -92,16 +92,7 @@ extension RECodable: MemberMacro {
         }
         
         var hasDefaultInstance = false
-        if let structDecl = declaration.as(StructDeclSyntax.self),
-           structDecl.attributes.containsAttribute(named: "DefaultInstance") {
-            hasDefaultInstance = true
-        }
-        if let classDecl = declaration.as(ClassDeclSyntax.self),
-           classDecl.attributes.containsAttribute(named: "DefaultInstance") {
-            hasDefaultInstance = true
-        }
-        if let enumDecl = declaration.as(EnumDeclSyntax.self),
-           enumDecl.attributes.containsAttribute(named: "DefaultInstance") {
+        if declaration.attributes.containsAttribute(named: "DefaultInstance") {
             hasDefaultInstance = true
         }
         
@@ -110,16 +101,7 @@ extension RECodable: MemberMacro {
         }
         
         var hasCopyable = false
-        if let structDecl = declaration.as(StructDeclSyntax.self),
-           structDecl.attributes.containsAttribute(named: "Copyable") {
-            hasCopyable = true
-        }
-        if let classDecl = declaration.as(ClassDeclSyntax.self),
-           classDecl.attributes.containsAttribute(named: "Copyable") {
-            hasCopyable = true
-        }
-        if let enumDecl = declaration.as(EnumDeclSyntax.self),
-           enumDecl.attributes.containsAttribute(named: "Copyable") {
+        if declaration.attributes.containsAttribute(named: "Copyable") {
             hasCopyable = true
         }
         
@@ -137,6 +119,203 @@ extension RECodable: MemberMacro {
         if hasCopyable {
             decls.append(try typeInfo.generateCopy())
         }
+        return decls
+    }
+}
+
+// MARK: - Decodable only
+
+public struct REDecodable {}
+
+extension REDecodable: ExtensionMacro {
+    public static func expansion(
+        of node: SwiftSyntax.AttributeSyntax,
+        attachedTo declaration: some SwiftSyntax.DeclGroupSyntax,
+        providingExtensionsOf type: some SwiftSyntax.TypeSyntaxProtocol,
+        conformingTo protocols: [SwiftSyntax.TypeSyntax],
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.ExtensionDeclSyntax] {
+        guard
+            declaration.is(StructDeclSyntax.self)
+            || declaration.is(ClassDeclSyntax.self)
+            || declaration.is(EnumDeclSyntax.self)
+        else {
+            throw MacroError(text: "@Decodable macro is only for `struct`, `class` or `enum`.")
+        }
+
+        var decodableExisted = false
+        if let inheritedTypeClause = declaration.inheritanceClause {
+            decodableExisted = inheritedTypeClause.inheritedTypes.contains { inheritedType in
+                let typeName = inheritedType.type.trimmedDescription
+                return typeName == "Decodable" || typeName == "Codable"
+            }
+        }
+
+        let extensionDecl: DeclSyntax =
+            """
+            extension \(type.trimmed): \(raw: decodableExisted ? "" : "Decodable, ")ReerCodableDelegate {}
+            """
+        return [extensionDecl.cast(ExtensionDeclSyntax.self)]
+    }
+}
+
+extension REDecodable: MemberMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingMembersOf declaration: some DeclGroupSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        let members = declaration.memberBlock.members
+
+        for member in members {
+            if let initDecl = member.decl.as(InitializerDeclSyntax.self),
+               initDecl.signature.parameterClause.parameters.count == 1,
+               initDecl.signature.parameterClause.parameters.first?.firstName.text == "from",
+               initDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Decoder" {
+                throw MacroError(text: "Please use the `@Decodable` macro-generated implementation instead of manually implementing `init(from:)`.")
+            }
+        }
+
+        let typeInfo = try TypeInfo(decl: declaration)
+        let decoder = try typeInfo.generateDecoderInit()
+        
+        var hasMemberwiseInit = true
+        if case .argumentList(let list) = node.arguments {
+            if let item = list.first(where: { $0.label?.text == "memberwiseInit" }),
+               item.expression.description == "false" {
+                hasMemberwiseInit = false
+            }
+        }
+
+        var hasDefaultInstance = false
+        if declaration.attributes.containsAttribute(named: "DefaultInstance") {
+            hasDefaultInstance = true
+        }
+
+        if hasDefaultInstance && !hasMemberwiseInit {
+            throw MacroError(text: "@DefaultInstance requires 'memberwiseInit' is 'true'")
+        }
+
+        var hasCopyable = false
+        if declaration.attributes.containsAttribute(named: "Copyable") {
+            hasCopyable = true
+        }
+
+        if hasCopyable && !hasMemberwiseInit {
+            throw MacroError(text: "@Copyable requires 'memberwiseInit' is 'true'")
+        }
+
+        var decls = [decoder]
+
+        if hasMemberwiseInit, !declaration.is(EnumDeclSyntax.self) {
+            decls.append(try typeInfo.generateMemberwiseInit())
+        }
+        if hasDefaultInstance {
+            decls.append(try typeInfo.generateDefaultInstance())
+        }
+        if hasCopyable {
+            decls.append(try typeInfo.generateCopy())
+        }
+
+        return decls
+    }
+}
+
+// MARK: - Encodable only
+
+public struct REEncodable {}
+
+extension REEncodable: ExtensionMacro {
+    public static func expansion(
+        of node: SwiftSyntax.AttributeSyntax,
+        attachedTo declaration: some SwiftSyntax.DeclGroupSyntax,
+        providingExtensionsOf type: some SwiftSyntax.TypeSyntaxProtocol,
+        conformingTo protocols: [SwiftSyntax.TypeSyntax],
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.ExtensionDeclSyntax] {
+        guard
+            declaration.is(StructDeclSyntax.self)
+            || declaration.is(ClassDeclSyntax.self)
+            || declaration.is(EnumDeclSyntax.self)
+        else {
+            throw MacroError(text: "@Encodable macro is only for `struct`, `class` or `enum`.")
+        }
+
+        var encodableExisted = false
+        if let inheritedTypeClause = declaration.inheritanceClause {
+            encodableExisted = inheritedTypeClause.inheritedTypes.contains { inheritedType in
+                let typeName = inheritedType.type.trimmedDescription
+                return typeName == "Encodable" || typeName == "Codable"
+            }
+        }
+
+        let extensionDecl: DeclSyntax =
+            """
+            extension \(type.trimmed): \(raw: encodableExisted ? "" : "Encodable, ")ReerCodableDelegate {}
+            """
+        return [extensionDecl.cast(ExtensionDeclSyntax.self)]
+    }
+}
+
+extension REEncodable: MemberMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingMembersOf declaration: some DeclGroupSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        let members = declaration.memberBlock.members
+
+        for member in members {
+            if let funcDecl = member.decl.as(FunctionDeclSyntax.self),
+               funcDecl.name.text == "encode",
+               funcDecl.signature.parameterClause.parameters.count == 1,
+               funcDecl.signature.parameterClause.parameters.first?.firstName.text == "to",
+               funcDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Encoder" {
+                throw MacroError(text: "Please use the `@Encodable` macro-generated implementation instead of manually implementing `encode(to:)`.")
+            }
+        }
+
+        let typeInfo = try TypeInfo(decl: declaration)
+        let encoderFunc = try typeInfo.generateEncoderFunc()
+
+        var hasMemberwiseInit = true
+        if case .argumentList(let list) = node.arguments {
+            if let item = list.first(where: { $0.label?.text == "memberwiseInit" }),
+               item.expression.description == "false" {
+                hasMemberwiseInit = false
+            }
+        }
+
+        var hasDefaultInstance = false
+        if declaration.attributes.containsAttribute(named: "DefaultInstance") {
+            hasDefaultInstance = true
+        }
+
+        if hasDefaultInstance && !hasMemberwiseInit {
+            throw MacroError(text: "@DefaultInstance requires 'memberwiseInit' is 'true' (when used with @Encodable)")
+        }
+
+        var hasCopyable = false
+        if declaration.attributes.containsAttribute(named: "Copyable") {
+            hasCopyable = true
+        }
+
+        if hasCopyable && !hasMemberwiseInit {
+             throw MacroError(text: "@Copyable requires 'memberwiseInit' is 'true' (when used with @Encodable)")
+        }
+
+        var decls = [encoderFunc]
+
+        if hasMemberwiseInit, !declaration.is(EnumDeclSyntax.self) {
+            decls.append(try typeInfo.generateMemberwiseInit())
+        }
+        if hasDefaultInstance {
+            decls.append(try typeInfo.generateDefaultInstance())
+        }
+        if hasCopyable {
+            decls.append(try typeInfo.generateCopy())
+        }
+
         return decls
     }
 }
