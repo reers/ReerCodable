@@ -71,7 +71,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.2.0")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.2.1")
     ]
 )
 </code></pre>
@@ -87,7 +87,7 @@ let package = Package(
 <pre><code class="ruby language-ruby">
 Pod::Spec.new do |s|
   s.name             = 'YourPod'
-  s.dependency 'ReerCodable', '1.2.0'
+  s.dependency 'ReerCodable', '1.2.1'
   # 复制以下 config 到你的 pod
   s.pod_target_xcconfig = {
     'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
