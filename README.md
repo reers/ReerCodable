@@ -1,5 +1,7 @@
 [简体中文](README_CN.md)
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/reers/ReerCodable)
+
 # ReerCodable
 Extension of `Codable` using Swift macros to make serialization simpler with declarative annotations!
 
