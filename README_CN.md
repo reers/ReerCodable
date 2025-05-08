@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/reers/ReerCodable)
+
 # ReerCodable
 使用 Swift macros 对 `Codable` 进行扩展, 以声明式注解让序列化变得更简单!
 ```swift
