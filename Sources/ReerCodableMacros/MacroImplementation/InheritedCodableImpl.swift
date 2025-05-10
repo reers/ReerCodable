@@ -27,6 +27,7 @@ public struct InheritedCodable: MemberMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
+        conformingTo protocols: [TypeSyntax],
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.DeclSyntax] {
         guard declaration.is(ClassDeclSyntax.self), declaration.inheritanceClause != nil else {
@@ -45,6 +46,7 @@ public struct InheritedDecodable: MemberMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
+        conformingTo protocols: [TypeSyntax],
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.DeclSyntax] {
         // 1. 检查宏是否应用于类 (ClassDeclSyntax)
