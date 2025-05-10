@@ -186,12 +186,12 @@ struct User {
 
 ### 3. 多键解码
 
-可以指定多个 key 用于解码，系统会按顺序尝试解码直到成功：
+可以指定多个 key (包括 nested key)用于解码，系统会按顺序尝试解码直到成功：
 
 ```swift
 @Codable
 struct User {
-    @CodingKey("name", "username", "nick_name")
+    @CodingKey("name", "username", "nick_name", "user_info.name")
     var name: String
 }
 ```
