@@ -73,12 +73,12 @@ public protocol CodingCustomizable {
 /// struct IntTransformer: CodingCustomizable {
 ///     typealias Value = Int
 ///     
-///     static func decode(by decoder: Decoder) throws -> Int {
+///     static func decode(by decoder: any Decoder, keys: [String]) throws -> Int {
 ///         let temp: Int = try decoder.value(forKeys: "custom")
 ///         return temp * 1000
 ///     }
 ///     
-///     static func encode(by encoder: Encoder, _ value: Int) throws {
+///     static func encode(by encoder: Encoder, key: String, value: Value) throws {
 ///         try encoder.set(value, forKey: "custom_by")
 ///     }
 /// }
