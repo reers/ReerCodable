@@ -25,22 +25,17 @@ import SwiftSyntaxMacros
 @main
 struct ReerCodablePlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
+        // For type use only
         RECodable.self,
         REDecodable.self,
         REEncodable.self,
         InheritedCodable.self,
         InheritedDecodable.self,
-        CodingKey.self,
-        EncodingKey.self,
-        CodingIgnored.self,
-        Base64Coding.self,
-        DateCoding.self,
-        CompactDecoding.self,
-        CustomCoding.self,
-        CodingCase.self,
-        CodingContainer.self,
         DefaultInstance.self,
         Copyable.self,
+        CodingContainer.self,
+        
+        // For type and property use only
         FlatCase.self,
         UpperCase.self,
         CamelCase.self,
@@ -53,5 +48,15 @@ struct ReerCodablePlugin: CompilerPlugin {
         CamelKebabCase.self,
         PascalKebabCase.self,
         ScreamingKebabCase.self,
+        
+        // For property use only
+        CodingKey.self,
+        EncodingKey.self,
+        CodingIgnored.self,
+        Base64Coding.self,
+        DateCoding.self,
+        CompactDecoding.self,
+        CustomCoding.self,
+        CodingCase.self,
     ]
 }
