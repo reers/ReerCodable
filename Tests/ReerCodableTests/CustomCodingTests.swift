@@ -7,7 +7,7 @@ struct RankTransformer: CodingCustomizable {
     
     typealias Value = UInt
     
-    static func decode(by decoder: any Decoder, keys: [String]) throws -> UInt {
+    static func decode(by decoder: any Decoder, keys: [String]) throws -> Value {
         var temp: String = try decoder.value(forKeys: keys)
         temp.removeLast(2)
         return UInt(temp) ?? 0
@@ -17,6 +17,19 @@ struct RankTransformer: CodingCustomizable {
         try encoder.set(value, forKey: key)
     }
 }
+
+
+struct AddPrefixTransformer<T: Codable>: CodingCustomizable {
+    static func decode(by decoder: any Decoder, keys: [String]) throws -> T {
+        var temp: String = try decoder.value(forKeys: keys)
+        return "prefix-\(temp)" as! T
+    }
+    
+    static func encode(by encoder: Encoder, key: String, value: T) throws {
+        try encoder.set(value, forKey: key)
+    }
+}
+
 
 @Codable
 struct HundredMeterRace {
@@ -40,13 +53,17 @@ struct HundredMeterRace {
     @KebabCase
     @EncodingKey("TEST~~Case")
     var testCase: UInt
+    
+    @CustomCoding(AddPrefixTransformer<String>.self)
+    var testGeneric: String
 }
 
 let jsonData2 = """
 {
     "milliseconds": 11200,
     "race_rank": "2nd",
-    "test-case": "3rd"
+    "test-case": "3rd",
+    "testGeneric": "helloworld"
 }
 """.data(using: .utf8)!
 
@@ -58,6 +75,7 @@ extension TestReerCodable {
         #expect(model.duration == 11.2)
         #expect(model.rank == 2)
         #expect(model.testCase == 3)
+        #expect(model.testGeneric == "prefix-helloworld")
         
         // Encode
         let modelData = try JSONEncoder().encode(model)
@@ -68,5 +86,6 @@ extension TestReerCodable {
         #expect(dict.double("seconds") == 11.2)
         #expect(dict.int("race_rank") == 2)
         #expect(dict.int("TEST~~Case") == 3)
+        #expect(dict.string("testGeneric") == "prefix-helloworld")
     }
 }
