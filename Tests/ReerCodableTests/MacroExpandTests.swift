@@ -181,11 +181,17 @@ final class ReerCodableTests: XCTestCase {
         assertMacroExpansion(
             """
             @Codable
-            @DefaultInstance
-            @CodingContainer("data.info", workForEncoding: true)
-            struct Person3 {
-                var name: String
-                var age: Int
+            struct HundredMeterRace {
+               
+                @CustomCoding(RankTransformer.self)
+                @CodingKey("race_rank")
+                @CodingIgnored
+                @Base64Coding
+                var rank: UInt
+                
+                @CustomCoding(RankTransformer.self)
+                @KebabCase
+                var testCase: UInt
             }
             """,
             expandedSource: """
