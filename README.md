@@ -192,12 +192,12 @@ struct User {
 
 ### 3. Multiple Keys for Decoding
 
-Multiple keys can be specified for decoding, the system will try decoding in order until successful:
+Multiple keys (including nested keys) can be specified for decoding, the system will try decoding in order until successful:
 
 ```swift
 @Codable
 struct User {
-    @CodingKey("name", "username", "nick_name")
+    @CodingKey("name", "username", "nick_name", "user_info.name")
     var name: String
 }
 ```
