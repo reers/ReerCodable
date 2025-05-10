@@ -300,7 +300,6 @@ extension TypeInfo {
                 if let customCoding = variable.attributes.firstAttribute(named: "CustomCoding"),
                    let attribute = customCoding.as(AttributeSyntax.self),
                    let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) {
-                    print(attribute)
                     property.customDecoder = arguments
                         .first(where: { $0.label?.identifier?.name == "decode" })?
                         .expression.trimmedDescription
