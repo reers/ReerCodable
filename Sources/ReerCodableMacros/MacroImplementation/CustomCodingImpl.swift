@@ -31,8 +31,22 @@ public struct CustomCoding: PeerMacro {
         guard let variable = declaration.as(VariableDeclSyntax.self) else {
             throw MacroError(text: "@CustomCoding macro is only for property.")
         }
-        guard variable.attributes.count == 1 else {
-            throw MacroError(text: "@CustomCoding macro cannot be used with other attributes.")
+        if variable.attributes.count > 1 {
+            let incompatibleMacros = [
+                "CodingIgnored",
+                "Base64Coding",
+                "DateCoding",
+                "CompactDecoding",
+                "CodingCase",
+            ]
+            
+            let conflictingMacros = incompatibleMacros.filter { macroName in
+                variable.attributes.containsAttribute(named: macroName)
+            }
+            
+            if !conflictingMacros.isEmpty {
+                throw MacroError(text: "@CustomCoding macro cannot be used together with @\(conflictingMacros.joined(separator: ", @")).")
+            }
         }
         return []
     }
