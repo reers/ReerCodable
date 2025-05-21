@@ -633,10 +633,10 @@ Provide convenient JSON string and dictionary conversion methods:
 
 ```swift
 let jsonString = "{\"name\": \"Tom\"}"
-let user = try User.decode(from: jsonString)
+let user = try User.decoded(from: jsonString)
 
 let dict: [String: Any] = ["name": "Tom"]
-let user2 = try User.decode(from: dict)
+let user2 = try User.decoded(from: dict)
 ```
 
 ### 17. Basic Type Conversion
