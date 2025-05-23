@@ -28,16 +28,15 @@ Pod::Spec.new do |s|
   
   s.swift_versions = '5.10'
 
-  s.source_files = 'Sources/**/*'
-  s.preserve_paths = ["Sources/Resources/ReerCodableMacros"]
+  s.source_files = 'Sources/**/*', 'MacroPlugin/ReerCodableMacros'
   s.exclude_files = 'Sources/ReerCodableMacros'
   
   s.pod_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
   }
   
   s.user_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
   }
 
 end
