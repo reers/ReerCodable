@@ -98,7 +98,7 @@ Pod::Spec.new do |s|
   s.dependency 'ReerCodable', '1.2.5'
   # Copy the following config to your pod
   s.pod_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
   }
 end
 </code></pre>
@@ -112,7 +112,7 @@ end
           puts "Adding ReerCodable Swift flags to target: #{target.name}"
           target.build_configurations.each do |config|
             swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] ||= ['$(inherited)']
-            plugin_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/Sources/Resources/ReerCodableMacros#ReerCodableMacros'
+            plugin_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
             unless swift_flags.join(' ').include?(plugin_flag)
               swift_flags.concat(plugin_flag.split)
             end
