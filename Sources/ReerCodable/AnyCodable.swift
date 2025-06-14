@@ -88,12 +88,12 @@ public struct AnyCodable: Codable {
             try container.encode(double)
         case let string as String: 
             try container.encode(string)
-#if canImport(Foundation)
+        #if canImport(Foundation)
         case let date as Date: 
             try container.encode(date)
         case let url as URL: 
             try container.encode(url)
-#endif
+        #endif
         case let array as [Any?]: 
             try container.encode(array.map { AnyCodable($0) })
         case let dictionary as [String: Any?]: 
@@ -104,6 +104,7 @@ public struct AnyCodable: Codable {
                 codingPath: container.codingPath,
                 debugDescription: "AnyEncodable value cannot be encoded"
             )
+            #if compiler(>=6.0)
             if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
                 if let int128 = value as? Int128 {
                     try container.encode(int128)
@@ -115,6 +116,9 @@ public struct AnyCodable: Codable {
             } else {
                 throw EncodingError.invalidValue(value, context)
             }
+            #else
+            throw EncodingError.invalidValue(value, context)
+            #endif
         }
     }
 }
@@ -157,6 +161,7 @@ extension AnyCodable: Equatable {
         case let (lhs as [AnyCodable], rhs as [AnyCodable]):
             return lhs == rhs
         default:
+            #if compiler(>=6.0)
             if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
                 if let left = lhs.value as? Int128, let right = rhs.value as? Int128 {
                     return left == right
@@ -168,6 +173,9 @@ extension AnyCodable: Equatable {
             } else {
                 return false
             }
+            #else
+            return false
+            #endif
         }
     }
 }
@@ -208,6 +216,7 @@ extension AnyCodable: Hashable {
         case let value as [AnyCodable]:
             hasher.combine(value)
         default:
+            #if compiler(>=6.0)
             if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
                 if let int128 = value as? Int128 {
                     hasher.combine(int128)
@@ -219,6 +228,9 @@ extension AnyCodable: Hashable {
             } else {
                 break
             }
+            #else
+            break
+            #endif
         }
     }
 }
