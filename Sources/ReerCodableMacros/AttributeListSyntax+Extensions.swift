@@ -35,4 +35,14 @@ extension AttributeListSyntax {
     func containsAttribute(named identifier: String) -> Bool {
         return firstAttribute(named: identifier) != nil
     }
+    
+    func countOfAttribute(named identifier: String) -> Int {
+        return count {
+            guard let attribute = $0.as(AttributeSyntax.self)?
+                .attributeName.as(IdentifierTypeSyntax.self)?
+                .trimmedDescription
+            else { return false }
+            return (attribute == identifier) || attribute.hasPrefix("\(identifier)<")
+        }
+    }
 }

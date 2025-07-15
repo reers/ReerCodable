@@ -34,6 +34,16 @@ public struct CodingContainer: PeerMacro {
         else {
             throw MacroError(text: "@CodingContainer macro is only for `struct` or `class`.")
         }
+        
+        if let structDecl = declaration.as(StructDeclSyntax.self),
+           structDecl.attributes.countOfAttribute(named: "CodingContainer") > 1 {
+            throw MacroError(text: "@CodingContainer macro must be applied only once per type declaration.")
+        }
+        if let classDecl = declaration.as(ClassDeclSyntax.self),
+           classDecl.attributes.countOfAttribute(named: "CodingContainer") > 1 {
+            throw MacroError(text: "@CodingContainer macro must be applied only once per type declaration.")
+        }
+        
         let keyPath = node.arguments?.as(LabeledExprListSyntax.self)?
             .first?.expression.as(StringLiteralExprSyntax.self)?
             .segments.first
