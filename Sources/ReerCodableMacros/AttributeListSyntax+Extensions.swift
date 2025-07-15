@@ -37,12 +37,12 @@ extension AttributeListSyntax {
     }
     
     func countOfAttribute(named identifier: String) -> Int {
-        return count {
+        return filter {
             guard let attribute = $0.as(AttributeSyntax.self)?
                 .attributeName.as(IdentifierTypeSyntax.self)?
                 .trimmedDescription
             else { return false }
             return (attribute == identifier) || attribute.hasPrefix("\(identifier)<")
-        }
+        }.count
     }
 }
