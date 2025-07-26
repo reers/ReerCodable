@@ -50,28 +50,28 @@ extension Bool: TypeConvertible {
 
 // MARK: - To Integer
 
-protocol IntegerConvertable: FixedWidthInteger, TypeConvertible {}
+protocol IntegerConvertible: FixedWidthInteger, TypeConvertible {}
 
-extension Int: IntegerConvertable {}
-extension Int8: IntegerConvertable {}
-extension Int16: IntegerConvertable {}
-extension Int32: IntegerConvertable {}
-extension Int64: IntegerConvertable {}
-extension UInt: IntegerConvertable {}
-extension UInt8: IntegerConvertable {}
-extension UInt16: IntegerConvertable {}
-extension UInt32: IntegerConvertable {}
-extension UInt64: IntegerConvertable {}
+extension Int: IntegerConvertible {}
+extension Int8: IntegerConvertible {}
+extension Int16: IntegerConvertible {}
+extension Int32: IntegerConvertible {}
+extension Int64: IntegerConvertible {}
+extension UInt: IntegerConvertible {}
+extension UInt8: IntegerConvertible {}
+extension UInt16: IntegerConvertible {}
+extension UInt32: IntegerConvertible {}
+extension UInt64: IntegerConvertible {}
 
 #if compiler(>=6.0)
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-extension Int128: IntegerConvertable {}
+extension Int128: IntegerConvertible {}
 
 @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
-extension UInt128: IntegerConvertable {}
+extension UInt128: IntegerConvertible {}
 #endif
 
-extension IntegerConvertable {
+extension IntegerConvertible {
     static func convert(from object: Any) -> Self? {
         switch object {
         case let text as String:
@@ -86,12 +86,12 @@ extension IntegerConvertable {
 
 // MARK: - To Float or Double
 
-protocol FloatConvertable: LosslessStringConvertible, TypeConvertible {}
+protocol FloatConvertible: LosslessStringConvertible, TypeConvertible {}
 
-extension Float: FloatConvertable {}
-extension Double: FloatConvertable {}
+extension Float: FloatConvertible {}
+extension Double: FloatConvertible {}
 
-extension FloatConvertable {
+extension FloatConvertible {
     static func convert(from object: Any) -> Self? {
         switch object {
         case let string as String:
