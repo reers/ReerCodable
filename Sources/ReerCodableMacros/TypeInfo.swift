@@ -78,6 +78,7 @@ struct TypeInfo {
     var properties: [PropertyInfo] = []
     var codingContainer: String?
     var codingContainerWorkForEncoding = false
+    var isFlexibleType = false
     
     init(decl: DeclGroupSyntax) throws {
         self.decl = decl
@@ -237,6 +238,9 @@ struct TypeInfo {
                 codingContainerWorkForEncoding = true
             }
         }
+        if let attribute = decl.attributes.firstAttribute(named: "FlexibleType") {
+            isFlexibleType = true
+        }
         properties = try parseProperties()
     }
 }
@@ -311,6 +315,11 @@ extension TypeInfo {
                     if property.customDecoder == nil, property.customEncoder == nil {
                         property.customByType = arguments.trimmedDescription
                     }
+                }
+                // auto convert type or set nil for Optional
+                property.isFlexibleType = isFlexibleType
+                if variable.attributes.containsAttribute(named: "FlexibleType") {
+                    property.isFlexibleType = true
                 }
                 
                 // coding key
@@ -554,7 +563,7 @@ extension TypeInfo {
                     // normal
                     else {
                         body = """
-                            container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))])
+                            container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))], flexibleType: \(property.isFlexibleType))
                             """
                     }
                     

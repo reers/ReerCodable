@@ -37,6 +37,7 @@ let testMacros: [String: Macro.Type] = [
     "CamelKebabCase": CamelKebabCase.self,
     "PascalKebabCase": PascalKebabCase.self,
     "ScreamingKebabCase": ScreamingKebabCase.self,
+    "FlexibleType": FlexibleType.self,
 ]
 #endif
 
@@ -129,6 +130,7 @@ final class ReerCodableTests: XCTestCase {
             @Codable
             @ScreamingKebabCase
             @Copyable
+            @FlexibleType
             public final class Test {
                 @CodingKey("age__", "a.b")
                 @EncodingKey("a.b", treatDotAsNested: false)

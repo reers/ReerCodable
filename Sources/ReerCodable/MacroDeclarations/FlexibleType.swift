@@ -19,45 +19,5 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-import SwiftCompilerPlugin
-import SwiftSyntaxMacros
-
-@main
-struct ReerCodablePlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
-        // For type use only
-        RECodable.self,
-        REDecodable.self,
-        REEncodable.self,
-        InheritedCodable.self,
-        InheritedDecodable.self,
-        DefaultInstance.self,
-        Copyable.self,
-        CodingContainer.self,
-        
-        // For type and property use only
-        FlatCase.self,
-        UpperCase.self,
-        CamelCase.self,
-        SnakeCase.self,
-        PascalCase.self,
-        KebabCase.self,
-        CamelSnakeCase.self,
-        PascalSnakeCase.self,
-        ScreamingSnakeCase.self,
-        CamelKebabCase.self,
-        PascalKebabCase.self,
-        ScreamingKebabCase.self,
-        FlexibleType.self,
-        
-        // For property use only
-        CodingKey.self,
-        EncodingKey.self,
-        CodingIgnored.self,
-        Base64Coding.self,
-        DateCoding.self,
-        CompactDecoding.self,
-        CustomCoding.self,
-        CodingCase.self,
-    ]
-}
+@attached(peer)
+public macro FlexibleType() = #externalMacro(module: "ReerCodableMacros", type: "FlexibleType")

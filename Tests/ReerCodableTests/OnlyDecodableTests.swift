@@ -54,6 +54,7 @@ enum OnlyDecodable {
         var spouse: String? = "nyc"
         
         @CodingKey("is_male")
+        @FlexibleType
         var isMale: Bool
         
         var withoutTypeDefine = 233
