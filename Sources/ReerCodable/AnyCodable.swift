@@ -25,7 +25,7 @@ import Foundation
 #endif
 
 public struct AnyCodable: Codable {
-    let value: Any
+    public let value: Any
     
     init(_ value: Any?) {
         self.value = value ?? ()

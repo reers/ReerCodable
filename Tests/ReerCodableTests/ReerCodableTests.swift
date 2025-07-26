@@ -78,6 +78,8 @@ class Person1: Codable {
     @CompactDecoding
     var uniqueIds: Set<String>
     
+    var anyDict: [String: AnyCodable]
+    
     // Optional enum decoding will not throw a error if not exist
     var bloodType: BloodType?
     
@@ -111,7 +113,11 @@ let jsonData = """
     "data": "aGVsbG8gd29ybGQ=",
     "items": [{"id": 1},  {"id": 2}, {"invalid": true}],
     "dict": {"a": {"name": "Alice"}, "b": null, "c": {"invalid": true}},
-    "uniqueIds": ["a", null, "b", "a"]
+    "uniqueIds": ["a", null, "b", "a"],
+    "anyDict": {
+        "key1": 1,
+        "key2": "2"
+    }
 }
 """.data(using: .utf8)!
 
@@ -137,6 +143,8 @@ struct TestReerCodable {
         #expect(model.items == [.init(id: 1), .init(id: 2)])
         #expect(model.dict == ["a": .init(name: "Alice")])
         #expect(model.uniqueIds == ["a", "b"])
+        #expect(model.anyDict["key1"]?.value as? Int == 1)
+        #expect(model.anyDict["key2"]?.value as? String == "2")
         
         model.ignore = Set(arrayLiteral: "1", "2")
         
@@ -160,6 +168,9 @@ struct TestReerCodable {
         #expect(dict?["ignore"] == nil)
         #expect(dict.string("data") == "aGVsbG8gd29ybGQ=")
         #expect(dict?["i_am_array"] as? [String] == ["a", "b", "c"])
+        let anyDict = dict?["anyDict"] as? [String: Any]
+        #expect(anyDict?.int("key1") == 1)
+        #expect(anyDict?.string("key2") == "2")
     }
 }
 
