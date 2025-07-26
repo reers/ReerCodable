@@ -53,6 +53,7 @@ class Person1: Codable {
     var spouse: String? = "nyc"
     
     @CodingKey("is_male")
+    @FlexibleType
     var isMale: Bool
     
     var withoutTypeDefine = 233
@@ -203,12 +204,14 @@ struct NetResponse<Element: Codable> {
 
 @Codable
 struct User4 {
+    @FlexibleType
     let id: String
     let nickName: String
 }
 
 @Codable
 struct Goods {
+    @FlexibleType
     private(set) var price: CGFloat = 0.0
     let name: String
 }

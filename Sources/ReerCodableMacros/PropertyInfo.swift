@@ -39,6 +39,7 @@ struct PropertyInfo {
     var customDecoder: String?
     var customEncoder: String?
     var customByType: String?
+    var isFlexibleType = false
     
     var codingKeys: [String] {
         var result: [String] = keys

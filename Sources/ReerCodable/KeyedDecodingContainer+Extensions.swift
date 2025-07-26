@@ -27,12 +27,14 @@ import Foundation
 extension KeyedDecodingContainer where K == AnyCodingKey {
     public func decode<Value: Decodable>(
         type: Value.Type,
-        keys: [AnyCodingKey]
+        keys: [AnyCodingKey],
+        flexibleType: Bool = false
     ) throws -> Value {
         for key in keys {
-            if key.maybeNested, let value = tryDecodeWithNestedKey(type: type, key: key) {
+            if key.maybeNested,
+               let value = tryDecodeWithNestedKey(type: type, key: key, flexibleType: flexibleType) {
                 return value
-            } else if let value = tryDecodeWithNormalKey(type: type, key: key) {
+            } else if let value = tryDecodeWithNormalKey(type: type, key: key, flexibleType: flexibleType) {
                 return value
             }
         }
@@ -44,12 +46,13 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     
     private func tryDecodeWithNormalKey<Value: Decodable>(
         type: Value.Type,
-        key: AnyCodingKey
+        key: AnyCodingKey,
+        flexibleType: Bool
     ) -> Value? {
         if let value = try? decodeIfPresent(type, forKey: key) {
             return value
         }
-        if let anyCodable = try? decodeIfPresent(AnyCodable.self, forKey: key) {
+        if flexibleType, let anyCodable = try? decodeIfPresent(AnyCodable.self, forKey: key) {
             let anyValue = anyCodable.value
             if let targetTypeValue = anyValue as? Value {
                 return targetTypeValue
@@ -64,7 +67,8 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     
     private func tryDecodeWithNestedKey<Value: Decodable>(
         type: Value.Type,
-        key: AnyCodingKey
+        key: AnyCodingKey,
+        flexibleType: Bool
     ) -> Value? {
         let keyPath = key.stringValue.components(separatedBy: CharacterSet(charactersIn: "."))
         guard !keyPath.isEmpty else { return nil }
@@ -76,7 +80,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             return nil
         }
         
-        return container.tryDecodeWithNormalKey(type: type, key: AnyCodingKey(lastKey))
+        return container.tryDecodeWithNormalKey(type: type, key: AnyCodingKey(lastKey), flexibleType: flexibleType)
     }
     
     public func match<T: Decodable & Comparable>(keyPathValues: [(String, Any, T.Type)]) -> Bool {
@@ -97,7 +101,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             default: return false
             }
             
-            if let foundValue = try? decode(type: T.self, keys: [AnyCodingKey(path, path.contains("."))]) {
+            if let foundValue = try? decode(type: T.self, keys: [AnyCodingKey(path, path.contains("."))], flexibleType: false) {
                 if let expectedValue = expectedValue as? T {
                     return foundValue == expectedValue
                 } else if let expectedRange = expectedRange as? Range<T> {
@@ -194,12 +198,12 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         transform: (T) throws -> Date
     ) throws -> Value {
         if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
-            guard let rawValue = try decode(type: T?.self, keys: keys) else {
+            guard let rawValue = try decode(type: T?.self, keys: keys, flexibleType: false) else {
                 return valueType.init(nilLiteral: ()) as! Value
             }
             return try transform(rawValue) as! Value
         } else {
-            let rawValue = try decode(type: T.self, keys: keys)
+            let rawValue = try decode(type: T.self, keys: keys, flexibleType: false)
             return try transform(rawValue) as! Value
         }
     }
