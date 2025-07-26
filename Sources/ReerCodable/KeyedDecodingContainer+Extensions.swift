@@ -27,7 +27,7 @@ import Foundation
 extension KeyedDecodingContainer where K == AnyCodingKey {
     public func decode<Value: Decodable>(
         type: Value.Type,
-        keys: [String]
+        keys: [AnyCodingKey]
     ) throws -> Value {
         for key in keys {
             if key.maybeNested, let value = tryDecodeWithNestedKey(type: type, key: key) {
@@ -44,9 +44,8 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     
     private func tryDecodeWithNormalKey<Value: Decodable>(
         type: Value.Type,
-        key: String
+        key: AnyCodingKey
     ) -> Value? {
-        guard let key = AnyCodingKey(stringValue: key) else { return nil }
         if let value = try? decodeIfPresent(type, forKey: key) {
             return value
         }
@@ -65,9 +64,9 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     
     private func tryDecodeWithNestedKey<Value: Decodable>(
         type: Value.Type,
-        key: String
+        key: AnyCodingKey
     ) -> Value? {
-        let keyPath = key.components(separatedBy: ".")
+        let keyPath = key.stringValue.components(separatedBy: CharacterSet(charactersIn: "."))
         guard !keyPath.isEmpty else { return nil }
         
         guard
@@ -77,7 +76,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             return nil
         }
         
-        return container.tryDecodeWithNormalKey(type: type, key: lastKey)
+        return container.tryDecodeWithNormalKey(type: type, key: AnyCodingKey(lastKey))
     }
     
     public func match<T: Decodable & Comparable>(keyPathValues: [(String, Any, T.Type)]) -> Bool {
@@ -98,7 +97,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             default: return false
             }
             
-            if let foundValue = try? decode(type: T.self, keys: [path]) {
+            if let foundValue = try? decode(type: T.self, keys: [AnyCodingKey(path, path.contains("."))]) {
                 if let expectedValue = expectedValue as? T {
                     return foundValue == expectedValue
                 } else if let expectedRange = expectedRange as? Range<T> {
@@ -129,7 +128,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     }
     
     public func nestedContainer(keyPath: String) throws -> KeyedDecodingContainer<AnyCodingKey> {
-        let path = keyPath.components(separatedBy: ".")
+        let path = keyPath.components(separatedBy: CharacterSet(charactersIn: "."))
         guard let first = path.first else { return self }
         let key = AnyCodingKey(first)
         let nestedContainer = try nestedContainer(keyedBy: AnyCodingKey.self, forKey: key)
@@ -155,7 +154,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
 extension KeyedDecodingContainer where K == AnyCodingKey {
     public func decodeDate<Value: Decodable>(
         type: Value.Type,
-        keys: [String],
+        keys: [AnyCodingKey],
         strategy: DateCodingStrategy
     ) throws -> Value {
         switch strategy {
@@ -191,7 +190,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     
     private func decodeDateValue<Value: Decodable, T: Decodable>(
         type: Value.Type,
-        keys: [String],
+        keys: [AnyCodingKey],
         transform: (T) throws -> Date
     ) throws -> Value {
         if let valueType = Value.self as? ExpressibleByNilLiteral.Type {
@@ -212,7 +211,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     
     public func compactDecodeArray<Element: Decodable>(
         type: [Element].Type,
-        keys: [String]
+        keys: [AnyCodingKey]
     ) throws -> [Element] {
         for key in keys {
             if key.maybeNested, let value: [Element] = try? tryDecodeArrayWithNestedKey(key) {
@@ -224,8 +223,8 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         throw ReerCodableError(text: "Keys not found or type not match: \(keys) when compact decoding array.")
     }
     
-    private func tryDecodeArrayWithNormalKey<Element: Decodable>(_ key: String) throws -> [Element] {
-        var arrayContainer = try nestedUnkeyedContainer(forKey: AnyCodingKey(stringValue: key)!)
+    private func tryDecodeArrayWithNormalKey<Element: Decodable>(_ key: AnyCodingKey) throws -> [Element] {
+        var arrayContainer = try nestedUnkeyedContainer(forKey: key)
         var tempArray: [Element] = []
         while !arrayContainer.isAtEnd {
             if let element = try? arrayContainer.decode(Element.self) {
@@ -237,8 +236,8 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         return tempArray
     }
     
-    private func tryDecodeArrayWithNestedKey<Element: Decodable>(_ key: String) throws -> [Element] {
-        let keyPath = key.components(separatedBy: ".")
+    private func tryDecodeArrayWithNestedKey<Element: Decodable>(_ key: AnyCodingKey) throws -> [Element] {
+        let keyPath = key.stringValue.components(separatedBy: CharacterSet(charactersIn: "."))
         guard !keyPath.isEmpty else {
             throw ReerCodableError(text: "Key path invalid.")
         }
@@ -248,7 +247,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         else {
             throw ReerCodableError(text: "Get nested container failed.")
         }
-        return try container.tryDecodeArrayWithNormalKey(lastKey)
+        return try container.tryDecodeArrayWithNormalKey(AnyCodingKey(lastKey))
     }
 }
 
@@ -258,7 +257,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
     
     public func compactDecodeDictionary<Key: Hashable & Decodable, Value: Decodable>(
         type: [Key: Value].Type,
-        keys: [String]
+        keys: [AnyCodingKey]
     ) throws -> [Key: Value] {
         for key in keys {
             if key.maybeNested, let value: [Key: Value] = try? tryDecodeDictionaryWithNestedKey(key) {
@@ -270,8 +269,8 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         throw ReerCodableError(text: "Keys not found or type not match: \(keys) when compact decoding dictionary.")
     }
     
-    private func tryDecodeDictionaryWithNormalKey<Key: Hashable & Decodable, Value: Decodable>(_ key: String) throws -> [Key: Value] {
-        let dictContainer = try nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(stringValue: key)!)
+    private func tryDecodeDictionaryWithNormalKey<Key: Hashable & Decodable, Value: Decodable>(_ key: AnyCodingKey) throws -> [Key: Value] {
+        let dictContainer = try nestedContainer(keyedBy: AnyCodingKey.self, forKey: key)
         var tempDict: [Key: Value] = [:]
         
         for key in dictContainer.allKeys {
@@ -283,8 +282,8 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         return tempDict
     }
     
-    private func tryDecodeDictionaryWithNestedKey<Key: Hashable & Decodable, Value: Decodable>(_ key: String) throws -> [Key: Value] {
-        let keyPath = key.components(separatedBy: ".")
+    private func tryDecodeDictionaryWithNestedKey<Key: Hashable & Decodable, Value: Decodable>(_ key: AnyCodingKey) throws -> [Key: Value] {
+        let keyPath = key.stringValue.components(separatedBy: CharacterSet(charactersIn: "."))
         guard !keyPath.isEmpty else {
             throw ReerCodableError(text: "Key path invalid.")
         }
@@ -294,7 +293,7 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
         else {
             throw ReerCodableError(text: "Get nested container failed.")
         }
-        return try container.tryDecodeDictionaryWithNormalKey(lastKey)
+        return try container.tryDecodeDictionaryWithNormalKey(AnyCodingKey(lastKey))
     }
 }
 

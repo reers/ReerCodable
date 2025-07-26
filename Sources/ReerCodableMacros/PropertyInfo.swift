@@ -46,7 +46,27 @@ struct PropertyInfo {
             let convertedKey = KeyConverter.convert(value: name, caseStyles: caseStyles)
             result.append(contentsOf: convertedKey.map { "\"\($0)\"" })
         }
-        result.append("\"\(name)\"")
+        if result.isEmpty {
+            result.append("\"\(name)\"")
+        }
+        
+        return result.reduce(into: [String]()) { array, element in
+            let anyKey = "AnyCodingKey(\(element), \(element.hasDot))"
+            if !array.contains(anyKey) {
+                array.append(anyKey)
+            }
+        }
+    }
+    
+    var stringCodingKeys: [String] {
+        var result: [String] = keys
+        if !caseStyles.isEmpty {
+            let convertedKey = KeyConverter.convert(value: name, caseStyles: caseStyles)
+            result.append(contentsOf: convertedKey.map { "\"\($0)\"" })
+        }
+        if result.isEmpty {
+            result.append("\"\(name)\"")
+        }
         
         return result.reduce(into: [String]()) { array, element in
             if !array.contains(element) {

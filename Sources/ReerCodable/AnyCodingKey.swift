@@ -23,20 +23,24 @@
 public struct AnyCodingKey: CodingKey, Hashable {
     public let stringValue: String
     public let intValue: Int?
+    public let maybeNested: Bool
     
-    public init(_ string: String) {
+    public init(_ string: String, _ maybeNested: Bool = false) {
         stringValue = string
         intValue = nil
+        self.maybeNested = maybeNested
     }
 
     public init?(stringValue: String) {
         self.stringValue = stringValue
         intValue = nil
+        self.maybeNested = false
     }
 
     public init?(intValue: Int) {
         stringValue = "\(intValue)"
         self.intValue = intValue
+        self.maybeNested = false
     }
 
     public init<Key>(_ base: Key) where Key: CodingKey {

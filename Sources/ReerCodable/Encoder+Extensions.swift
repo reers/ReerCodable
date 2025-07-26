@@ -68,6 +68,10 @@ public extension Encoder {
     /// - Throws: `EncodingError` if the value cannot be encoded or if the key path is invalid.
     func set<Value: Encodable>(_ value: Value, forKey key: String, treatDotAsNested: Bool = true) throws {
         var container = container(keyedBy: AnyCodingKey.self)
-        try container.encode(value: value, key: key, treatDotAsNested: treatDotAsNested)
+        try container.encode(
+            value: value,
+            key: AnyCodingKey(key, key.contains(".")),
+            treatDotAsNested: treatDotAsNested
+        )
     }
 }

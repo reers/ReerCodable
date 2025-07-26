@@ -548,7 +548,7 @@ extension TypeInfo {
                     // custom decode by type
                     else if let customByType = property.customByType {
                         body = """
-                            \(customByType).decode(by: decoder, keys: [\(property.codingKeys.joined(separator: ", "))])
+                            \(customByType).decode(by: decoder, keys: [\(property.stringCodingKeys.joined(separator: ", "))])
                             """
                     }
                     // normal
@@ -607,7 +607,7 @@ extension TypeInfo {
                     let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
                         (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
                     } else {
-                        (property.codingKeys.first!, true)
+                        (property.stringCodingKeys.first!, true)
                     }
                     // base64
                     if property.base64Coding {
@@ -622,14 +622,14 @@ extension TypeInfo {
                         return """
                         try {
                             let base64String = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
-                            try container.encode(value: base64String, key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))
+                            try container.encode(value: base64String, key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested))
                         }()
                         """
                     }
                     // Date
                     else if let dateCodingStrategy = property.dateCodingStrategy {
                         return """
-                        try container.encodeDate(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
+                        try container.encodeDate(value: self.\(property.name), key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
                         """
                     }
                     // custom encode
@@ -646,7 +646,7 @@ extension TypeInfo {
                     }
                     // normal
                     else {
-                        return "try container.encode(value: self.\(property.name), key: \(encodingKey), treatDotAsNested: \(treatDotAsNested))"
+                        return "try container.encode(value: self.\(property.name), key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested))"
                     }
                 }
                 .joined(separator: "\n")
@@ -803,7 +803,7 @@ extension TypeInfo {
                         keys.removeDuplicates()
                         let hasDefault = value.defaultValue != nil
                         return """
-                        let \(value.variableName) = (try\(hasDefault ? "?" : "") \(hasPathValue ? "container" : "nestedContainer").decode(type: \(value.type).self, keys: [\(keys.joined(separator: ", "))]))\(hasDefault ? " ?? (\(value.defaultValue!))" : "")
+                        let \(value.variableName) = (try\(hasDefault ? "?" : "") \(hasPathValue ? "container" : "nestedContainer").decode(type: \(value.type).self, keys: [\(keys.map { "AnyCodingKey(\($0), \($0.hasDot))" }.joined(separator: ", "))]))\(hasDefault ? " ?? (\(value.defaultValue!))" : "")
                         """
                         }.joined(separator: "\n    "))
                         self = \(theCase.initText)
@@ -867,7 +867,7 @@ extension TypeInfo {
                     let hasAssociated = !$0.associated.isEmpty
                     let encodeCase = if hasPathValue {
                         """
-                        try container.encode(keyPath: \($0.keyPathMatches.first!.path), value: "\($0.caseName)")
+                        try container.encode(keyPath: AnyCodingKey(\($0.keyPathMatches.first!.path), \($0.keyPathMatches.first!.path.hasDot)), value: "\($0.caseName)")
                         """
                         }
                         else {
@@ -971,5 +971,9 @@ extension String {
     
     var trimmed: String {
         return trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    var hasDot: Bool {
+        return contains(".")
     }
 }

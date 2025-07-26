@@ -69,11 +69,11 @@
 public extension Decoder {
     func value<Value: Decodable>(forKeys keys: String...) throws -> Value {
         let container = try container(keyedBy: AnyCodingKey.self)
-        return try container.decode(type: Value.self, keys: keys)
+        return try container.decode(type: Value.self, keys: keys.map { .init($0, $0.contains(".")) })
     }
     
     func value<Value: Decodable>(forKeys keys: [String]) throws -> Value {
         let container = try container(keyedBy: AnyCodingKey.self)
-        return try container.decode(type: Value.self, keys: keys)
+        return try container.decode(type: Value.self, keys: keys.map { .init($0, $0.contains(".")) })
     }
 }
