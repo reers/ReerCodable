@@ -22,10 +22,6 @@
 import Foundation
 
 extension String {
-    var maybeNested: Bool {
-        contains(".")
-    }
-    
     public var re_base64DecodedData: Data {
         get throws {
             if let data = Data(base64Encoded: self, options: .ignoreUnknownCharacters) {

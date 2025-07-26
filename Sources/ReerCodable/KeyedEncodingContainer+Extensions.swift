@@ -27,7 +27,7 @@ import Foundation
 extension KeyedEncodingContainer where K == AnyCodingKey {
     public mutating func encode<Value: Encodable>(
         value: Value,
-        key: String,
+        key: AnyCodingKey,
         treatDotAsNested: Bool = true
     ) throws {
         if case Optional<Any>.none = (value as Any) {
@@ -40,33 +40,32 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
         }
     }
     
-    private mutating func encode(_ value: Encodable, forNestedKey key: String) throws {
-        let keyPath = key.components(separatedBy: ".")
+    private mutating func encode(_ value: Encodable, forNestedKey key: AnyCodingKey) throws {
+        let keyPath = key.stringValue.components(separatedBy: CharacterSet(charactersIn: "."))
         guard let lastKey = keyPath.last, !lastKey.isEmpty else {
             throw ReerCodableError(text: "Nested key (\(key)) invalid.")
         }
         var container = try nestedContainer(path: keyPath.dropLast())
-        try container.encode(value, forNormalKey: lastKey)
+        try container.encode(value, forNormalKey: AnyCodingKey(lastKey))
     }
     
-    private mutating func encode(_ value: Encodable, forNormalKey key: String) throws {
-        let codingKey = AnyCodingKey(stringValue: key)!
+    private mutating func encode(_ value: Encodable, forNormalKey key: AnyCodingKey) throws {
         
         #if compiler(>=6.0)
         if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
             if let int128 = value as? Int128 {
                 let stringValue = String(describing: int128)
-                try encode(stringValue, forKey: codingKey)
+                try encode(stringValue, forKey: key)
                 return
             } else if let uint128 = value as? UInt128 {
                 let stringValue = String(describing: uint128)
-                try encode(stringValue, forKey: codingKey)
+                try encode(stringValue, forKey: key)
                 return
             }
         }
         #endif
         
-        try encode(value, forKey: codingKey)
+        try encode(value, forKey: key)
     }
     
     private mutating func nestedContainer(path: [String]) throws -> KeyedEncodingContainer<AnyCodingKey> {
@@ -83,7 +82,7 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
         return try nestedContainer(path: path)
     }
     
-    public mutating func encode(keyPath: String, value: any Encodable) throws {
+    public mutating func encode(keyPath: AnyCodingKey, value: any Encodable) throws {
         try encode(value: value, key: keyPath, treatDotAsNested: true)
     }
 }
@@ -93,7 +92,7 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
 extension KeyedEncodingContainer where K == AnyCodingKey {
     public mutating func encodeDate<Value: Encodable>(
         value: Value,
-        key: String,
+        key: AnyCodingKey,
         treatDotAsNested: Bool = true,
         strategy: DateCodingStrategy
     ) throws {
@@ -117,7 +116,7 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
     
     private mutating func encodeDateValue<Value: Encodable>(
         _ value: Value,
-        key: String,
+        key: AnyCodingKey,
         treatDotAsNested: Bool = true,
         transform: (Date) -> Encodable
     ) throws {
