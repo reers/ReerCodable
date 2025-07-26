@@ -49,7 +49,7 @@ Main features include:
 - Provide simple and rich encoding/decoding capabilities for various `enum` types
 - Support encoding/decoding lifecycle through `ReerCodableDelegate`, like `didDecode`, `willEncode`
 - Provide extensions to support using JSON String, `Dictionary`, `Array` directly as parameters for encoding/decoding
-- Support conversion between basic data types like `Bool`, `String`, `Double`, `Int`, `CGFloat`
+- Support flexible type conversion between basic data types like `Bool`, `String`, `Double`, `Int`, `CGFloat` through `@FlexibleType`
 - Support BigInt `Int128`, `UInt128` on macOS 15+, iOS 13+
 - Support encoding/decoding of `Any` through `AnyCodable`, like `var dict = [String: AnyCodable]`
 - Auto-generate default instances: 
@@ -641,16 +641,27 @@ let user2 = try User.decoded(from: dict)
 
 ### 17. Basic Type Conversion
 
-Support automatic conversion between basic data types:
+Use `@FlexibleType` to enable automatic conversion between basic data types. This can be applied to both individual properties and entire types:
 
 ```swift
 @Codable
 struct User {
+    @FlexibleType
     @CodingKey("is_vip")
-    var isVIP: Bool    // "1" or 1 can be decoded as true
-    
+    var isVIP: Bool    // Can decode from "1", 1, "true", "yes" as true
+
+    @FlexibleType
     @CodingKey("score")
-    var score: Double  // "100" or 100 can be decoded as 100.0
+    var score: Double  // Can decode from "100" or 100 as 100.0
+}
+
+@Codable
+@FlexibleType
+struct Settings {
+    // All properties in this type will support flexible type conversion
+    var isEnabled: Bool    // Can decode from number or string
+    var count: Int        // Can decode from string
+    var amount: Double    // Can decode from string or integer
 }
 ```
 

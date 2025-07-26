@@ -44,7 +44,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 对各类 `enum` 提供简单而丰富的编解码能力
 - 支持通过 `ReerCodableDelegate` 来编解码生命周期, 如 `didDecode`, `willEncode`
 - 提供扩展, 支持使用 JSON String, `Dictionary`, `Array` 直接作为参数进行编解码
-- 支持 `Bool`, `String`, `Double`, `Int`, `CGFloat` 等基本数据类型互相转换
+- 通过 `@FlexibleType` 支持 `Bool`, `String`, `Double`, `Int`, `CGFloat` 等基本数据类型互相转换
 - 支持 BigInt `Int128`, `UInt128` (限 macOS 15+, iOS 13+)
 - 支持通过 `AnyCodable` 来实现对 `Any` 的编解码, 如 `var dict = [String: AnyCodable]`
 - 支持通过 `@DefaultInstance` 生成一个 `static let default: Model` 实例, `Model.default`
@@ -636,16 +636,27 @@ let user2 = try User.decoded(from: dict)
 
 ### 17. 基本类型转换
 
-支持基本数据类型之间的自动转换：
+通过 `@FlexibleType` 启用基本数据类型之间的自动转换。可以应用在单个属性或整个类型上：
 
 ```swift
 @Codable
 struct User {
+    @FlexibleType
     @CodingKey("is_vip")
-    var isVIP: Bool    // "1" 或 1 都可以被解码为 true
+    var isVIP: Bool    // 可以从 "1"、1、"true"、"yes" 解码为 true
     
+    @FlexibleType
     @CodingKey("score")
-    var score: Double  // "100" 或 100 都可以被解码为 100.0
+    var score: Double  // 可以从 "100" 或 100 解码为 100.0
+}
+
+@Codable
+@FlexibleType
+struct Settings {
+    // 该类型的所有属性都将支持灵活类型转换
+    var isEnabled: Bool    // 可以从数字或字符串解码
+    var count: Int        // 可以从字符串解码
+    var amount: Double    // 可以从字符串或整数解码
 }
 ```
 
