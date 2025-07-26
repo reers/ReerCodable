@@ -238,7 +238,7 @@ struct TypeInfo {
                 codingContainerWorkForEncoding = true
             }
         }
-        if let attribute = decl.attributes.firstAttribute(named: "FlexibleType") {
+        if decl.attributes.containsAttribute(named: "FlexibleType") {
             isFlexibleType = true
         }
         properties = try parseProperties()
