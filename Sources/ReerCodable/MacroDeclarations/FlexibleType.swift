@@ -19,5 +19,34 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+/// A macro that enables flexible type conversion during decoding.
+///
+/// When applied to a property or type, this macro allows for automatic type conversion between basic types
+/// during the decoding process. It supports conversions between:
+/// - Numbers (Int, Double, Float, etc.)
+/// - Strings and Numbers
+/// - Booleans and Numbers (0/1)
+/// - Booleans and Strings ("true"/"false", "yes"/"no")
+///
+/// Example usage:
+/// ```swift
+/// struct User: Codable {
+///     @FlexibleType
+///     var age: Int // Can decode from String "25" or Double 25.0
+///
+///     @FlexibleType
+///     var isActive: Bool // Can decode from Int 1/0 or String "true"/"false"
+/// }
+///
+/// @FlexibleType
+/// struct Settings: Codable {
+///     // All properties in this type will support flexible type conversion
+///     var count: Int
+///     var enabled: Bool
+///     var name: String
+/// }
+/// ```
+///
+/// The supported type conversions are defined in the `TypeConvertible` protocol implementations.
 @attached(peer)
 public macro FlexibleType() = #externalMacro(module: "ReerCodableMacros", type: "FlexibleType")
