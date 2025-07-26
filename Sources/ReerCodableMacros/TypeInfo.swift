@@ -562,9 +562,20 @@ extension TypeInfo {
                     }
                     // normal
                     else {
-                        body = """
-                            container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))], flexibleType: \(property.isFlexibleType))
-                            """
+                        let useDefaultDecodeFunc =
+                            !property.isOptional
+                            && property.stringCodingKeys.count == 1
+                            && !property.stringCodingKeys[0].hasDot
+                            && !property.isFlexibleType
+                        if useDefaultDecodeFunc {
+                            body = """
+                                container.decode(\(property.type).self, forKey: \(property.codingKeys[0]))
+                                """
+                        } else {
+                            body = """
+                                container.decode(type: \(property.type).self, keys: [\(property.codingKeys.joined(separator: ", "))], flexibleType: \(property.isFlexibleType))
+                                """
+                        }
                     }
                     
                     if let initExpr = property.initExpr {
