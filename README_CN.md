@@ -822,6 +822,5 @@ let dict: [String: Any] = [
 let model = try User.decoded(from: dict)
 // model == User(name: "phoenix", age: 34, address: Address(country: "China", city: "Beijing"))
 ```
-`
 
 以上示例展示了 ReerCodable 的主要特性，这些特性可以帮助开发者大大简化编解码过程，提高代码的可读性和可维护性。
