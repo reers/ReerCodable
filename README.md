@@ -52,6 +52,7 @@ Main features include:
 - Support flexible type conversion between basic data types like `Bool`, `String`, `Double`, `Int`, `CGFloat` through `@FlexibleType`
 - Support BigInt `Int128`, `UInt128` on macOS 15+, iOS 13+
 - Support encoding/decoding of `Any` through `AnyCodable`, like `var dict = [String: AnyCodable]`
+- Flatten nested property into the parent structure during coding using `@Flat`
 - Auto-generate default instances: 
   Use `@DefaultInstance` to automatically create a default instance of your type, 
   accessible through `Model.default`
@@ -793,6 +794,38 @@ struct Item: Equatable {
 struct User3: Equatable {
     let name: String
 }
+```
+
+### 21. Flatten Property with `@Flat`
+
+Flatten a nested property so that its fields are encoded/decoded at the same level as the enclosing type.
+
+```swift
+@Codable
+struct User {
+    var name: String
+    var age: Int = 0
+
+    @Flat
+    var address: Address
+}
+
+@Codable
+struct Address {
+    var country: String
+    var city: String
+}
+
+// Input
+let dict: [String: Any] = [
+    "name": "phoenix",
+    "age": 34,
+    "country": "China",
+    "city": "Beijing"
+]
+
+let model = try User.decoded(from: dict)
+// model == User(name: "phoenix", age: 34, address: Address(country: "China", city: "Beijing"))
 ```
 
 These examples demonstrate the main features of ReerCodable, which can help developers greatly simplify the encoding/decoding process, improving code readability and maintainability.
