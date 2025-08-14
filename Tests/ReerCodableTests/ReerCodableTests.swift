@@ -344,3 +344,42 @@ extension TestReerCodable {
         #expect(dict.string("name") == "phoenix")
     }
 }
+
+@Codable
+struct FlatUser {
+    var name: String
+    var age: Int = 0
+    
+    @Flat
+    var address: FlatAddress
+}
+
+@Codable
+struct FlatAddress {
+    var country: String
+    var city: String
+}
+
+extension TestReerCodable {
+    @Test
+    func flat() throws {
+        let dict: [String: Any] =  [
+            "name": "phoenix",
+            "age": 34,
+            "country": "China",
+            "city": "Beijing"
+        ]
+        
+        let model = try FlatUser.decoded(from: dict)
+        #expect(model.name == "phoenix")
+        #expect(model.age == 34)
+        #expect(model.address.country == "China")
+        #expect(model.address.city == "Beijing")
+        
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("name") == "phoenix")
+        #expect(encoded.int("age") == 34)
+        #expect(encoded.string("country") == "China")
+        #expect(encoded.string("city") == "Beijing")
+    }
+}
