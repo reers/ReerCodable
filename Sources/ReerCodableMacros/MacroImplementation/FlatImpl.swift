@@ -19,46 +19,26 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-import SwiftCompilerPlugin
+import SwiftSyntax
 import SwiftSyntaxMacros
 
-@main
-struct ReerCodablePlugin: CompilerPlugin {
-    let providingMacros: [Macro.Type] = [
-        // For type use only
-        RECodable.self,
-        REDecodable.self,
-        REEncodable.self,
-        InheritedCodable.self,
-        InheritedDecodable.self,
-        DefaultInstance.self,
-        Copyable.self,
-        CodingContainer.self,
-        
-        // For type and property use only
-        FlatCase.self,
-        UpperCase.self,
-        CamelCase.self,
-        SnakeCase.self,
-        PascalCase.self,
-        KebabCase.self,
-        CamelSnakeCase.self,
-        PascalSnakeCase.self,
-        ScreamingSnakeCase.self,
-        CamelKebabCase.self,
-        PascalKebabCase.self,
-        ScreamingKebabCase.self,
-        FlexibleType.self,
-        
-        // For property use only
-        CodingKey.self,
-        EncodingKey.self,
-        CodingIgnored.self,
-        Flat.self,
-        Base64Coding.self,
-        DateCoding.self,
-        CompactDecoding.self,
-        CustomCoding.self,
-        CodingCase.self,
-    ]
+public struct Flat: PeerMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingPeersOf declaration: some DeclSyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        guard let variableDecl = declaration.as(VariableDeclSyntax.self) else {
+            throw MacroError(text: "@Flat macro is only for a stored property.")
+        }
+        let attributes = variableDecl.attributes.compactMap { attr in
+            attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text
+        }
+        if attributes.contains(where: { $0 != "Flat" }) {
+            throw MacroError(text: "@Flat cannot be used together with other macros on the same property.")
+        }
+        return []
+    }
 }
+
+

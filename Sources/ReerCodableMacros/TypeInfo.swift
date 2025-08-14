@@ -301,6 +301,11 @@ extension TypeInfo {
                     property.isCompactDecoding = true
                 }
                 
+                // flat
+                if variable.attributes.containsAttribute(named: "Flat") {
+                    property.isFlat = true
+                }
+
                 if let customCoding = variable.attributes.firstAttribute(named: "CustomCoding"),
                    let attribute = customCoding.as(AttributeSyntax.self),
                    let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) {
@@ -567,7 +572,10 @@ extension TypeInfo {
                             && property.stringCodingKeys.count == 1
                             && !property.stringCodingKeys[0].hasDot
                             && !property.isFlexibleType
-                        if useDefaultDecodeFunc {
+                        if property.isFlat {
+                            let valueType = property.type.nonOptionalType
+                            body = "\(valueType)(from: decoder)"
+                        } else if useDefaultDecodeFunc {
                             body = """
                                 container.decode(\(property.type).self, forKey: \(property.codingKeys[0]))
                                 """
@@ -663,6 +671,13 @@ extension TypeInfo {
                         return """
                         try \(customByType).encode(by: encoder, key: \(encodingKey), value: self.\(property.name))
                         """
+                    }
+                    else if property.isFlat {
+                        if property.isOptional {
+                            return "if let value = self.\(property.name) { try value.encode(to: encoder) }"
+                        } else {
+                            return "try self.\(property.name).encode(to: encoder)"
+                        }
                     }
                     // normal
                     else {
