@@ -47,6 +47,12 @@ extension RECodable: ExtensionMacro {
            inheritedType.contains(where: { $0.type.trimmedDescription == "Codable" }) {
             codableExisted = true
         }
+        var delegateExisted = false
+        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
+           inheritedType.contains(where: { $0.type.trimmedDescription == "ReerCodableDelegate" }) {
+            delegateExisted = true
+        }
+        if codableExisted && delegateExisted { return [] }
         let extensionDecl: DeclSyntax =
             """
             extension \(type.trimmed):\(raw: codableExisted ? "" : "Codable,") ReerCodableDelegate {}
@@ -151,7 +157,12 @@ extension REDecodable: ExtensionMacro {
                 return typeName == "Decodable" || typeName == "Codable"
             }
         }
-
+        var delegateExisted = false
+        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
+           inheritedType.contains(where: { $0.type.trimmedDescription == "ReerCodableDelegate" }) {
+            delegateExisted = true
+        }
+        if decodableExisted && delegateExisted { return [] }
         let extensionDecl: DeclSyntax =
             """
             extension \(type.trimmed): \(raw: decodableExisted ? "" : "Decodable, ")ReerCodableDelegate {}
@@ -250,7 +261,12 @@ extension REEncodable: ExtensionMacro {
                 return typeName == "Encodable" || typeName == "Codable"
             }
         }
-
+        var delegateExisted = false
+        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
+           inheritedType.contains(where: { $0.type.trimmedDescription == "ReerCodableDelegate" }) {
+            delegateExisted = true
+        }
+        if encodableExisted && delegateExisted { return [] }
         let extensionDecl: DeclSyntax =
             """
             extension \(type.trimmed): \(raw: encodableExisted ? "" : "Encodable, ")ReerCodableDelegate {}
