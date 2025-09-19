@@ -252,6 +252,8 @@ extension AnyCodable: CustomStringConvertible {
     }
 }
 
+// MARK: - AnyCodable Extensions
+
 public extension AnyCodable {
     var data: Data? {
         return try? JSONEncoder().encode(self)
@@ -277,11 +279,124 @@ public extension AnyCodable {
         return value as? String
     }
     
-    var dictionay: [String: Any]? {
+    var dict: [String: Any]? {
         return value as? [String: Any]
     }
     
     var array: [Any]? {
         return value as? [Any]
+    }
+    
+    var dictArray: [[String: Any]]? {
+        return value as? [[String: Any]]
+    }
+    
+    /// Returns a null AnyCodable instance
+    static var null: AnyCodable {
+        return AnyCodable(NSNull())
+    }
+    
+    /// Checks if the value is null
+    var isNull: Bool {
+        return value is NSNull
+    }
+}
+
+
+protocol JSONKey {}
+/// Extends Int to conform to JSONKey for array index access
+extension Int: JSONKey {}
+/// Extends String to conform to JSONKey for dictionary key access
+extension String: JSONKey {}
+
+/// Core subscript method that handles both array index and dictionary key access.
+///
+/// This method provides type-safe access to nested JSON structures with automatic
+/// null handling for invalid paths or out-of-bounds access. It uses O(1) bounds
+/// checking for arrays and direct dictionary lookup.
+///
+/// - Parameter key: A JSONKey (Int for arrays, String for dictionaries)
+/// - Returns: AnyCodable instance containing the value, or AnyCodable.null if not found
+///
+/// Time Complexity: O(1) for both array and dictionary access
+///
+/// Example:
+/// ```swift
+/// let json = AnyCodable([
+///     "users": [
+///         ["name": "Alice", "age": 25],
+///         ["name": "Bob", "age": 30]
+///     ],
+///     "total": 2
+/// ])
+///
+/// // Chained access for complex nested structures
+/// let firstName = json["users"][0]["name"].string  // "Alice"
+/// let secondAge = json["users"][1]["age"].int      // 30
+/// let total = json["total"].int                    // 2
+///
+/// // Safe access to non-existent paths
+/// let invalid = json["users"][5]["name"].isNull    // true
+/// let missing = json["nonexistent"].isNull         // true
+/// ```
+extension AnyCodable {
+    
+    /// Convenient subscript for array index access.
+    /// 
+    /// Provides clean syntax for accessing array elements by index with automatic
+    /// bounds checking. Returns `AnyCodable.null` for out-of-bounds access.
+    /// 
+    /// - Parameter index: The array index to access (0-based)
+    /// - Returns: AnyCodable instance at the specified index, or AnyCodable.null if out of bounds
+    /// 
+    /// Example:
+    /// ```swift
+    /// let json = AnyCodable(["Alice", "Bob", "Charlie"])
+    /// let first = json[0].string     // "Alice"
+    /// let second = json[1].string    // "Bob" 
+    /// let invalid = json[10].isNull  // true
+    /// ```
+    public subscript(index: Int) -> AnyCodable {
+        return self[path: index]
+    }
+    
+    /// Convenient subscript for dictionary key access.
+    /// 
+    /// Provides clean syntax for accessing dictionary values by string key.
+    /// Returns `AnyCodable.null` if the key doesn't exist or if the current
+    /// value is not a dictionary.
+    /// 
+    /// - Parameter key: The dictionary key to access
+    /// - Returns: AnyCodable instance for the key, or AnyCodable.null if key doesn't exist
+    /// 
+    /// Example:
+    /// ```swift
+    /// let json = AnyCodable(["name": "Alice", "age": 25])
+    /// let name = json["name"].string      // "Alice"
+    /// let age = json["age"].int           // 25
+    /// let invalid = json["missing"].isNull // true
+    /// ```
+    public subscript(key: String) -> AnyCodable {
+        return self[path: key]
+    }
+    
+    /// Single subscript access for array index or dictionary key
+    subscript(path key: JSONKey) -> AnyCodable {
+        switch key {
+        case let index as Int:
+            // Array index access with O(1) bounds checking
+            if let array = value as? [Any], index >= 0 && index < array.count {
+                return AnyCodable(array[index])
+            }
+            return .null
+        case let key as String:
+            // Dictionary key access with direct lookup
+            if let dictionary = value as? [String: Any] {
+                return AnyCodable(dictionary[key] ?? NSNull())
+            }
+            return .null
+        default:
+            return .null
+        }
     }
 }
