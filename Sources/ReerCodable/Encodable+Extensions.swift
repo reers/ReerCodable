@@ -82,7 +82,17 @@ public extension Encodable {
     /// - Throws: An error if encoding fails.
     func encodedString(using encoder: JSONEncoder = .init()) throws -> String {
         let data = try encodedData(using: encoder)
-        return String(data: data, encoding: .utf8)!
+        
+        guard let string = String(data: data, encoding: .utf8) else {
+            throw EncodingError.invalidValue(
+                data,
+                EncodingError.Context(
+                    codingPath: [],
+                    debugDescription: "Encoded object is not a valid json."
+                )
+            )
+        }
+        return string
     }
     
     /// Encodes the object to a dictionary using the specified JSON encoder.
@@ -92,7 +102,18 @@ public extension Encodable {
     /// - Throws: An error if encoding fails or if the encoded object is not a dictionary.
     func encodedDict(using encoder: JSONEncoder = .init()) throws -> [String: Any] {
         let data = try encodedData(using: encoder)
-        return try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) as! [String: Any]
+        let jsonObject = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
+        
+        guard let dictionary = jsonObject as? [String: Any] else {
+            throw EncodingError.invalidValue(
+                jsonObject,
+                EncodingError.Context(
+                    codingPath: [],
+                    debugDescription: "Encoded object is not a dictionary but \(type(of: jsonObject))"
+                )
+            )
+        }
+        return dictionary
     }
     
     /// Encodes the object to an array using the specified JSON encoder.
@@ -102,6 +123,17 @@ public extension Encodable {
     /// - Throws: An error if encoding fails or if the encoded object is not an array.
     func encodedArray(using encoder: JSONEncoder = .init()) throws -> [Any] {
         let data = try encodedData(using: encoder)
-        return try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) as! [Any]
+        let jsonObject = try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
+        
+        guard let array = jsonObject as? [Any] else {
+            throw EncodingError.invalidValue(
+                jsonObject,
+                EncodingError.Context(
+                    codingPath: [],
+                    debugDescription: "Encoded object is not an array but \(type(of: jsonObject))"
+                )
+            )
+        }
+        return array
     }
 }
