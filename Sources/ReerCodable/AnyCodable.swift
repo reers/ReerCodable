@@ -27,7 +27,7 @@ import Foundation
 public struct AnyCodable: Codable {
     public let value: Any
     
-    init(_ value: Any) {
+    public init(_ value: Any) {
         self.value = value
     }
     
@@ -249,5 +249,39 @@ extension AnyCodable: CustomStringConvertible {
         default:
             return String(describing: value)
         }
+    }
+}
+
+public extension AnyCodable {
+    var data: Data? {
+        return try? JSONEncoder().encode(self)
+    }
+    
+    var bool: Bool? {
+        return value as? Bool
+    }
+    
+    var int: Int? {
+        return value as? Int
+    }
+    
+    var uint: UInt? {
+        return value as? UInt
+    }
+    
+    var double: Double? {
+        return value as? Double
+    }
+    
+    var string: String? {
+        return value as? String
+    }
+    
+    var dictionay: [String: Any]? {
+        return value as? [String: Any]
+    }
+    
+    var array: [Any]? {
+        return value as? [Any]
     }
 }
