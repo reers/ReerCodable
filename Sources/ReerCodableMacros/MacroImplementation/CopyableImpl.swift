@@ -37,19 +37,22 @@ public struct Copyable: PeerMacro {
             throw MacroError(text: "@Copyable macro is only for `struct`, `class` and `enum`.")
         }
         if let structDecl = declaration.as(StructDeclSyntax.self),
-           structDecl.attributes.firstAttribute(named: "Codable") == nil &&
-           structDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
-            throw MacroError(text: "@Copyable macro can only be used with @Codable or @InheritedCodable types.")
+           !structDecl.attributes.containsAttribute(named: "Codable")
+           && !structDecl.attributes.containsAttribute(named: "Decodable")
+           && !structDecl.attributes.containsAttribute(named: "Encodable") {
+            throw MacroError(text: "@Copyable macro can only be used with @Decodable, @Encodable or @Codable types.")
         }
         if let classDecl = declaration.as(ClassDeclSyntax.self),
-           classDecl.attributes.firstAttribute(named: "Codable") == nil &&
-           classDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
-            throw MacroError(text: "@Copyable macro can only be used with @Codable or @InheritedCodable types.")
+           !classDecl.attributes.containsAttribute(named: "Codable")
+           && !classDecl.attributes.containsAttribute(named: "Decodable")
+           && !classDecl.attributes.containsAttribute(named: "Encodable") {
+            throw MacroError(text: "@Copyable macro can only be used with @Decodable, @Encodable or @Codable types.")
         }
         if let enumDecl = declaration.as(EnumDeclSyntax.self),
-           enumDecl.attributes.firstAttribute(named: "Codable") == nil &&
-           enumDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
-            throw MacroError(text: "@Copyable macro can only be used with @Codable or @InheritedCodable types.")
+           !enumDecl.attributes.containsAttribute(named: "Codable")
+           && !enumDecl.attributes.containsAttribute(named: "Decodable")
+           && !enumDecl.attributes.containsAttribute(named: "Encodable") {
+            throw MacroError(text: "@Copyable macro can only be used with @Decodable, @Encodable or @Codable types.")
         }
         return []
     }
