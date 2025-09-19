@@ -34,7 +34,11 @@ public struct AnyCodable: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
-            self.init(nil)
+            #if canImport(Foundation)
+            self.init(NSNull())
+            #else
+            self.init(Optional<Self>.none)
+            #endif
         } else if let bool = try? container.decode(Bool.self) {
             self.init(bool)
         } else if let int = try? container.decode(Int.self) {
@@ -58,7 +62,11 @@ public struct AnyCodable: Codable {
         var container = encoder.singleValueContainer()
         
         switch value {
-        case is Void: 
+        #if canImport(Foundation)
+        case is NSNull:
+            try container.encodeNil()
+        #endif
+        case is Void:
             try container.encodeNil()
         case let bool as Bool:
             try container.encode(bool)
@@ -128,6 +136,10 @@ extension AnyCodable: Equatable {
         switch (lhs.value, rhs.value) {
         case is (Void, Void):
             return true
+        #if canImport(Foundation)
+        case is (NSNull, NSNull):
+            return true
+        #endif
         case let (lhs as Bool, rhs as Bool):
             return lhs == rhs
         case let (lhs as Int, rhs as Int):

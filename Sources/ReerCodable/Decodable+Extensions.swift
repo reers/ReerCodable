@@ -126,6 +126,14 @@ public extension Decodable {
         using decoder: JSONDecoder = .init(),
         as type: Self.Type = Self.self
     ) throws -> Self {
+        guard JSONSerialization.isValidJSONObject(dict) else {
+            throw DecodingError.dataCorrupted(
+                .init(
+                    codingPath: [],
+                    debugDescription: "The provided dictionary is not a valid JSON object. Dictionary: \(dict)",
+                )
+            )
+        }
         let data = try JSONSerialization.data(withJSONObject: dict, options: .fragmentsAllowed)
         return try decoder.decode(type, from: data)
     }
@@ -143,6 +151,14 @@ public extension Decodable {
         using decoder: JSONDecoder = .init(),
         as type: Self.Type = Self.self
     ) throws -> Self {
+        guard JSONSerialization.isValidJSONObject(array) else {
+            throw DecodingError.dataCorrupted(
+                .init(
+                    codingPath: [],
+                    debugDescription: "The provided array is not a valid JSON object. Array: \(array)",
+                )
+            )
+        }
         let data = try JSONSerialization.data(withJSONObject: array, options: .fragmentsAllowed)
         return try decoder.decode(type, from: data)
     }
@@ -186,6 +202,14 @@ public extension Dictionary {
     /// - Returns: A decoded instance
     /// - Throws: An error if decoding fails
     func decoded<T: Decodable>(using decoder: JSONDecoder = .init(), as type: T.Type = T.self) throws -> T {
+        guard JSONSerialization.isValidJSONObject(self) else {
+            throw DecodingError.dataCorrupted(
+                .init(
+                    codingPath: [],
+                    debugDescription: "The provided dictionary is not a valid JSON object. Dictionary: \(self)",
+                )
+            )
+        }
         let data = try JSONSerialization.data(withJSONObject: self, options: .fragmentsAllowed)
         return try data.decoded(using: decoder, as: type)
     }
@@ -201,6 +225,14 @@ public extension Array {
     /// - Returns: A decoded instance
     /// - Throws: An error if decoding fails
     func decoded<T: Decodable>(using decoder: JSONDecoder = .init(), as type: T.Type = T.self) throws -> T {
+        guard JSONSerialization.isValidJSONObject(self) else {
+            throw DecodingError.dataCorrupted(
+                .init(
+                    codingPath: [],
+                    debugDescription: "The provided array is not a valid JSON object. Array: \(self)",
+                )
+            )
+        }
         let data = try JSONSerialization.data(withJSONObject: self, options: .fragmentsAllowed)
         return try data.decoded(using: decoder, as: type)
     }
