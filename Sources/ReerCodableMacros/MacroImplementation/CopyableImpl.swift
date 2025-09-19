@@ -37,16 +37,19 @@ public struct Copyable: PeerMacro {
             throw MacroError(text: "@Copyable macro is only for `struct`, `class` and `enum`.")
         }
         if let structDecl = declaration.as(StructDeclSyntax.self),
-           structDecl.attributes.firstAttribute(named: "Codable") == nil {
-            throw MacroError(text: "@Copyable macro macro can only be used with @Codable types.")
+           structDecl.attributes.firstAttribute(named: "Codable") == nil &&
+           structDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
+            throw MacroError(text: "@Copyable macro can only be used with @Codable or @InheritedCodable types.")
         }
         if let classDecl = declaration.as(ClassDeclSyntax.self),
-           classDecl.attributes.firstAttribute(named: "Codable") == nil {
-            throw MacroError(text: "@Copyable macro macro can only be used with @Codable types.")
+           classDecl.attributes.firstAttribute(named: "Codable") == nil &&
+           classDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
+            throw MacroError(text: "@Copyable macro can only be used with @Codable or @InheritedCodable types.")
         }
         if let enumDecl = declaration.as(EnumDeclSyntax.self),
-           enumDecl.attributes.firstAttribute(named: "Codable") == nil {
-            throw MacroError(text: "@Copyable macro macro can only be used with @Codable types.")
+           enumDecl.attributes.firstAttribute(named: "Codable") == nil &&
+           enumDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
+            throw MacroError(text: "@Copyable macro can only be used with @Codable or @InheritedCodable types.")
         }
         return []
     }
