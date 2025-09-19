@@ -96,12 +96,14 @@ extension CaseStyleAttribute {
             throw MacroError(text: "@\(style.macroName) macro is only for `struct`, `class` or a property.")
         }
         if let structDecl = declaration.as(StructDeclSyntax.self),
-           structDecl.attributes.firstAttribute(named: "Codable") == nil {
-            throw MacroError(text: "@\(style.macroName) macro can only be used with @Codable types.")
+           structDecl.attributes.firstAttribute(named: "Codable") == nil &&
+           structDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
+            throw MacroError(text: "@\(style.macroName) macro can only be used with @Codable or @InheritedCodable types.")
         }
         if let classDecl = declaration.as(ClassDeclSyntax.self),
-           classDecl.attributes.firstAttribute(named: "Codable") == nil {
-            throw MacroError(text: "@\(style.macroName) macro can only be used with @Codable types.")
+           classDecl.attributes.firstAttribute(named: "Codable") == nil &&
+           classDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
+            throw MacroError(text: "@\(style.macroName) macro can only be used with @Codable or @InheritedCodable types.")
         }
         return []
     }
