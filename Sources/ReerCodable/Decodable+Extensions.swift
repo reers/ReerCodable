@@ -130,7 +130,7 @@ public extension Decodable {
             throw DecodingError.dataCorrupted(
                 .init(
                     codingPath: [],
-                    debugDescription: "The provided dictionary is not a valid JSON object. Dictionary: \(dict)",
+                    debugDescription: "The provided dictionary is not a valid JSON object. Dictionary: \(dict)"
                 )
             )
         }
@@ -155,7 +155,7 @@ public extension Decodable {
             throw DecodingError.dataCorrupted(
                 .init(
                     codingPath: [],
-                    debugDescription: "The provided array is not a valid JSON object. Array: \(array)",
+                    debugDescription: "The provided array is not a valid JSON object. Array: \(array)"
                 )
             )
         }
@@ -206,7 +206,7 @@ public extension Dictionary {
             throw DecodingError.dataCorrupted(
                 .init(
                     codingPath: [],
-                    debugDescription: "The provided dictionary is not a valid JSON object. Dictionary: \(self)",
+                    debugDescription: "The provided dictionary is not a valid JSON object. Dictionary: \(self)"
                 )
             )
         }
@@ -229,7 +229,7 @@ public extension Array {
             throw DecodingError.dataCorrupted(
                 .init(
                     codingPath: [],
-                    debugDescription: "The provided array is not a valid JSON object. Array: \(self)",
+                    debugDescription: "The provided array is not a valid JSON object. Array: \(self)"
                 )
             )
         }
