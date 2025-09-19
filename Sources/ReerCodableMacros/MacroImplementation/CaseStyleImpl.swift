@@ -96,14 +96,18 @@ extension CaseStyleAttribute {
             throw MacroError(text: "@\(style.macroName) macro is only for `struct`, `class` or a property.")
         }
         if let structDecl = declaration.as(StructDeclSyntax.self),
-           structDecl.attributes.firstAttribute(named: "Codable") == nil &&
-           structDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
-            throw MacroError(text: "@\(style.macroName) macro can only be used with @Codable or @InheritedCodable types.")
+           !structDecl.attributes.containsAttribute(named: "Codable")
+           && !structDecl.attributes.containsAttribute(named: "Decodable")
+           && !structDecl.attributes.containsAttribute(named: "Encodable") {
+            throw MacroError(text: "@\(style.macroName) macro can only be used with @Decodable, @Encodable or @Codable types.")
         }
         if let classDecl = declaration.as(ClassDeclSyntax.self),
-           classDecl.attributes.firstAttribute(named: "Codable") == nil &&
-           classDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
-            throw MacroError(text: "@\(style.macroName) macro can only be used with @Codable or @InheritedCodable types.")
+           !classDecl.attributes.containsAttribute(named: "Codable")
+           && !classDecl.attributes.containsAttribute(named: "Decodable")
+           && !classDecl.attributes.containsAttribute(named: "Encodable")
+           && !classDecl.attributes.containsAttribute(named: "InheritedCodable")
+           && !classDecl.attributes.containsAttribute(named: "InheritedDecodable") {
+            throw MacroError(text: "@\(style.macroName) macro can only be used with @Decodable, @Encodable, @Codable, @InheritedCodable or @InheritedDecodable types.")
         }
         return []
     }

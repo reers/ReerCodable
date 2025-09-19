@@ -36,14 +36,16 @@ public struct FlexibleType: PeerMacro {
             throw MacroError(text: "@FlexibleType macro is only for `struct`, `class` or a property.")
         }
         if let structDecl = declaration.as(StructDeclSyntax.self),
-           structDecl.attributes.firstAttribute(named: "Codable") == nil &&
-           structDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
-            throw MacroError(text: "@FlexibleType macro can only be used with @Codable or @InheritedCodable types.")
+           !structDecl.attributes.containsAttribute(named: "Codable")
+           && !structDecl.attributes.containsAttribute(named: "Decodable") {
+            throw MacroError(text: "@FlexibleType macro can only be used with @Codable or @Decodable types.")
         }
         if let classDecl = declaration.as(ClassDeclSyntax.self),
-           classDecl.attributes.firstAttribute(named: "Codable") == nil &&
-           classDecl.attributes.firstAttribute(named: "InheritedCodable") == nil {
-            throw MacroError(text: "@FlexibleType macro can only be used with @Codable or @InheritedCodable types.")
+           !classDecl.attributes.containsAttribute(named: "Codable")
+           && !classDecl.attributes.containsAttribute(named: "Decodable")
+           && !classDecl.attributes.containsAttribute(named: "InheritedCodable")
+           && !classDecl.attributes.containsAttribute(named: "InheritedDecodable") {
+            throw MacroError(text: "@FlexibleType macro can only be used with @Codable, @Decodable, @InheritedDecodable or @InheritedCodable types.")
         }
         return []
     }
