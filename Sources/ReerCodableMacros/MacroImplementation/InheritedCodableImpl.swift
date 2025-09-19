@@ -49,23 +49,23 @@ public struct InheritedDecodable: MemberMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.DeclSyntax] {
-        // 1. 检查宏是否应用于类 (ClassDeclSyntax)
-        // 2. 检查该类是否有继承子句 (inheritanceClause)，即它是一个子类
+        // 1. Check if the macro is applied to a class (ClassDeclSyntax)
+        // 2. Check if the class has an inheritance clause (inheritanceClause), i.e., it is a subclass
         guard let classDecl = declaration.as(ClassDeclSyntax.self), classDecl.inheritanceClause != nil else {
-            // 如果不是子类，则抛出错误
+            // If it's not a subclass, throw an error
             throw MacroError(text: "`@InheritedDecodable` must be used on a subclass.")
         }
 
-        // 3. 创建 TypeInfo 实例以分析子类的结构
-        //    你需要确保 TypeInfo 能正确处理继承关系
+        // 3. Create a TypeInfo instance to analyze the subclass structure
+        //    You need to ensure TypeInfo can properly handle inheritance relationships
         let typeInfo = try TypeInfo(decl: classDecl)
 
-        // 4. 生成需要 override 的 `init(from:)` 实现
-        //    传递 isOverride: true 来确保生成的方法包含 `override` 关键字
-        //    并且内部可能需要调用 super.init(from:)
+        // 4. Generate the `init(from:)` implementation that needs to override
+        //    Pass isOverride: true to ensure the generated method includes the `override` keyword
+        //    and internally may need to call super.init(from:)
         let decoderInit = try typeInfo.generateDecoderInit(isOverride: true)
 
-        // 5. 返回仅包含 `init(from:)` override 实现的声明数组
+        // 5. Return an array of declarations containing only the `init(from:)` override implementation
         return [decoderInit]
     }
 }
