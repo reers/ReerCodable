@@ -44,6 +44,7 @@ let package = Package(
             name: "ReerCodableTests",
             dependencies: [
                 "ReerCodable",
+                "ReerCodableMacros",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
         ),
