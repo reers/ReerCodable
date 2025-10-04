@@ -87,18 +87,18 @@
 ///     let age: Int
 /// }
 /// ```
-@attached(extension, conformances: Codable, ReerCodableDelegate, names: arbitrary)
-@attached(member, names: named(init(from:)), named(encode(to:)), named(default), arbitrary)
+@attached(extension, conformances: Codable, ReerCodableDelegate)
+@attached(member, names: named(init(from:)), named(encode(to:)), named(default), named(init), named(copy))
 public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "RECodable")
 
 /// Decodable only
-@attached(extension, conformances: Decodable, ReerCodableDelegate, names: arbitrary)
-@attached(member, names: named(init(from:)), named(default), arbitrary)
+@attached(extension, conformances: Decodable, ReerCodableDelegate)
+@attached(member, names: named(init(from:)), named(default), named(init), named(copy))
 public macro Decodable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "REDecodable")
 
 /// Encodable only
-@attached(extension, conformances: Encodable, ReerCodableDelegate, names: arbitrary)
-@attached(member, names: named(encode(to:)), named(default), arbitrary)
+@attached(extension, conformances: Encodable, ReerCodableDelegate)
+@attached(member, names: named(encode(to:)), named(default), named(init), named(copy))
 public macro Encodable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "REEncodable")
 
 
@@ -123,7 +123,7 @@ public macro Encodable(memberwiseInit: Bool = true) = #externalMacro(module: "Re
 ///     let childProperty: Int
 /// }
 /// ```
-@attached(member, names: named(init(from:)), named(encode(to:)), arbitrary)
+@attached(member, names: named(init(from:)), named(encode(to:)))
 public macro InheritedCodable() = #externalMacro(module: "ReerCodableMacros", type: "InheritedCodable")
 
 /// Inherited Decodable only
@@ -131,7 +131,7 @@ public macro InheritedCodable() = #externalMacro(module: "ReerCodableMacros", ty
 /// from a `Decodable` (or `Codable`) base class.
 /// It automatically calls `super.init(from:)` and decodes properties defined
 /// within the subclass itself.
-@attached(member, names: named(init(from:)), arbitrary)
+@attached(member, names: named(init(from:)))
 public macro InheritedDecodable() = #externalMacro(module: "ReerCodableMacros", type: "InheritedDecodable")
 
 // ⚠️⚠️⚠️ Note on the absence of a standalone `InheritedEncodable` macro:
