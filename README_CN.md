@@ -356,13 +356,16 @@ class DateModel {
     @DateCoding(.iso8601)
     var date5: Date
     
-    @DateCoding(.formatted(Self.formatter))
+    @DateCoding(.iso8601)
     var date6: Date
+    
+    @DateCoding(.formatted(Self.formatter))
+    var date7: Date
     
     static let formatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        dateFormatter.dateFormat = "yyyy'Year'MM'-Month'dd'*Day 'HH'h'mm'm'ss's'"
         dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
         return dateFormatter
     }()
@@ -379,7 +382,8 @@ class DateModel {
     "date3": 1731585275,
     "date4": 1731585275944,
     "date5": "2024-12-10T00:00:00Z",
-    "date6": "2024-12-10T00:00:00.000"
+    "date6": "2025-04-17T00:00:00.000Z",
+    "date7": "2024Year12-Month10*Day 00h00m00s"
 }
 ```
 
