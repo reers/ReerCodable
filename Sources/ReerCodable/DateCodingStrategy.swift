@@ -50,4 +50,10 @@ public enum DateCodingStrategy {
         formatter.formatOptions = .withInternetDateTime
         return formatter
     }()
+    
+    nonisolated(unsafe) static let iso8601FractionalSecondsFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
 }
