@@ -177,7 +177,11 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
             }
         case .iso8601:
             return try decodeDateValue(type: type, keys: keys) { (rawValue: String) in
-                guard let date = DateCodingStrategy.iso8601Formatter.date(from: rawValue) else {
+                let date =
+                    DateCodingStrategy.iso8601Formatter.date(from: rawValue)
+                    ?? DateCodingStrategy.iso8601FractionalSecondsFormatter.date(from: rawValue)
+                
+                guard let date else {
                     throw ReerCodableError(text: "Decode date with iso8601 string failed for keys: \(keys)")
                 }
                 return date
