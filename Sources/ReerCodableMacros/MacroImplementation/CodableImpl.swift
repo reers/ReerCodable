@@ -26,6 +26,20 @@ import SwiftSyntaxMacros
 
 public struct RECodable {}
 
+private func parameterMatchesType(
+    _ parameter: FunctionParameterSyntax,
+    baseName: String
+) -> Bool {
+    let type = parameter.type
+    var tokens = type.trimmedDescription.split(whereSeparator: \.isWhitespace)
+    if let first = tokens.first, first == "any" || first == "some" {
+        tokens.removeFirst()
+    }
+    guard let last = tokens.last else { return false }
+    let identifier = last.split(separator: ".").last ?? last
+    return String(identifier) == baseName
+}
+
 extension RECodable: ExtensionMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -74,15 +88,17 @@ extension RECodable: MemberMacro {
             if let initDecl = member.decl.as(InitializerDeclSyntax.self),
                initDecl.signature.parameterClause.parameters.count == 1,
                initDecl.signature.parameterClause.parameters.first?.firstName.text == "from",
-               initDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Decoder" {
+               let parameter = initDecl.signature.parameterClause.parameters.first,
+               parameterMatchesType(parameter, baseName: "Decoder") {
                 throw MacroError(text: "Please use the `@Codable` macro-generated implementation instead of manually implementing `init(from:)`.")
             }
             
             if let funcDecl = member.decl.as(FunctionDeclSyntax.self),
-               funcDecl.name.text == "encode" &&
-               funcDecl.signature.parameterClause.parameters.count == 1 &&
-               funcDecl.signature.parameterClause.parameters.first?.firstName.text == "to" &&
-               funcDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Encoder" {
+               funcDecl.name.text == "encode",
+               funcDecl.signature.parameterClause.parameters.count == 1,
+               funcDecl.signature.parameterClause.parameters.first?.firstName.text == "to",
+               let parameter = funcDecl.signature.parameterClause.parameters.first,
+               parameterMatchesType(parameter, baseName: "Encoder") {
                 throw MacroError(text: "Please use the `@Codable` macro-generated implementation instead of manually implementing `encode(to:)`.")
             }
         }
@@ -184,7 +200,8 @@ extension REDecodable: MemberMacro {
             if let initDecl = member.decl.as(InitializerDeclSyntax.self),
                initDecl.signature.parameterClause.parameters.count == 1,
                initDecl.signature.parameterClause.parameters.first?.firstName.text == "from",
-               initDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Decoder" {
+               let parameter = initDecl.signature.parameterClause.parameters.first,
+               parameterMatchesType(parameter, baseName: "Decoder") {
                 throw MacroError(text: "Please use the `@Decodable` macro-generated implementation instead of manually implementing `init(from:)`.")
             }
         }
@@ -289,7 +306,8 @@ extension REEncodable: MemberMacro {
                funcDecl.name.text == "encode",
                funcDecl.signature.parameterClause.parameters.count == 1,
                funcDecl.signature.parameterClause.parameters.first?.firstName.text == "to",
-               funcDecl.signature.parameterClause.parameters.first?.type.as(SomeOrAnyTypeSyntax.self)?.constraint.as(IdentifierTypeSyntax.self)?.name.text == "Encoder" {
+               let parameter = funcDecl.signature.parameterClause.parameters.first,
+               parameterMatchesType(parameter, baseName: "Encoder") {
                 throw MacroError(text: "Please use the `@Encodable` macro-generated implementation instead of manually implementing `encode(to:)`.")
             }
         }
