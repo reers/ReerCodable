@@ -400,7 +400,7 @@ class DateModel {
 ### 12. Custom Encoding/Decoding Logic
 
 Implement custom encoding/decoding logic through `@CustomCoding`. There are two ways to customize encoding/decoding:
-- Through closures, using `decoder: Decoder`, `encoder: Encoder` as parameters to implement custom logic:
+- Through closures, using `decoder: any Decoder`, `encoder: any Encoder` as parameters to implement custom logic:
 
 ```swift
 @Codable
@@ -425,7 +425,7 @@ struct RankTransformer: CodingCustomizable {
         return UInt(temp) ?? 0
     }
     
-    static func encode(by encoder: Encoder, key: String, value: Value) throws {
+    static func encode(by encoder: any Encoder, key: String, value: Value) throws {
         try encoder.set(value, forKey: key)
     }
 }
@@ -455,7 +455,7 @@ public extension Encoder {
 
 ### 13. Inheritance Support
 
-Use `@InheritedCodable` for better support of subclass encoding/decoding. Native `Codable` cannot parse subclass properties, even if the value exists in JSON, requiring manual implementation of `init(from decoder: Decoder) throws`
+Use `@InheritedCodable` for better support of subclass encoding/decoding. Native `Codable` cannot parse subclass properties, even if the value exists in JSON, requiring manual implementation of `init(from decoder: any Decoder) throws`
 
 ```swift
 @Codable

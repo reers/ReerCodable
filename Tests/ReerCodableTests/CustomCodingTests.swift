@@ -13,7 +13,7 @@ struct RankTransformer: CodingCustomizable {
         return UInt(temp) ?? 0
     }
     
-    static func encode(by encoder: Encoder, key: String, value: Value) throws {
+    static func encode(by encoder: any Encoder, key: String, value: Value) throws {
         try encoder.set(value, forKey: key)
     }
 }
@@ -25,7 +25,7 @@ struct AddPrefixTransformer<T: Codable>: CodingCustomizable {
         return "prefix-\(temp)" as! T
     }
     
-    static func encode(by encoder: Encoder, key: String, value: T) throws {
+    static func encode(by encoder: any Encoder, key: String, value: T) throws {
         try encoder.set(value, forKey: key)
     }
 }

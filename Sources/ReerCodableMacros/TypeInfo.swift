@@ -614,7 +614,7 @@ extension TypeInfo {
             )
         }
         let decoder: DeclSyntax = """
-        \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: Decoder) throws {
+        \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: any Decoder) throws {
             \(raw: container)
             \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
             \(raw: shouldAddDidDecode ? "try self.didDecode(from: decoder)" : "")
@@ -699,7 +699,7 @@ extension TypeInfo {
         }
         let accessable = if isOpen { "open " } else if isPublic || hasPublicOrOpenProperty { "public " } else { "" }
         let encoder: DeclSyntax = """
-        \(raw: accessable)\(raw: isOverride ? "override " : "")func encode(to encoder: Encoder) throws {
+        \(raw: accessable)\(raw: isOverride ? "override " : "")func encode(to encoder: any Encoder) throws {
             try self.willEncode(to: encoder)
             \(raw: isOverride ? "try super.encode(to: encoder)\n" : "")\(raw: container)
             \(raw: encoding)
