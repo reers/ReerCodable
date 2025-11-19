@@ -394,7 +394,7 @@ class DateModel {
 ### 12. 自定义编解码逻辑
 
 通过 `@CustomCoding` 实现自定义的编解码逻辑. 自定义编解码有两种方式:
-- 通过闭包, 以 `decoder: Decoder`, `encoder: Encoder` 为参数来实现自定义逻辑:
+- 通过闭包, 以 `decoder: any Decoder`, `encoder: any Encoder` 为参数来实现自定义逻辑:
 
 ```swift
 @Codable
@@ -419,7 +419,7 @@ struct RankTransformer: CodingCustomizable {
         return UInt(temp) ?? 0
     }
     
-    static func encode(by encoder: Encoder, key: String, value: Value) throws {
+    static func encode(by encoder: any Encoder, key: String, value: Value) throws {
         try encoder.set(value, forKey: key)
     }
 }
@@ -450,7 +450,7 @@ public extension Encoder {
 
 ### 13. 继承支持
 
-使用 `@InheritedCodable` 更好地支持子类的编解码. 原生 `Codable` 无法解析子类属性, 即使 JSON 中存在该值, 需要手动实现 `init(from decoder: Decoder) throws`
+使用 `@InheritedCodable` 更好地支持子类的编解码. 原生 `Codable` 无法解析子类属性, 即使 JSON 中存在该值, 需要手动实现 `init(from decoder: any Decoder) throws`
 
 ```swift
 @Codable

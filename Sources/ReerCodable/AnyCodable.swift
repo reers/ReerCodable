@@ -31,7 +31,7 @@ public struct AnyCodable: Codable {
         self.value = value
     }
     
-    public init(from decoder: Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
             self.init(NSNull())
@@ -54,7 +54,7 @@ public struct AnyCodable: Codable {
         }
     }
     
-    public func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         
         switch value {

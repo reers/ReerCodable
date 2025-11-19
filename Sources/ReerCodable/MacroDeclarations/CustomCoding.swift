@@ -36,8 +36,8 @@
 /// ```
 @attached(peer)
 public macro CustomCoding<Value>(
-    decode: ((_ decoder: Decoder) throws -> Value)? = nil,
-    encode: ((_ encoder: Encoder, _ value: Value) throws -> Void)? = nil
+    decode: ((_ decoder: any Decoder) throws -> Value)? = nil,
+    encode: ((_ encoder: any Encoder, _ value: Value) throws -> Void)? = nil
 ) = #externalMacro(module: "ReerCodableMacros", type: "CustomCoding")
 
 /// Protocol for defining custom coding logic in a separate type.
@@ -53,14 +53,14 @@ public protocol CodingCustomizable {
     ///   - decoder: The decoder to read values from
     ///   - keys: property name and converted keys.
     /// - Returns: The decoded value after custom transformation
-    static func decode(by decoder: Decoder, keys: [String]) throws -> Value
+    static func decode(by decoder: any Decoder, keys: [String]) throws -> Value
     
     /// Custom encoding implementation
     /// - Parameters:
     ///   - encoder: The encoder to write values to
     ///   - key: property name.
     ///   - value: The value to encode
-    static func encode(by encoder: Encoder, key: String, value: Value) throws
+    static func encode(by encoder: any Encoder, key: String, value: Value) throws
 }
 
 /// The `@CustomCoding` macro with type-based customization.
@@ -78,7 +78,7 @@ public protocol CodingCustomizable {
 ///         return temp * 1000
 ///     }
 ///     
-///     static func encode(by encoder: Encoder, key: String, value: Value) throws {
+    ///     static func encode(by encoder: any Encoder, key: String, value: Value) throws {
 ///         try encoder.set(value, forKey: "custom_by")
 ///     }
 /// }
