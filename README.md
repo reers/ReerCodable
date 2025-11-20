@@ -124,6 +124,9 @@ end
     end
 </code></pre>
 
+<p><strong>⚠️ Important:</strong> If you encounter <code>rsync</code> permission errors with Xcode 14+, disable User Script Sandboxing:</p>
+<p>In your project's <strong>Build Settings</strong>, search for <code>User Script Sandboxing</code> and set <code>ENABLE_USER_SCRIPT_SANDBOXING</code> to <code>No</code>. This resolves CocoaPods script execution issues caused by Xcode's stricter sandbox restrictions.</p>
+
 </details>
 
 # Usage
