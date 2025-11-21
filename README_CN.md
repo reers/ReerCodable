@@ -102,8 +102,8 @@ end
 <pre><code class="ruby language-ruby">
     post_install do |installer|
       installer.pods_project.targets.each do |target|
-        rhea_dependency = target.dependencies.find { |d| ['ReerCodable'].include?(d.name) }
-        if rhea_dependency
+        reercodable_dependency = target.dependencies.find { |d| ['ReerCodable'].include?(d.name) }
+        if reercodable_dependency
           puts "Adding ReerCodable Swift flags to target: #{target.name}"
           target.build_configurations.each do |config|
             swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] ||= ['$(inherited)']
