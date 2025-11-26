@@ -333,7 +333,9 @@ final class ReerCodableTests: XCTestCase {
                     try container.encode(value: self.isEnabled, key: AnyCodingKey("isEnabled", false), treatDotAsNested: true)
                 }
 
-                init(isEnabled: Bool) {
+                init(
+                    isEnabled: Bool
+                ) {
                     self.isEnabled = isEnabled
                 }
             }
@@ -374,7 +376,9 @@ final class ReerCodableTests: XCTestCase {
                     try container.encode(value: ((self.nickname ?? ("anonymous"))) as String?, key: AnyCodingKey("nickname", false), treatDotAsNested: true)
                 }
 
-                init(nickname: String? = nil) {
+                init(
+                    nickname: String? = nil
+                ) {
                     self.nickname = nickname
                 }
             }
@@ -415,7 +419,9 @@ final class ReerCodableTests: XCTestCase {
                     try container.encode(value: ((self.metadata ?? (["seed": 1]))) as [String: Int]?, key: AnyCodingKey("metadata", false), treatDotAsNested: true)
                 }
 
-                init(metadata: [String: Int]? = nil) {
+                init(
+                    metadata: [String: Int]? = nil
+                ) {
                     self.metadata = metadata
                 }
             }
