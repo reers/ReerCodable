@@ -15,23 +15,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux:
+  macOS:
     if: github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]')
-    name: Linux (Swift ${{ matrix.swift }})
-    runs-on: ubuntu-latest
+    name: ${{ matrix.platform }} (Swift ${{ matrix.swift }})
+    runs-on: macos-15
     strategy:
       fail-fast: false
       matrix:
+        platform:
+          - iOS
+          - mac-catalyst
+          - macOS
+          - tvOS
+          - visionOS
+          - watchOS
         swift:
-          - "5.10"
           - "6.0"
           - "6.1"
           - "6.2"
-    container:
-      image: swift:${{ matrix.swift }}
     steps:
       - name: Git Checkout
         uses: actions/checkout@v5
 
+      - name: Select Xcode version
+        uses: mxcl/xcodebuild@v3
+        with:
+          swift: ~${{ matrix.swift }}
+          action: none
+          verbosity: xcbeautify
+
+      - name: Disable SwiftSyntax Prebuilts
+        run: |
+          defaults write com.apple.dt.Xcode IDEPackageEnablePrebuilts -bool NO
+
+          # nuke cache to ensure it takes effect
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Developer/Xcode/SourcePackages
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+
+      - if: matrix.platform != 'mac-catalyst' && matrix.platform != 'macOS'
+        name: Download Required Runtime
+        run: xcodebuild -downloadPlatform ${{ matrix.platform }}
+
+      - if: matrix.platform != 'mac-catalyst' && matrix.platform != 'macOS'
+        name: List Available Simulators
+        run: xcrun simctl list devices
+
       - name: Run Tests
-        run: swift test
+        uses: mxcl/xcodebuild@v3
+        with:
+          platform: ${{ matrix.platform }}
+          swift: ~${{ matrix.swift }}
+          action: test
+          verbosity: xcbeautify
