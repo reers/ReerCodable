@@ -4,6 +4,7 @@ import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import XCTest
 @testable import ReerCodable
+import MacroTesting
 import Testing
 import Foundation
 
@@ -42,10 +43,20 @@ let testMacros: [String: Macro.Type] = [
 #endif
 
 final class ReerCodableTests: XCTestCase {
-    
+
+    override func invokeTest() {
+        withMacroTesting(
+            indentationWidth: .spaces(4),
+            record: .missing,
+            macros: testMacros
+        ) {
+            super.invokeTest()
+        }
+    }
+
     func testInheritedCodable() throws {
         #if canImport(ReerCodableMacros)
-        assertMacroExpansion(
+        assertMacro {
             """
             @Codable
             struct NetResponse<Element: Codable> {
@@ -53,12 +64,8 @@ final class ReerCodableTests: XCTestCase {
                 let msg: String
                 private(set) var code: Int = 0
             }
-            """,
-            expandedSource: """
-            
-            """,
-            macros: testMacros
-        )
+            """
+        }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
