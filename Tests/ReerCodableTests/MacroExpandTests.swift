@@ -47,6 +47,9 @@ final class ReerCodableTests: XCTestCase {
                 "PascalKebabCase": PascalKebabCase.self,
                 "ScreamingKebabCase": ScreamingKebabCase.self,
                 "FlexibleType": FlexibleType.self,
+                "DecodingDefault": DecodingDefault.self,
+                "EncodingDefault": EncodingDefault.self,
+                "CodingDefault": CodingDefault.self,
             ]
         ) {
             super.invokeTest()
@@ -297,6 +300,129 @@ final class ReerCodableTests: XCTestCase {
             extension Video1: ReerCodableDelegate {
             }
             """#
+        }
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func testDecodingDefaultMacro() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacro {
+            """
+            @Codable
+            struct Flags {
+                @DecodingDefault(false)
+                var isEnabled: Bool
+            }
+            """
+        } expansion: {
+            """
+            struct Flags {
+                var isEnabled: Bool
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.isEnabled = (try? container.decode(Bool.self, forKey: AnyCodingKey("isEnabled", false))) ?? (false)
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.isEnabled, key: AnyCodingKey("isEnabled", false), treatDotAsNested: true)
+                }
+
+                init(isEnabled: Bool) {
+                    self.isEnabled = isEnabled
+                }
+            }
+
+            extension Flags: Codable, ReerCodableDelegate {
+            }
+            """
+        }
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func testEncodingDefaultMacro() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacro {
+            """
+            @Codable
+            struct Payload {
+                @EncodingDefault("anonymous")
+                var nickname: String?
+            }
+            """
+        } expansion: {
+            """
+            struct Payload {
+                var nickname: String?
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.nickname = try? container.decode(type: String?.self, keys: [AnyCodingKey("nickname", false)], flexibleType: false)
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: ((self.nickname ?? ("anonymous"))) as String?, key: AnyCodingKey("nickname", false), treatDotAsNested: true)
+                }
+
+                init(nickname: String? = nil) {
+                    self.nickname = nickname
+                }
+            }
+
+            extension Payload: Codable, ReerCodableDelegate {
+            }
+            """
+        }
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    
+    func testCodingDefaultMacro() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacro {
+            """
+            @Codable
+            struct Preferences {
+                @CodingDefault(["seed": 1])
+                var metadata: [String: Int]?
+            }
+            """
+        } expansion: {
+            """
+            struct Preferences {
+                var metadata: [String: Int]?
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.metadata = (try? container.decode(type: [String: Int]?.self, keys: [AnyCodingKey("metadata", false)], flexibleType: false)) ?? (["seed": 1])
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: ((self.metadata ?? (["seed": 1]))) as [String: Int]?, key: AnyCodingKey("metadata", false), treatDotAsNested: true)
+                }
+
+                init(metadata: [String: Int]? = nil) {
+                    self.metadata = metadata
+                }
+            }
+
+            extension Preferences: Codable, ReerCodableDelegate {
+            }
+            """
         }
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
