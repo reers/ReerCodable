@@ -1,19 +1,37 @@
-# This workflow will build a Swift project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
-
-name: ReerCodable
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - "**"
+  schedule:
+    - cron: "3 3 * * 2" # 3:03 AM, every Tuesday
 
-jobs: 
-  Linux:
-    runs-on: [ubuntu-latest]
-    container: swift:5.10
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    if: github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]')
+    name: Linux (Swift ${{ matrix.swift }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift:
+          - "5.10"
+          - "6.0"
+          - "6.1"
+          - "6.2"
+    container:
+      image: swift:${{ matrix.swift }}
     steps:
-      - uses: actions/checkout@v1
-      - name: Linux
-        run: swift build -v
+      - name: Git Checkout
+        uses: actions/checkout@v5
+
+      - name: Run Tests
+        run: swift test
