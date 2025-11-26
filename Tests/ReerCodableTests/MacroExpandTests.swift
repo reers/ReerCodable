@@ -11,48 +11,48 @@ import Foundation
 // Macro implementations build for the host, so the corresponding module is not available when cross-compiling. Cross-compiled tests may still make use of the macro itself in end-to-end tests.
 #if canImport(ReerCodableMacros)
 import ReerCodableMacros
-
-let testMacros: [String: Macro.Type] = [
-    "Codable": RECodable.self,
-    "InheritedCodable": InheritedCodable.self,
-    "CodingKey": CodingKey.self,
-    "EncodingKey": EncodingKey.self,
-    "CodingIgnored": CodingIgnored.self,
-    "Base64Coding": Base64Coding.self,
-    "DateCoding": DateCoding.self,
-    "CompactDecoding": CompactDecoding.self,
-    "CustomCoding": CustomCoding.self,
-    "CodingCase": CodingCase.self,
-    "CodingContainer": CodingContainer.self,
-    "DefaultInstance": DefaultInstance.self,
-    "Copyable": Copyable.self,
-    "FlatCase": FlatCase.self,
-    "UpperCase": UpperCase.self,
-    "CamelCase": CamelCase.self,
-    "PascalCase": PascalCase.self,
-    "SnakeCase": SnakeCase.self,
-    "KebabCase": KebabCase.self,
-    "CamelSnakeCase": CamelSnakeCase.self,
-    "PascalSnakeCase": PascalSnakeCase.self,
-    "ScreamingSnakeCase": ScreamingSnakeCase.self,
-    "CamelKebabCase": CamelKebabCase.self,
-    "PascalKebabCase": PascalKebabCase.self,
-    "ScreamingKebabCase": ScreamingKebabCase.self,
-    "FlexibleType": FlexibleType.self,
-]
 #endif
 
 final class ReerCodableTests: XCTestCase {
 
+    #if canImport(ReerCodableMacros)
     override func invokeTest() {
         withMacroTesting(
             indentationWidth: .spaces(4),
             record: .missing,
-            macros: testMacros
+            macros: [
+                "Codable": RECodable.self,
+                "InheritedCodable": InheritedCodable.self,
+                "CodingKey": CodingKey.self,
+                "EncodingKey": EncodingKey.self,
+                "CodingIgnored": CodingIgnored.self,
+                "Base64Coding": Base64Coding.self,
+                "DateCoding": DateCoding.self,
+                "CompactDecoding": CompactDecoding.self,
+                "CustomCoding": CustomCoding.self,
+                "CodingCase": CodingCase.self,
+                "CodingContainer": CodingContainer.self,
+                "DefaultInstance": DefaultInstance.self,
+                "Copyable": Copyable.self,
+                "FlatCase": FlatCase.self,
+                "UpperCase": UpperCase.self,
+                "CamelCase": CamelCase.self,
+                "PascalCase": PascalCase.self,
+                "SnakeCase": SnakeCase.self,
+                "KebabCase": KebabCase.self,
+                "CamelSnakeCase": CamelSnakeCase.self,
+                "PascalSnakeCase": PascalSnakeCase.self,
+                "ScreamingSnakeCase": ScreamingSnakeCase.self,
+                "CamelKebabCase": CamelKebabCase.self,
+                "PascalKebabCase": PascalKebabCase.self,
+                "ScreamingKebabCase": ScreamingKebabCase.self,
+                "FlexibleType": FlexibleType.self,
+            ]
         ) {
             super.invokeTest()
         }
     }
+    #endif
 
     func testInheritedCodable() throws {
         #if canImport(ReerCodableMacros)
