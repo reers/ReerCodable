@@ -23,20 +23,12 @@ jobs:
       fail-fast: false
       matrix:
         swift:
-          - "5.10"
           - "6.0"
           - "6.1"
           - "6.2"
     steps:
       - name: Git Checkout
         uses: actions/checkout@v5
-
-      - name: Select Xcode version
-        uses: mxcl/xcodebuild@v3
-        with:
-          swift: ~${{ matrix.swift }}
-          action: none
-          verbosity: xcbeautify
 
       - name: Disable SwiftSyntax Prebuilts
         run: |
