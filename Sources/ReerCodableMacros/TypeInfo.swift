@@ -268,6 +268,15 @@ extension TypeInfo {
                 }
                 
                 var property = PropertyInfo(name: name, type: type)
+                let attributeArgument: (String) -> String? = { attributeName in
+                    guard
+                        let attribute = variable.attributes.firstAttribute(named: attributeName)?
+                            .as(AttributeSyntax.self),
+                        let arguments = attribute.arguments?.as(LabeledExprListSyntax.self),
+                        let expr = arguments.first?.expression
+                    else { return nil }
+                    return expr.trimmedDescription
+                }
                 // isOptional
                 property.isOptional = variable.isOptional
                 // get property case attributes
@@ -349,6 +358,12 @@ extension TypeInfo {
                 }
                 
                 property.initExpr = variable.initExpr
+                
+                let codingDefaultExpr = attributeArgument("CodingDefault")
+                let decodingDefaultExpr = attributeArgument("DecodingDefault")
+                let encodingDefaultExpr = attributeArgument("EncodingDefault")
+                property.decodingDefaultValue = decodingDefaultExpr ?? codingDefaultExpr
+                property.encodingDefaultValue = encodingDefaultExpr ?? codingDefaultExpr
                 properties.append(property)
             }
             return properties
@@ -586,11 +601,12 @@ extension TypeInfo {
                         }
                     }
                     
-                    if let initExpr = property.initExpr {
-                        return "self.\(property.name) = (try? \(body)) ?? (\(initExpr))"
+                    if let fallbackExpr = property.decodingFallbackExpr {
+                        return "self.\(property.name) = (try? \(body)) ?? (\(fallbackExpr))"
+                    } else if property.isOptional {
+                        return "self.\(property.name) = try? \(body)"
                     } else {
-                        let questionMark = property.isOptional ? "?" : ""
-                        return "self.\(property.name) = try\(questionMark) \(body)"
+                        return "self.\(property.name) = try \(body)"
                     }
                 }
                 .joined(separator: "\n")
@@ -632,6 +648,9 @@ extension TypeInfo {
             encoding = properties
                 .compactMap { property in
                     if property.isIgnored { return nil }
+                    let valueExpr = property.encodingValueExpr
+                    let resolvedValueExpr = property.resolvedEncodingValueExpr
+                    let needsOptionalHandling = property.needsOptionalEncodingHandling
                     let (encodingKey, treatDotAsNested) = if let specifiedEncodingKey = property.encodingKey {
                         (specifiedEncodingKey, property.treatDotAsNestedWhenEncoding)
                     } else {
@@ -639,17 +658,20 @@ extension TypeInfo {
                     }
                     // base64
                     if property.base64Coding {
-                        
-                        // a Data or Data? type
-                        let dataTypeTemp = if property.isOptional {
-                            property.type.hasPrefix("[UInt8]") ? "self.\(property.name).map({ Data($0) })" : "self.\(property.name)"
+                        let nonOptionalType = property.type.nonOptionalType
+                        let dataExpr: String
+                        if needsOptionalHandling {
+                            dataExpr = nonOptionalType.hasPrefix("[UInt8]")
+                                ? "\(resolvedValueExpr).map({ Data($0) })"
+                                : resolvedValueExpr
                         } else {
-                            property.type.hasPrefix("[UInt8]") ? "Data(self.\(property.name))" : "self.\(property.name)"
+                            dataExpr = nonOptionalType.hasPrefix("[UInt8]")
+                                ? "Data(\(resolvedValueExpr))"
+                                : resolvedValueExpr
                         }
-                        
                         return """
                         try {
-                            let base64String = \(dataTypeTemp)\(property.questionMark).base64EncodedString()
+                            let base64String = \(dataExpr)\(property.encodingQuestionMark).base64EncodedString()
                             try container.encode(value: base64String, key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested))
                         }()
                         """
@@ -657,31 +679,31 @@ extension TypeInfo {
                     // Date
                     else if let dateCodingStrategy = property.dateCodingStrategy {
                         return """
-                        try container.encodeDate(value: self.\(property.name), key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
+                        try container.encodeDate(value: \(valueExpr), key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested), strategy: \(dateCodingStrategy))
                         """
                     }
                     // custom encode
                     else if let customEncoder = property.customEncoder {
                         return """
-                        let _ = try \(customEncoder)(encoder, self.\(property.name))
+                        let _ = try \(customEncoder)(encoder, \(valueExpr))
                         """
                     }
                     // custom encode by type
                     else if let customByType = property.customByType {
                         return """
-                        try \(customByType).encode(by: encoder, key: \(encodingKey), value: self.\(property.name))
+                        try \(customByType).encode(by: encoder, key: \(encodingKey), value: \(valueExpr))
                         """
                     }
                     else if property.isFlat {
-                        if property.isOptional {
-                            return "if let value = self.\(property.name) { try value.encode(to: encoder) }"
+                        if needsOptionalHandling {
+                            return "if let value = \(resolvedValueExpr) { try value.encode(to: encoder) }"
                         } else {
-                            return "try self.\(property.name).encode(to: encoder)"
+                            return "try \(resolvedValueExpr).encode(to: encoder)"
                         }
                     }
                     // normal
                     else {
-                        return "try container.encode(value: self.\(property.name), key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested))"
+                        return "try container.encode(value: \(valueExpr), key: AnyCodingKey(\(encodingKey), \(encodingKey.hasDot)), treatDotAsNested: \(treatDotAsNested))"
                     }
                 }
                 .joined(separator: "\n")
