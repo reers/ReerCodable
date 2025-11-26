@@ -135,20 +135,6 @@ final class ReerCodableTests: XCTestCase {
 
                 init(from decoder: any Decoder) throws {
                     let container = try decoder.singleValueContainer()
-                    if let value = try? container.decode(Int.self) {
-                        switch value {
-                        case 8, 10, 12 ... 22:
-                            self = .apple;
-                            try self.didDecode(from: decoder);
-                            return;
-                        case 12:
-                            self = .mi;
-                            try self.didDecode(from: decoder);
-                            return;
-                        default:
-                            break
-                        }
-                    }
                     if let value = try? container.decode(Bool.self) {
                         switch value {
                         case true:
@@ -157,6 +143,20 @@ final class ReerCodableTests: XCTestCase {
                             return;
                         case false:
                             self = .oppo;
+                            try self.didDecode(from: decoder);
+                            return;
+                        default:
+                            break
+                        }
+                    }
+                    if let value = try? container.decode(Int.self) {
+                        switch value {
+                        case 8, 10, 12 ... 22:
+                            self = .apple;
+                            try self.didDecode(from: decoder);
+                            return;
+                        case 12:
+                            self = .mi;
                             try self.didDecode(from: decoder);
                             return;
                         default:

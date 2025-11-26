@@ -55,6 +55,7 @@ struct EnumCase {
     var rawValue: String
     // [Type: Value]
     var matches: [String: [String]] = [:]
+    var matchOrder: [String] = []
     var keyPathMatches: [PathValueMatch] = []
     var associatedMatch: [AssociatedMatch] = []
     var associated: [AssociatedValue] = []
@@ -169,6 +170,9 @@ struct TypeInfo {
                                 } else if let tuple = parseEnumCaseMatchString(functionCall.trimmedDescription) {
                                     // normal
                                     var last = enumCases.removeLast()
+                                    if last.matches[tuple.type] == nil {
+                                        last.matchOrder.append(tuple.type)
+                                    }
                                     var values = last.matches[tuple.type] ?? []
                                     values.append(tuple.value)
                                     last.matches[tuple.type] = values
@@ -414,27 +418,39 @@ extension TypeInfo {
          ]
      ]
      */
-    func processEnumCases(_ enumCases: [EnumCase]) -> [String: [(valueString: String, caseName: String)]] {
+    func processEnumCases(_ enumCases: [EnumCase]) -> [(type: String, values: [(valueString: String, caseName: String)])] {
         var result: [String: [(String, String)]] = [:]
+        var typeOrder: [String] = []
         
         for enumCase in enumCases {
-            for (type, values) in enumCase.matches {
-                let caseInfo = (values.joined(separator: ", "), enumCase.caseName)
-                if result[type] == nil {
-                    result[type] = []
+            let orderedTypes = enumCase.matchOrder.isEmpty
+                ? Array(enumCase.matches.keys)
+                : enumCase.matchOrder
+            for type in orderedTypes {
+                guard let values = enumCase.matches[type] else { continue }
+                    if result[type] == nil {
+                        result[type] = []
+                        typeOrder.append(type)
+                    }
+                    let caseInfo = (values.joined(separator: ", "), enumCase.caseName)
+                    result[type]?.append(caseInfo)
                 }
-                result[type]?.append(caseInfo)
             }
-        }
         
-        return result
+        return typeOrder.map { type in
+            (type: type, values: result[type] ?? [])
+        }
     }
     
     func validateEnumCases(_ cases: [EnumCase]) throws {
         var matchMap: [String: [String: String]] = [:]
         
         for enumCase in cases {
-            for (type, values) in enumCase.matches {
+            let orderedTypes = enumCase.matchOrder.isEmpty
+                ? Array(enumCase.matches.keys)
+                : enumCase.matchOrder
+            for type in orderedTypes {
+                guard let values = enumCase.matches[type] else { continue }
                 if matchMap[type] == nil {
                     matchMap[type] = [:]
                 }
@@ -878,8 +894,15 @@ extension TypeInfo {
                 """, true)
         } else {
             if enumCases.contains(where: { !$0.matches.isEmpty }) {
-                let dict = processEnumCases(enumCases)
-                let tryDecode = dict.compactMapWithLastKey("String") { type, associatedValues in
+                let matches = processEnumCases(enumCases)
+                var orderedMatches = matches.filter { $0.type != "String" }
+                if let stringMatch = matches.first(where: { $0.type == "String" }) {
+                    orderedMatches.append(stringMatch)
+                }
+                let tryDecode = orderedMatches.compactMap { match -> String? in
+                    guard !match.values.isEmpty else { return nil }
+                    let type = match.type
+                    let associatedValues = match.values
                     return """
                         if let value = try? container.decode(\(type).self) {\nswitch value {
                         \(associatedValues.compactMap {
@@ -989,24 +1012,6 @@ extension TypeInfo {
     
     var hasEnumAssociatedValue: Bool {
         return isEnum && enumCases.contains { !$0.associated.isEmpty }
-    }
-}
-
-extension Dictionary {
-    func compactMapWithLastKey<T>(_ lastKey: Key, transform: ((key: Key, value: Value)) throws -> T?) rethrows -> [T] {
-        var result: [T] = []
-        for (key, value) in self where key != lastKey {
-            if let transformed = try transform((key, value)) {
-                result.append(transformed)
-            }
-        }
-        
-        if let lastValue = self[lastKey],
-           let transformed = try transform((lastKey, lastValue)) {
-            result.append(transformed)
-        }
-        
-        return result
     }
 }
 
