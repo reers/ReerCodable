@@ -287,6 +287,30 @@ enum Gender: String {
 }
 ```
 
+如果需要更精细地控制默认值, 可以使用 `@DecodingDefault`, `@EncodingDefault`, `@CodingDefault`:
+
+```swift
+@Decodable
+struct Flags {
+    @DecodingDefault(false)
+    var isEnabled: Bool
+}
+
+@Encodable
+struct Payload {
+    @EncodingDefault("anonymous")
+    var nickname: String?
+}
+
+@Codable
+struct Preferences {
+    @CodingDefault([String]())
+    var tags: [String]?
+}
+```
+
+`@DecodingDefault` 会在解码失败或缺失时使用提供的表达式, `@EncodingDefault` 会在编码 `nil` 可选值时使用该表达式, 而 `@CodingDefault` 同时具备前两者的行为。
+
 ### 8. 忽略属性
 
 使用 `@CodingIgnored` 在编解码过程中忽略特定属性. 在解码过程中对于非 `Optional` 属性要有一个默认值才能满足 Swift 初始化的要求, `ReerCodable` 对基本数据类型和集合类型会自动生成默认值, 如果是其他自定义类型, 则需用用户提供默认值.
