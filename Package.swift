@@ -45,9 +45,10 @@ let package = Package(
             name: "ReerCodableTests",
             dependencies: [
                 "ReerCodable",
+                "ReerCodableMacros",
                 .product(name: "MacroTesting", package: "swift-macro-testing"),
-                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v5],
 )
