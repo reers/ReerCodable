@@ -23,8 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         swift:
-          - "6.0"
-          - "6.1"
           - "6.2"
     steps:
       - name: Git Checkout
@@ -46,3 +44,20 @@ jobs:
           swift: ~${{ matrix.swift }}
           action: test
           verbosity: xcbeautify
+  linux:
+    if: github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]')
+    name: Linux (Swift ${{ matrix.swift }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift:
+          - "6.2"
+    container:
+      image: swift:${{ matrix.swift }}
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v5
+
+      - name: Run Tests
+        run: swift test
