@@ -314,16 +314,20 @@ final class ReerCodableTests: XCTestCase {
             struct Flags {
                 @DecodingDefault(false)
                 var isEnabled: Bool
+                @DecodingDefault(true)
+                let fallbackEnabled: Bool = false
             }
             """
         } expansion: {
             """
             struct Flags {
                 var isEnabled: Bool
+                let fallbackEnabled: Bool = false
 
                 init(from decoder: any Decoder) throws {
                     let container = try decoder.container(keyedBy: AnyCodingKey.self)
                     self.isEnabled = (try? container.decode(Bool.self, forKey: AnyCodingKey("isEnabled", false))) ?? (false)
+                    self.fallbackEnabled = (try? container.decode(Bool.self, forKey: AnyCodingKey("fallbackEnabled", false))) ?? (true)
                     try self.didDecode(from: decoder)
                 }
 
@@ -331,12 +335,15 @@ final class ReerCodableTests: XCTestCase {
                     try self.willEncode(to: encoder)
                     var container = encoder.container(keyedBy: AnyCodingKey.self)
                     try container.encode(value: self.isEnabled, key: AnyCodingKey("isEnabled", false), treatDotAsNested: true)
+                    try container.encode(value: self.fallbackEnabled, key: AnyCodingKey("fallbackEnabled", false), treatDotAsNested: true)
                 }
 
                 init(
-                    isEnabled: Bool
+                    isEnabled: Bool,
+                    fallbackEnabled: Bool = false
                 ) {
                     self.isEnabled = isEnabled
+                    self.fallbackEnabled = fallbackEnabled
                 }
             }
 
@@ -357,16 +364,20 @@ final class ReerCodableTests: XCTestCase {
             struct Payload {
                 @EncodingDefault("anonymous")
                 var nickname: String?
+                @EncodingDefault("guest")
+                let legacyNickname: String? = "LEGACY"
             }
             """
         } expansion: {
             """
             struct Payload {
                 var nickname: String?
+                let legacyNickname: String? = "LEGACY"
 
                 init(from decoder: any Decoder) throws {
                     let container = try decoder.container(keyedBy: AnyCodingKey.self)
                     self.nickname = try? container.decode(type: String?.self, keys: [AnyCodingKey("nickname", false)], flexibleType: false)
+                    self.legacyNickname = (try? container.decode(type: String?.self, keys: [AnyCodingKey("legacyNickname", false)], flexibleType: false)) ?? ("LEGACY")
                     try self.didDecode(from: decoder)
                 }
 
@@ -374,12 +385,15 @@ final class ReerCodableTests: XCTestCase {
                     try self.willEncode(to: encoder)
                     var container = encoder.container(keyedBy: AnyCodingKey.self)
                     try container.encode(value: ((self.nickname ?? ("anonymous"))) as String?, key: AnyCodingKey("nickname", false), treatDotAsNested: true)
+                    try container.encode(value: ((self.legacyNickname ?? ("guest"))) as String?, key: AnyCodingKey("legacyNickname", false), treatDotAsNested: true)
                 }
 
                 init(
-                    nickname: String? = nil
+                    nickname: String? = nil,
+                    legacyNickname: String? = "LEGACY"
                 ) {
                     self.nickname = nickname
+                    self.legacyNickname = legacyNickname
                 }
             }
 
@@ -400,16 +414,20 @@ final class ReerCodableTests: XCTestCase {
             struct Preferences {
                 @CodingDefault(["seed": 1])
                 var metadata: [String: Int]?
+                @CodingDefault(["legacy": 2])
+                let legacyMetadata: [String: Int]? = ["legacy": 0]
             }
             """
         } expansion: {
             """
             struct Preferences {
                 var metadata: [String: Int]?
+                let legacyMetadata: [String: Int]? = ["legacy": 0]
 
                 init(from decoder: any Decoder) throws {
                     let container = try decoder.container(keyedBy: AnyCodingKey.self)
                     self.metadata = (try? container.decode(type: [String: Int]?.self, keys: [AnyCodingKey("metadata", false)], flexibleType: false)) ?? (["seed": 1])
+                    self.legacyMetadata = (try? container.decode(type: [String: Int]?.self, keys: [AnyCodingKey("legacyMetadata", false)], flexibleType: false)) ?? (["legacy": 2])
                     try self.didDecode(from: decoder)
                 }
 
@@ -417,12 +435,15 @@ final class ReerCodableTests: XCTestCase {
                     try self.willEncode(to: encoder)
                     var container = encoder.container(keyedBy: AnyCodingKey.self)
                     try container.encode(value: ((self.metadata ?? (["seed": 1]))) as [String: Int]?, key: AnyCodingKey("metadata", false), treatDotAsNested: true)
+                    try container.encode(value: ((self.legacyMetadata ?? (["legacy": 2]))) as [String: Int]?, key: AnyCodingKey("legacyMetadata", false), treatDotAsNested: true)
                 }
 
                 init(
-                    metadata: [String: Int]? = nil
+                    metadata: [String: Int]? = nil,
+                    legacyMetadata: [String: Int]? = ["legacy": 0]
                 ) {
                     self.metadata = metadata
+                    self.legacyMetadata = legacyMetadata
                 }
             }
 
