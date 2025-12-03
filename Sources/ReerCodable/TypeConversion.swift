@@ -20,6 +20,12 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
+import Foundation
+
+#if canImport(CoreGraphics)
+import CoreGraphics
+#endif
+
 protocol TypeConvertible {
     static func convert(from object: Any) -> Self?
 }
@@ -106,16 +112,18 @@ extension FloatConvertible {
 
 // MARK: - To CGFloat
 
-#if canImport(CoreGraphics) && !os(Linux) && !os(Windows)
-import CoreGraphics
-
+#if canImport(CoreGraphics) || os(Linux) || os(Windows)
 extension CGFloat: TypeConvertible {
     static func convert(from object: Any) -> CGFloat? {
-        if let string = object as? CustomStringConvertible,
-           let double = Double(string.description) {
+        if let convertible = object as? CustomStringConvertible,
+           let double = Double(convertible.description) {
             return CGFloat(double)
         } else if let bool = object as? Bool {
-            return bool ? 1.0 : 0
+            return CGFloat(bool ? 1 : 0)
+        } else if let double = object as? Double {
+            return CGFloat(double)
+        } else if let float = object as? Float {
+            return CGFloat(float)
         } else {
             return nil
         }

@@ -293,6 +293,30 @@ enum Gender: String {
 }
 ```
 
+For explicit control you can annotate properties with `@DecodingDefault`, `@EncodingDefault`, or `@CodingDefault`:
+
+```swift
+@Decodable
+struct Flags {
+    @DecodingDefault(false)
+    var isEnabled: Bool
+}
+
+@Encodable
+struct Payload {
+    @EncodingDefault("anonymous")
+    var nickname: String?
+}
+
+@Codable
+struct Preferences {
+    @CodingDefault([String]())
+    var tags: [String]?
+}
+```
+
+`@DecodingDefault` supplies a fallback when decoding throws or keys are missing, `@EncodingDefault` encodes the provided expression instead of `nil`, and `@CodingDefault` combines both behaviors with a single annotation.
+
 ### 8. Ignore Properties
 
 Use `@CodingIgnored` to ignore specific properties during encoding/decoding. During decoding, non-`Optional` properties must have a default value to satisfy Swift initialization requirements. `ReerCodable` automatically generates default values for basic data types and collection types. For other custom types, users need to provide default values.
