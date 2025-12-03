@@ -60,6 +60,7 @@ Main features include:
   The `@Copyable` macro generates a powerful `copy()` method that allows both 
   full copies and selective property updates in a single call
 - Support the use of `@Decodable` or `@Encodable` alone
+- Full compatibility with classes inheriting from `NSObject`
 
 # Requirements
 XCode 16.0+
@@ -858,5 +859,33 @@ let dict: [String: Any] = [
 let model = try User.decoded(from: dict)
 // model == User(name: "phoenix", age: 34, address: Address(country: "China", city: "Beijing"))
 ```
+
+### 22. NSObject Subclass Support
+
+`@Codable` fully supports classes that inherit from `NSObject`. The macro automatically detects and correctly handles the `super.init()` call:
+
+```swift
+// Direct inheritance from NSObject
+@Codable
+public class Message: NSObject {
+    let title: String
+    let content: String
+}
+
+// Inheriting from NSObject subclass
+@Codable
+class Article: NSObject {
+    let title: String
+    var content: String = ""
+}
+
+@InheritedCodable
+class NewsArticle: Article {
+    let source: String
+    var publishDate: String = ""
+}
+```
+
+All `@Codable` features (such as `@CodingKey`, `@SnakeCase`, `@FlexibleType`, etc.) can be used with `NSObject` subclasses.
 
 These examples demonstrate the main features of ReerCodable, which can help developers greatly simplify the encoding/decoding process, improving code readability and maintainability.

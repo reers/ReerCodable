@@ -53,6 +53,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 自动生成默认实例：使用 `@DefaultInstance` 自动创建类型的默认实例, 可通过 Model.default 访问
 - 灵活的复制与更新：`@Copyable` 宏会生成一个 copy() 方法, 支持在一次调用中实现完整复制或选择性地更新属性值
 - 支持单独使用 `@Decodable` 或 `@Encodable`
+- 完全兼容继承自 `NSObject` 的类
 
 
 # 环境要求
@@ -853,5 +854,33 @@ let dict: [String: Any] = [
 let model = try User.decoded(from: dict)
 // model == User(name: "phoenix", age: 34, address: Address(country: "China", city: "Beijing"))
 ```
+
+### 22. NSObject 子类支持
+
+`@Codable` 完全兼容继承自 `NSObject` 的类，宏会自动检测并正确处理 `super.init()` 的调用：
+
+```swift
+// 直接继承 NSObject
+@Codable
+public class Message: NSObject {
+    let title: String
+    let content: String
+}
+
+// 继承自 NSObject 子类
+@Codable
+class Article: NSObject {
+    let title: String
+    var content: String = ""
+}
+
+@InheritedCodable
+class NewsArticle: Article {
+    let source: String
+    var publishDate: String = ""
+}
+```
+
+所有 `@Codable` 的特性（如 `@CodingKey`、`@SnakeCase`、`@FlexibleType` 等）都可以与 `NSObject` 子类一起使用。
 
 以上示例展示了 ReerCodable 的主要特性，这些特性可以帮助开发者大大简化编解码过程，提高代码的可读性和可维护性。
