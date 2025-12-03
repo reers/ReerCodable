@@ -428,14 +428,14 @@ extension TypeInfo {
                 : enumCase.matchOrder
             for type in orderedTypes {
                 guard let values = enumCase.matches[type] else { continue }
-                    if result[type] == nil {
-                        result[type] = []
-                        typeOrder.append(type)
-                    }
-                    let caseInfo = (values.joined(separator: ", "), enumCase.caseName)
-                    result[type]?.append(caseInfo)
+                if result[type] == nil {
+                    result[type] = []
+                    typeOrder.append(type)
                 }
+                let caseInfo = (values.joined(separator: ", "), enumCase.caseName)
+                result[type]?.append(caseInfo)
             }
+        }
         
         return typeOrder.map { type in
             (type: type, values: result[type] ?? [])

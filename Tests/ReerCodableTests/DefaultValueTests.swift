@@ -25,10 +25,10 @@ private struct EncodingDefaultsModel {
 @Codable
 private struct CodingDefaultsModel: Equatable {
     @CodingDefault(["seed": 1])
-    var metadata: [String: Int]?
+    var metadata: [String: Int]? = [:]
     
-    @CodingDefault(false)
-    var isEnabled: Bool
+    @CodingDefault(true)
+    let isEnabled: Bool
 }
 
 struct DefaultValueTests {
@@ -67,7 +67,7 @@ struct DefaultValueTests {
     func codingDefaults() throws {
         let decoded = try JSONDecoder().decode(CodingDefaultsModel.self, from: "{}".data(using: .utf8)!)
         #expect(decoded.metadata == ["seed": 1])
-        #expect(decoded.isEnabled == false)
+        #expect(decoded.isEnabled == true)
         
         var mutable = decoded
         mutable.metadata = nil
