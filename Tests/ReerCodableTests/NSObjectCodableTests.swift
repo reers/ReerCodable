@@ -99,6 +99,100 @@ class NSObjectWithDefaults: NSObject {
     let isEnabled: Bool
 }
 
+// MARK: - Inherited from NSObject Subclass
+
+/// Base class: NSObject -> Article
+@Codable
+class Article: NSObject {
+    let title: String
+    var content: String = ""
+    
+    func didDecode(from decoder: any Decoder) throws {}
+    func willEncode(to encoder: any Encoder) throws {}
+}
+
+/// Subclass: NSObject -> Article -> NewsArticle
+@InheritedCodable
+class NewsArticle: Article {
+    let source: String
+    var publishDate: String = ""
+    
+    override func didDecode(from decoder: any Decoder) throws {
+        try super.didDecode(from: decoder)
+    }
+    
+    override func willEncode(to encoder: any Encoder) throws {
+        try super.willEncode(to: encoder)
+    }
+}
+
+/// Third level: NSObject -> Article -> NewsArticle -> BreakingNews
+@InheritedCodable
+class BreakingNews: NewsArticle {
+    let priority: Int
+    var isUrgent: Bool = false
+}
+
+// MARK: - Inherited NSObject with SnakeCase
+
+@Codable
+@SnakeCase
+class BaseProduct: NSObject {
+    let productId: String
+    var productName: String = ""
+    
+    func didDecode(from decoder: any Decoder) throws {}
+    func willEncode(to encoder: any Encoder) throws {}
+}
+
+@InheritedCodable
+@SnakeCase
+class ElectronicProduct: BaseProduct {
+    let brandName: String
+    var warrantyYears: Int = 1
+}
+
+// MARK: - Inherited NSObject with FlexibleType
+
+@Codable
+@FlexibleType
+class BaseEntity: NSObject {
+    let entityId: Int
+    var isActive: Bool = true
+    
+    func didDecode(from decoder: any Decoder) throws {}
+    func willEncode(to encoder: any Encoder) throws {}
+}
+
+@InheritedDecodable
+@FlexibleType
+class UserEntity: BaseEntity {
+    let userId: Int
+    var verified: Bool = false
+}
+
+// MARK: - Inherited NSObject with CodingKey
+
+@Codable
+class BaseRecord: NSObject {
+    @CodingKey("record_id")
+    let recordId: String
+    
+    var createdAt: String = ""
+    
+    func didDecode(from decoder: any Decoder) throws {}
+    func willEncode(to encoder: any Encoder) throws {}
+}
+
+@InheritedCodable
+class DetailedRecord: BaseRecord {
+    @CodingKey("record_type")
+    let recordType: String
+    
+    @CodingKey("extra_info.note")
+    var note: String = ""
+}
+
 // MARK: - Tests
 
 extension TestReerCodable {
@@ -333,6 +427,160 @@ extension TestReerCodable {
         let encoded = try model.encodedDict()
         #expect(encoded.string("user_name") == "Test User")
         #expect(encoded.int("user_age") == 25)
+    }
+    
+    // MARK: - Inherited NSObject Tests
+    
+    @Test("Inherited NSObject - Basic Inheritance")
+    func inheritedNSObjectBasic() throws {
+        let dict: [String: Any] = [
+            "title": "Breaking News",
+            "content": "Something happened",
+            "source": "CNN",
+            "publishDate": "2024-01-01"
+        ]
+        
+        // Decode
+        let model = try NewsArticle.decoded(from: dict)
+        #expect(model.title == "Breaking News")
+        #expect(model.content == "Something happened")
+        #expect(model.source == "CNN")
+        #expect(model.publishDate == "2024-01-01")
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("title") == "Breaking News")
+        #expect(encoded.string("content") == "Something happened")
+        #expect(encoded.string("source") == "CNN")
+        #expect(encoded.string("publishDate") == "2024-01-01")
+    }
+    
+    @Test("Inherited NSObject - Three Level Inheritance")
+    func inheritedNSObjectThreeLevel() throws {
+        let jsonData = """
+        {
+            "title": "Earthquake Alert",
+            "content": "Major earthquake detected",
+            "source": "USGS",
+            "publishDate": "2024-03-15",
+            "priority": 1,
+            "isUrgent": true
+        }
+        """.data(using: .utf8)!
+        
+        // Decode
+        let model = try JSONDecoder().decode(BreakingNews.self, from: jsonData)
+        #expect(model.title == "Earthquake Alert")
+        #expect(model.content == "Major earthquake detected")
+        #expect(model.source == "USGS")
+        #expect(model.publishDate == "2024-03-15")
+        #expect(model.priority == 1)
+        #expect(model.isUrgent == true)
+        
+        // Encode
+        let encodedData = try JSONEncoder().encode(model)
+        let dict = encodedData.stringAnyDictionary
+        #expect(dict.string("title") == "Earthquake Alert")
+        #expect(dict.string("source") == "USGS")
+        #expect(dict.int("priority") == 1)
+        #expect(dict.bool("isUrgent") == true)
+    }
+    
+    @Test("Inherited NSObject - With SnakeCase")
+    func inheritedNSObjectWithSnakeCase() throws {
+        let dict: [String: Any] = [
+            "product_id": "SKU-12345",
+            "product_name": "iPhone 15",
+            "brand_name": "Apple",
+            "warranty_years": 2
+        ]
+        
+        // Decode
+        let model = try ElectronicProduct.decoded(from: dict)
+        #expect(model.productId == "SKU-12345")
+        #expect(model.productName == "iPhone 15")
+        #expect(model.brandName == "Apple")
+        #expect(model.warrantyYears == 2)
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("product_id") == "SKU-12345")
+        #expect(encoded.string("product_name") == "iPhone 15")
+        #expect(encoded.string("brand_name") == "Apple")
+        #expect(encoded.int("warranty_years") == 2)
+    }
+    
+    @Test("Inherited NSObject - With FlexibleType")
+    func inheritedNSObjectWithFlexibleType() throws {
+        let dict: [String: Any] = [
+            "entityId": "999",      // String instead of Int
+            "isActive": 1,          // Int instead of Bool
+            "userId": "12345",      // String instead of Int
+            "verified": "true"      // String instead of Bool
+        ]
+        
+        // Decode with type conversion
+        let model = try UserEntity.decoded(from: dict)
+        #expect(model.entityId == 999)
+        #expect(model.isActive == true)
+        #expect(model.userId == 12345)
+        #expect(model.verified == true)
+    }
+    
+    @Test("Inherited NSObject - With CodingKey")
+    func inheritedNSObjectWithCodingKey() throws {
+        let dict: [String: Any] = [
+            "record_id": "REC-001",
+            "createdAt": "2024-01-01",
+            "record_type": "invoice",
+            "extra_info": [
+                "note": "Important record"
+            ]
+        ]
+        
+        // Decode
+        let model = try DetailedRecord.decoded(from: dict)
+        #expect(model.recordId == "REC-001")
+        #expect(model.createdAt == "2024-01-01")
+        #expect(model.recordType == "invoice")
+        #expect(model.note == "Important record")
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("record_id") == "REC-001")
+        #expect(encoded.string("record_type") == "invoice")
+    }
+    
+    @Test("Inherited NSObject - Partial Data with Defaults")
+    func inheritedNSObjectPartialData() throws {
+        // Only provide required fields, let defaults fill in
+        let dict: [String: Any] = [
+            "title": "Simple Article",
+            "source": "Local News"
+        ]
+        
+        let model = try NewsArticle.decoded(from: dict)
+        #expect(model.title == "Simple Article")
+        #expect(model.content == "")  // Default value
+        #expect(model.source == "Local News")
+        #expect(model.publishDate == "")  // Default value
+    }
+    
+    @Test("Inherited NSObject - Base Class Only")
+    func inheritedNSObjectBaseClass() throws {
+        let dict: [String: Any] = [
+            "title": "Base Article",
+            "content": "Base content only"
+        ]
+        
+        // Test that base class works independently
+        let model = try Article.decoded(from: dict)
+        #expect(model.title == "Base Article")
+        #expect(model.content == "Base content only")
+        
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("title") == "Base Article")
+        #expect(encoded.string("content") == "Base content only")
     }
 }
 
