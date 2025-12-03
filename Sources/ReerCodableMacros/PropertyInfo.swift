@@ -32,6 +32,8 @@ struct PropertyInfo {
     var encodingKey: String?
     var treatDotAsNestedWhenEncoding: Bool = true
     var initExpr: String?
+    var decodingDefaultValue: String?
+    var encodingDefaultValue: String?
     var base64Coding = false
     var caseStyles: [CaseStyle] = []
     var dateCodingStrategy: String?
@@ -81,6 +83,37 @@ struct PropertyInfo {
         return type.typeDefaultValue
     }
     
-    
+
     var questionMark: String { isOptional ? "?" : "" }
+    
+    var encodingQuestionMark: String { needsOptionalEncodingHandling ? "?" : "" }
+    
+    var decodingFallbackExpr: String? {
+        decodingDefaultValue ?? initExpr
+    }
+    
+    var resolvedEncodingValueExpr: String {
+        if isOptional {
+            if let encodingDefaultValue {
+                return "(self.\(name) ?? (\(encodingDefaultValue)))"
+            } else {
+                return "self.\(name)"
+            }
+        }
+        return "self.\(name)"
+    }
+    
+    var needsOptionalEncodingHandling: Bool {
+        isOptional && encodingDefaultValue == nil
+    }
+    
+    var encodingValueExpr: String {
+        if needsOptionalEncodingHandling {
+            return "self.\(name)"
+        }
+        if isOptional {
+            return "(\(resolvedEncodingValueExpr)) as \(type.nonOptionalType)?"
+        }
+        return "self.\(name)"
+    }
 }

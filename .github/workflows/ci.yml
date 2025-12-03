@@ -1,19 +1,63 @@
-# This workflow will build a Swift project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
-
-name: ReerCodable
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - "**"
+  schedule:
+    - cron: "3 3 * * 2" # 3:03 AM, every Tuesday
 
-jobs: 
-  Linux:
-    runs-on: [ubuntu-latest]
-    container: swift:5.10
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macOS:
+    if: github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]')
+    name: macOS (Swift ${{ matrix.swift }})
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        swift:
+          - "6.2"
     steps:
-      - uses: actions/checkout@v1
-      - name: Linux
-        run: swift build -v
+      - name: Git Checkout
+        uses: actions/checkout@v5
+
+      - name: Disable SwiftSyntax Prebuilts
+        run: |
+          defaults write com.apple.dt.Xcode IDEPackageEnablePrebuilts -bool NO
+
+          # nuke cache to ensure it takes effect
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Developer/Xcode/SourcePackages
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+
+      - name: Run Tests
+        uses: mxcl/xcodebuild@v3
+        with:
+          platform: macOS
+          swift: ~${{ matrix.swift }}
+          action: test
+          verbosity: xcbeautify
+  linux:
+    if: github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]')
+    name: Linux (Swift ${{ matrix.swift }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift:
+          - "6.2"
+    container:
+      image: swift:${{ matrix.swift }}
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v5
+
+      - name: Run Tests
+        run: swift test
