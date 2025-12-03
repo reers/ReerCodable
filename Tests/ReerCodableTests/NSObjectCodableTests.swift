@@ -193,6 +193,7 @@ class DetailedRecord: BaseRecord {
     var note: String = ""
 }
 
+#if canImport(ObjectiveC)
 // MARK: - NSObject with @objc attribute (OC compatible)
 
 @Codable
@@ -292,6 +293,7 @@ class ObjCMembersWithIgnored: NSObject {
     
     var score: Int = 0
 }
+#endif // canImport(ObjectiveC)
 
 // MARK: - Tests
 
@@ -683,6 +685,7 @@ extension TestReerCodable {
         #expect(encoded.string("content") == "Base content only")
     }
     
+#if canImport(ObjectiveC)
     // MARK: - @objc and @objcMembers Tests
     
     @Test("NSObject with @objc attribute")
@@ -942,6 +945,5 @@ extension TestReerCodable {
         #expect(encoded.string("userId") == "INIT-001")
         #expect(encoded.bool("isVIP") == true)
     }
+#endif // canImport(ObjectiveC)
 }
-
-
