@@ -4,62 +4,50 @@ import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import XCTest
 @testable import ReerCodable
-import MacroTesting
-import Testing
 import Foundation
 
 // Macro implementations build for the host, so the corresponding module is not available when cross-compiling. Cross-compiled tests may still make use of the macro itself in end-to-end tests.
 #if canImport(ReerCodableMacros)
 import ReerCodableMacros
+
+let testMacros: [String: Macro.Type] = [
+    "Codable": RECodable.self,
+    "InheritedCodable": InheritedCodable.self,
+    "CodingKey": CodingKey.self,
+    "EncodingKey": EncodingKey.self,
+    "CodingIgnored": CodingIgnored.self,
+    "Base64Coding": Base64Coding.self,
+    "DateCoding": DateCoding.self,
+    "CompactDecoding": CompactDecoding.self,
+    "CustomCoding": CustomCoding.self,
+    "CodingCase": CodingCase.self,
+    "CodingContainer": CodingContainer.self,
+    "DefaultInstance": DefaultInstance.self,
+    "Copyable": Copyable.self,
+    "FlatCase": FlatCase.self,
+    "UpperCase": UpperCase.self,
+    "CamelCase": CamelCase.self,
+    "PascalCase": PascalCase.self,
+    "SnakeCase": SnakeCase.self,
+    "KebabCase": KebabCase.self,
+    "CamelSnakeCase": CamelSnakeCase.self,
+    "PascalSnakeCase": PascalSnakeCase.self,
+    "ScreamingSnakeCase": ScreamingSnakeCase.self,
+    "CamelKebabCase": CamelKebabCase.self,
+    "PascalKebabCase": PascalKebabCase.self,
+    "ScreamingKebabCase": ScreamingKebabCase.self,
+    "FlexibleType": FlexibleType.self,
+    "DecodingDefault": DecodingDefault.self,
+    "EncodingDefault": EncodingDefault.self,
+    "CodingDefault": CodingDefault.self,
+]
 #endif
 
 final class ReerCodableTests: XCTestCase {
 
-    #if canImport(ReerCodableMacros)
-    override func invokeTest() {
-        withMacroTesting(
-            indentationWidth: .spaces(4),
-            record: .missing,
-            macros: [
-                "Codable": RECodable.self,
-                "InheritedCodable": InheritedCodable.self,
-                "CodingKey": CodingKey.self,
-                "EncodingKey": EncodingKey.self,
-                "CodingIgnored": CodingIgnored.self,
-                "Base64Coding": Base64Coding.self,
-                "DateCoding": DateCoding.self,
-                "CompactDecoding": CompactDecoding.self,
-                "CustomCoding": CustomCoding.self,
-                "CodingCase": CodingCase.self,
-                "CodingContainer": CodingContainer.self,
-                "DefaultInstance": DefaultInstance.self,
-                "Copyable": Copyable.self,
-                "FlatCase": FlatCase.self,
-                "UpperCase": UpperCase.self,
-                "CamelCase": CamelCase.self,
-                "PascalCase": PascalCase.self,
-                "SnakeCase": SnakeCase.self,
-                "KebabCase": KebabCase.self,
-                "CamelSnakeCase": CamelSnakeCase.self,
-                "PascalSnakeCase": PascalSnakeCase.self,
-                "ScreamingSnakeCase": ScreamingSnakeCase.self,
-                "CamelKebabCase": CamelKebabCase.self,
-                "PascalKebabCase": PascalKebabCase.self,
-                "ScreamingKebabCase": ScreamingKebabCase.self,
-                "FlexibleType": FlexibleType.self,
-                "DecodingDefault": DecodingDefault.self,
-                "EncodingDefault": EncodingDefault.self,
-                "CodingDefault": CodingDefault.self,
-            ]
-        ) {
-            super.invokeTest()
-        }
-    }
-    #endif
-
     func testInheritedCodable() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
+        assertMacroExpansion(
             """
             @Codable
             struct NetResponse<Element: Codable> {
@@ -67,9 +55,8 @@ final class ReerCodableTests: XCTestCase {
                 let msg: String
                 private(set) var code: Int = 0
             }
-            """
-        } expansion: {
-            """
+            """,
+            expandedSource: """
             struct NetResponse<Element: Codable> {
                 let data: Element?
                 let msg: String
@@ -104,8 +91,10 @@ final class ReerCodableTests: XCTestCase {
 
             extension NetResponse: Codable, ReerCodableDelegate {
             }
-            """
-        }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -113,7 +102,7 @@ final class ReerCodableTests: XCTestCase {
     
     func testEnumMacro() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
+        assertMacroExpansion(
             """
             @Codable
             enum Phone: Codable {
@@ -126,9 +115,8 @@ final class ReerCodableTests: XCTestCase {
                 @CodingCase(match: .bool(false), .stringRange("o"..."q"))
                 case oppo
             }
-            """
-        } expansion: {
-            #"""
+            """,
+            expandedSource: #"""
             enum Phone: Codable {
                 case apple
 
@@ -215,8 +203,10 @@ final class ReerCodableTests: XCTestCase {
 
             extension Phone: ReerCodableDelegate {
             }
-            """#
-        }
+            """#,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -224,7 +214,7 @@ final class ReerCodableTests: XCTestCase {
     
     func testEnumPathValueMacro() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
+        assertMacroExpansion(
             """
             @Codable
             enum Video1: Codable {
@@ -243,9 +233,8 @@ final class ReerCodableTests: XCTestCase {
                 )
                 case tiktok(url: URL, tag: String?)
             }
-            """
-        } expansion: {
-            #"""
+            """,
+            expandedSource: #"""
             enum Video1: Codable {
                 case youTube
 
@@ -299,8 +288,10 @@ final class ReerCodableTests: XCTestCase {
 
             extension Video1: ReerCodableDelegate {
             }
-            """#
-        }
+            """#,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -308,7 +299,7 @@ final class ReerCodableTests: XCTestCase {
     
     func testDecodingDefaultMacro() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
+        assertMacroExpansion(
             """
             @Codable
             struct Flags {
@@ -317,9 +308,8 @@ final class ReerCodableTests: XCTestCase {
                 @DecodingDefault(true)
                 let fallbackEnabled: Bool = false
             }
-            """
-        } expansion: {
-            """
+            """,
+            expandedSource: """
             struct Flags {
                 var isEnabled: Bool
                 let fallbackEnabled: Bool = false
@@ -349,8 +339,10 @@ final class ReerCodableTests: XCTestCase {
 
             extension Flags: Codable, ReerCodableDelegate {
             }
-            """
-        }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -358,7 +350,7 @@ final class ReerCodableTests: XCTestCase {
     
     func testEncodingDefaultMacro() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
+        assertMacroExpansion(
             """
             @Codable
             struct Payload {
@@ -367,9 +359,8 @@ final class ReerCodableTests: XCTestCase {
                 @EncodingDefault("guest")
                 let legacyNickname: String? = "LEGACY"
             }
-            """
-        } expansion: {
-            """
+            """,
+            expandedSource: """
             struct Payload {
                 var nickname: String?
                 let legacyNickname: String? = "LEGACY"
@@ -399,8 +390,10 @@ final class ReerCodableTests: XCTestCase {
 
             extension Payload: Codable, ReerCodableDelegate {
             }
-            """
-        }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -408,8 +401,8 @@ final class ReerCodableTests: XCTestCase {
     
     func testCodingDefaultMacro() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
-            """
+        assertMacroExpansion(
+            #"""
             @Codable
             struct Preferences {
                 @CodingDefault(["seed": 1])
@@ -417,9 +410,8 @@ final class ReerCodableTests: XCTestCase {
                 @CodingDefault(["legacy": 2])
                 let legacyMetadata: [String: Int]? = ["legacy": 0]
             }
-            """
-        } expansion: {
-            """
+            """#,
+            expandedSource: #"""
             struct Preferences {
                 var metadata: [String: Int]?
                 let legacyMetadata: [String: Int]? = ["legacy": 0]
@@ -449,8 +441,10 @@ final class ReerCodableTests: XCTestCase {
 
             extension Preferences: Codable, ReerCodableDelegate {
             }
-            """
-        }
+            """#,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -459,7 +453,7 @@ final class ReerCodableTests: XCTestCase {
     static let test = "abc"
     func testMacro() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
+        assertMacroExpansion(
             """
             @Codable
             @ScreamingKebabCase
@@ -498,9 +492,8 @@ final class ReerCodableTests: XCTestCase {
                 var customBy: Int
             }
             
-            """
-        } expansion: {
-            """
+            """,
+            expandedSource: """
             public final class Test {
                 var userAge: Int = 18
                 var name: String
@@ -595,8 +588,10 @@ final class ReerCodableTests: XCTestCase {
 
             extension Test: Codable, ReerCodableDelegate {
             }
-            """
-        }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
@@ -604,7 +599,7 @@ final class ReerCodableTests: XCTestCase {
 
     func testExpand() throws {
         #if canImport(ReerCodableMacros)
-        assertMacro {
+        assertMacroExpansion(
             """
             @Codable
             struct HundredMeterRace {
@@ -619,28 +614,54 @@ final class ReerCodableTests: XCTestCase {
                 @KebabCase
                 var testCase: UInt
             }
-            """
-        } diagnostics: {
-            """
-            @Codable
+            """,
+            expandedSource: """
             struct HundredMeterRace {
-               
-                @CustomCoding(RankTransformer.self)
-                ┬──────────────────────────────────
-                ╰─ 🛑 @CustomCoding macro cannot be used together with @CodingIgnored, @Base64Coding.
-                @CodingKey("race_rank")
-                @CodingIgnored
-                @Base64Coding
-                ┬────────────
-                ╰─ 🛑 @Base64Coding macro is only for `Data` or `[UInt8]`.
+
                 var rank: UInt
-                
-                @CustomCoding(RankTransformer.self)
-                @KebabCase
+
                 var testCase: UInt
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.rank = 0
+                    self.testCase = try RankTransformer.self.decode(by: decoder, keys: ["test-case"])
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try RankTransformer.self.encode(by: encoder, key: "test-case", value: self.testCase)
+                }
+
+                init(
+                    rank: UInt = 0,
+                    testCase: UInt
+                ) {
+                    self.rank = rank
+                    self.testCase = testCase
+                }
             }
-            """
-        }
+
+            extension HundredMeterRace: Codable, ReerCodableDelegate {
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@CustomCoding macro cannot be used together with @CodingIgnored, @Base64Coding.",
+                    line: 4,
+                    column: 5
+                ),
+                DiagnosticSpec(
+                    message: "@Base64Coding macro is only for `Data` or `[UInt8]`.",
+                    line: 7,
+                    column: 5
+                )
+            ],
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
         #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
