@@ -80,6 +80,7 @@ struct TypeInfo {
     var codingContainer: String?
     var codingContainerWorkForEncoding = false
     var isFlexibleType = false
+    var isNSObjectSubclass = false
     
     init(decl: DeclGroupSyntax) throws {
         self.decl = decl
@@ -244,6 +245,11 @@ struct TypeInfo {
         }
         if decl.attributes.containsAttribute(named: "FlexibleType") {
             isFlexibleType = true
+        }
+        // Check if the class inherits from NSObject
+        if let classDecl = decl.as(ClassDeclSyntax.self),
+           let inheritedTypes = classDecl.inheritanceClause?.inheritedTypes {
+            isNSObjectSubclass = inheritedTypes.contains { $0.type.trimmedDescription == "NSObject" }
         }
         properties = try parseProperties()
     }
@@ -645,10 +651,22 @@ extension TypeInfo {
                 """
             )
         }
+        // Determine if we need to call super.init()
+        // - For NSObject subclass (not override): call super.init()
+        // - For override (inherited from parent with Codable): call super.init(from: decoder)
+        let superInitCall: String
+        if isOverride {
+            superInitCall = "\ntry super.init(from: decoder)"
+        } else if isNSObjectSubclass {
+            superInitCall = "\nsuper.init()"
+        } else {
+            superInitCall = ""
+        }
+        
         let decoder: DeclSyntax = """
         \(raw: needPublic ? "public " : "")\(raw: needRequired ? "required " : "")init(from decoder: any Decoder) throws {
             \(raw: container)
-            \(raw: assignments)\(raw: isOverride ? "\ntry super.init(from: decoder)" : "")
+            \(raw: assignments)\(raw: superInitCall)
             \(raw: shouldAddDidDecode ? "try self.didDecode(from: decoder)" : "")
         }
         """
@@ -762,11 +780,13 @@ extension TypeInfo {
         }
 
         let needPublic = hasPublicOrOpenProperty || isPublic || isOpen
-        let overrideInit = isOverride ? "super.init()\n" : ""
+        // For NSObject subclass or override, need to call super.init()
+        let needSuperInit = isOverride || isNSObjectSubclass
+        let superInitCall = needSuperInit ? "\nsuper.init()" : ""
 
         let initializer: DeclSyntax = """
         \(raw: needPublic ? "public " : "")init(\(raw: parameters.isEmpty ? "" : "\n")\(raw: parameters.joined(separator: ",\n"))\(raw: parameters.isEmpty ? "" : "\n")) {
-            \(raw: overrideInit)\(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n"))
+            \(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n"))\(raw: superInitCall)
         }
         """
         return initializer
