@@ -193,6 +193,106 @@ class DetailedRecord: BaseRecord {
     var note: String = ""
 }
 
+// MARK: - NSObject with @objc attribute (OC compatible)
+
+@Codable
+@objc
+class ObjCCompatibleModel: NSObject {
+    @objc let identifier: String
+    @objc var displayName: String = ""
+    @objc let count: Int
+}
+
+// MARK: - NSObject with @objcMembers (all members exposed to OC)
+
+@Codable
+@objcMembers
+class ObjCMembersModel: NSObject {
+    let userId: String
+    var userName: String = ""
+    let age: Int
+    var isVIP: Bool = false
+}
+
+// MARK: - NSObject with @objcMembers and CodingKey
+
+@Codable
+@objcMembers
+@SnakeCase
+class ObjCMembersWithSnakeCase: NSObject {
+    let productId: String
+    var productName: String = ""
+    let stockCount: Int
+}
+
+// MARK: - NSObject with dynamic (for KVO support)
+
+@Codable
+@objcMembers
+class KVOCompatibleModel: NSObject {
+    let modelId: String
+    @objc dynamic var observableValue: String = ""
+    @objc dynamic var observableCount: Int = 0
+}
+
+// MARK: - NSObject with @objcMembers and FlexibleType
+
+@Codable
+@objcMembers
+@FlexibleType
+class ObjCMembersWithFlexibleType: NSObject {
+    let itemId: Int
+    var quantity: Int = 0
+    let isAvailable: Bool
+}
+
+// MARK: - Inherited NSObject with @objcMembers
+
+@Codable
+@objcMembers
+class ObjCBaseEntity: NSObject {
+    let entityId: String
+    var entityName: String = ""
+    
+    func didDecode(from decoder: any Decoder) throws {}
+    func willEncode(to encoder: any Encoder) throws {}
+}
+
+@InheritedCodable
+@objcMembers
+class ObjCDerivedEntity: ObjCBaseEntity {
+    let derivedId: String
+    @objc dynamic var observableStatus: String = ""
+}
+
+// MARK: - NSObject with @objcMembers, CodingKey and Nested Key
+
+@Codable
+@objcMembers
+class ObjCMembersWithCodingKey: NSObject {
+    @CodingKey("user_id")
+    let userId: String
+    
+    @CodingKey("profile.nickname")
+    var nickname: String = ""
+    
+    @CodingKey("profile.avatar_url")
+    let avatarUrl: String
+}
+
+// MARK: - NSObject with @objcMembers and CodingIgnored
+
+@Codable
+@objcMembers
+class ObjCMembersWithIgnored: NSObject {
+    let name: String
+    
+    @CodingIgnored
+    @objc dynamic var cachedValue: String = "cache_default"
+    
+    var score: Int = 0
+}
+
 // MARK: - Tests
 
 extension TestReerCodable {
@@ -581,6 +681,266 @@ extension TestReerCodable {
         let encoded = try model.encodedDict()
         #expect(encoded.string("title") == "Base Article")
         #expect(encoded.string("content") == "Base content only")
+    }
+    
+    // MARK: - @objc and @objcMembers Tests
+    
+    @Test("NSObject with @objc attribute")
+    func nsObjectWithObjcAttribute() throws {
+        let dict: [String: Any] = [
+            "identifier": "OBJ-001",
+            "displayName": "Test Object",
+            "count": 42
+        ]
+        
+        // Decode
+        let model = try ObjCCompatibleModel.decoded(from: dict)
+        #expect(model.identifier == "OBJ-001")
+        #expect(model.displayName == "Test Object")
+        #expect(model.count == 42)
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("identifier") == "OBJ-001")
+        #expect(encoded.string("displayName") == "Test Object")
+        #expect(encoded.int("count") == 42)
+        
+        // Verify OC runtime accessibility
+        #expect(model.responds(to: #selector(getter: ObjCCompatibleModel.identifier)))
+        #expect(model.responds(to: #selector(getter: ObjCCompatibleModel.displayName)))
+    }
+    
+    @Test("NSObject with @objcMembers")
+    func nsObjectWithObjcMembers() throws {
+        let dict: [String: Any] = [
+            "userId": "USER-12345",
+            "userName": "Phoenix",
+            "age": 28,
+            "isVIP": true
+        ]
+        
+        // Decode
+        let model = try ObjCMembersModel.decoded(from: dict)
+        #expect(model.userId == "USER-12345")
+        #expect(model.userName == "Phoenix")
+        #expect(model.age == 28)
+        #expect(model.isVIP == true)
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("userId") == "USER-12345")
+        #expect(encoded.string("userName") == "Phoenix")
+        #expect(encoded.int("age") == 28)
+        #expect(encoded.bool("isVIP") == true)
+        
+        // Verify all members are accessible via OC runtime
+        #expect(model.responds(to: #selector(getter: ObjCMembersModel.userId)))
+        #expect(model.responds(to: #selector(getter: ObjCMembersModel.userName)))
+        #expect(model.responds(to: #selector(getter: ObjCMembersModel.age)))
+    }
+    
+    @Test("NSObject with @objcMembers and SnakeCase")
+    func nsObjectWithObjcMembersAndSnakeCase() throws {
+        let dict: [String: Any] = [
+            "product_id": "PROD-999",
+            "product_name": "MacBook Pro",
+            "stock_count": 100
+        ]
+        
+        // Decode
+        let model = try ObjCMembersWithSnakeCase.decoded(from: dict)
+        #expect(model.productId == "PROD-999")
+        #expect(model.productName == "MacBook Pro")
+        #expect(model.stockCount == 100)
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("product_id") == "PROD-999")
+        #expect(encoded.string("product_name") == "MacBook Pro")
+        #expect(encoded.int("stock_count") == 100)
+    }
+    
+    @Test("NSObject with dynamic for KVO")
+    func nsObjectWithDynamicForKVO() throws {
+        let dict: [String: Any] = [
+            "modelId": "KVO-001",
+            "observableValue": "initial",
+            "observableCount": 10
+        ]
+        
+        // Decode
+        let model = try KVOCompatibleModel.decoded(from: dict)
+        #expect(model.modelId == "KVO-001")
+        #expect(model.observableValue == "initial")
+        #expect(model.observableCount == 10)
+        
+        // Test KVO capability - dynamic properties can be observed
+        var observedValue: String?
+        let observation = model.observe(\.observableValue, options: [.new]) { _, change in
+            observedValue = change.newValue
+        }
+        
+        // Modify the dynamic property
+        model.observableValue = "changed"
+        #expect(observedValue == "changed")
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("modelId") == "KVO-001")
+        #expect(encoded.string("observableValue") == "changed")
+        
+        // Clean up observation
+        observation.invalidate()
+    }
+    
+    @Test("NSObject with @objcMembers and FlexibleType")
+    func nsObjectWithObjcMembersAndFlexibleType() throws {
+        let dict: [String: Any] = [
+            "itemId": "999",        // String instead of Int
+            "quantity": "50",       // String instead of Int
+            "isAvailable": 1        // Int instead of Bool
+        ]
+        
+        // Decode with type conversion
+        let model = try ObjCMembersWithFlexibleType.decoded(from: dict)
+        #expect(model.itemId == 999)
+        #expect(model.quantity == 50)
+        #expect(model.isAvailable == true)
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.int("itemId") == 999)
+        #expect(encoded.int("quantity") == 50)
+        #expect(encoded.bool("isAvailable") == true)
+    }
+    
+    @Test("Inherited NSObject with @objcMembers")
+    func inheritedNSObjectWithObjcMembers() throws {
+        let dict: [String: Any] = [
+            "entityId": "ENT-001",
+            "entityName": "Base Entity",
+            "derivedId": "DRV-001",
+            "observableStatus": "active"
+        ]
+        
+        // Decode
+        let model = try ObjCDerivedEntity.decoded(from: dict)
+        #expect(model.entityId == "ENT-001")
+        #expect(model.entityName == "Base Entity")
+        #expect(model.derivedId == "DRV-001")
+        #expect(model.observableStatus == "active")
+        
+        // Test KVO on derived class dynamic property
+        var observedStatus: String?
+        let observation = model.observe(\.observableStatus, options: [.new]) { _, change in
+            observedStatus = change.newValue
+        }
+        
+        model.observableStatus = "inactive"
+        #expect(observedStatus == "inactive")
+        
+        // Encode
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("entityId") == "ENT-001")
+        #expect(encoded.string("derivedId") == "DRV-001")
+        #expect(encoded.string("observableStatus") == "inactive")
+        
+        observation.invalidate()
+    }
+    
+    @Test("NSObject with @objcMembers and CodingKey")
+    func nsObjectWithObjcMembersAndCodingKey() throws {
+        let dict: [String: Any] = [
+            "user_id": "UID-12345",
+            "profile": [
+                "nickname": "小明",
+                "avatar_url": "https://example.com/avatar.png"
+            ]
+        ]
+        
+        // Decode
+        let model = try ObjCMembersWithCodingKey.decoded(from: dict)
+        #expect(model.userId == "UID-12345")
+        #expect(model.nickname == "小明")
+        #expect(model.avatarUrl == "https://example.com/avatar.png")
+        
+        // Verify OC runtime accessibility
+        #expect(model.responds(to: #selector(getter: ObjCMembersWithCodingKey.userId)))
+        #expect(model.responds(to: #selector(getter: ObjCMembersWithCodingKey.nickname)))
+    }
+    
+    @Test("NSObject with @objcMembers and CodingIgnored")
+    func nsObjectWithObjcMembersAndCodingIgnored() throws {
+        let dict: [String: Any] = [
+            "name": "Test Name",
+            "cachedValue": "should be ignored",
+            "score": 95
+        ]
+        
+        // Decode
+        let model = try ObjCMembersWithIgnored.decoded(from: dict)
+        #expect(model.name == "Test Name")
+        #expect(model.cachedValue == "cache_default")  // Should use default, not decoded value
+        #expect(model.score == 95)
+        
+        // Test KVO on ignored dynamic property
+        var observedCache: String?
+        let observation = model.observe(\.cachedValue, options: [.new]) { _, change in
+            observedCache = change.newValue
+        }
+        
+        model.cachedValue = "new_cache"
+        #expect(observedCache == "new_cache")
+        
+        // Encode - cachedValue should not be included
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("name") == "Test Name")
+        #expect(encoded.int("score") == 95)
+        #expect(encoded["cachedValue"] == nil)  // Should not be encoded
+        
+        observation.invalidate()
+    }
+    
+    @Test("NSObject with @objcMembers JSON round trip")
+    func nsObjectWithObjcMembersJSONRoundTrip() throws {
+        let jsonData = """
+        {
+            "userId": "JSON-USER-001",
+            "userName": "JSON User",
+            "age": 35,
+            "isVIP": false
+        }
+        """.data(using: .utf8)!
+        
+        // Decode from JSON
+        let model = try JSONDecoder().decode(ObjCMembersModel.self, from: jsonData)
+        #expect(model.userId == "JSON-USER-001")
+        #expect(model.userName == "JSON User")
+        #expect(model.age == 35)
+        #expect(model.isVIP == false)
+        
+        // Encode back to JSON
+        let encodedData = try JSONEncoder().encode(model)
+        let dict = encodedData.stringAnyDictionary
+        #expect(dict.string("userId") == "JSON-USER-001")
+        #expect(dict.string("userName") == "JSON User")
+        #expect(dict.int("age") == 35)
+        #expect(dict.bool("isVIP") == false)
+    }
+    
+    @Test("NSObject with @objcMembers memberwise init")
+    func nsObjectWithObjcMembersMemberwiseInit() throws {
+        // Test memberwise init works with @objcMembers
+        let model = ObjCMembersModel(userId: "INIT-001", userName: "Init User", age: 30, isVIP: true)
+        #expect(model.userId == "INIT-001")
+        #expect(model.userName == "Init User")
+        #expect(model.age == 30)
+        #expect(model.isVIP == true)
+        
+        // Encode to verify
+        let encoded = try model.encodedDict()
+        #expect(encoded.string("userId") == "INIT-001")
+        #expect(encoded.bool("isVIP") == true)
     }
 }
 
