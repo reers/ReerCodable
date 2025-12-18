@@ -30,7 +30,7 @@ Pod::Spec.new do |s|
 
   s.source_files = 'Sources/ReerCodable/**/*'
   
-  s.preserve_paths = ["Package.swift", "Sources/ReerCodableMacros"]
+  s.preserve_paths = ["Package.swift", "Sources/ReerCodableMacros", "Tests"]
   
   s.pod_target_xcconfig = {
     'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool#ReerCodableMacros'
