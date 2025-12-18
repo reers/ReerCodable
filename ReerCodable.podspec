@@ -28,15 +28,29 @@ Pod::Spec.new do |s|
   
   s.swift_versions = '5.10'
 
-  s.source_files = 'Sources/**/*', 'MacroPlugin/ReerCodableMacros'
-  s.exclude_files = 'Sources/ReerCodableMacros'
+  s.source_files = 'Sources/ReerCodable/**/*'
+  
+  s.preserve_paths = ["Package.swift", "Sources/ReerCodableMacros"]
   
   s.pod_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool#ReerCodableMacros'
   }
   
   s.user_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool#ReerCodableMacros'
+  }
+  
+  script = <<-SCRIPT
+    env -i PATH="$PATH" "$SHELL" -l -c "swift build -c release --package-path \\"$PODS_TARGET_SRCROOT\\" --build-path \\"${PODS_BUILD_DIR}/ReerCodable\\""
+  SCRIPT
+  
+  s.script_phase = {
+    :name => 'Build ReerCodable macro plugin',
+    :script => script,
+    :execution_position => :before_compile,
+    :output_files => [
+      '$(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool'
+    ]
   }
 
 end
