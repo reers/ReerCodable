@@ -88,7 +88,7 @@
 /// }
 /// ```
 @attached(extension, conformances: Codable, ReerCodableDelegate)
-@attached(member, names: named(init(from:)), named(encode(to:)), named(default), named(init), named(copy))
+@attached(member, names: named(init), named(init(from:)), named(encode(to:)), named(default), named(copy))
 public macro Codable(memberwiseInit: Bool = true) = #externalMacro(module: "ReerCodableMacros", type: "RECodable")
 
 /// Decodable only
