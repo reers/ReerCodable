@@ -94,29 +94,9 @@ Pod::Spec.new do |s|
   s.dependency 'ReerCodable', '1.4.6'
   # 复制以下 config 到你的 pod
   s.pod_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool#ReerCodableMacros'
   }
 end
-</code></pre>
-
-<p>或者, 如果不使用<code>s.pod_target_xcconfig</code>和<code>s.user_target_xcconfig</code>, 也可以在 podfile 中添加如下脚本统一处理:</p>
-<pre><code class="ruby language-ruby">
-    post_install do |installer|
-      installer.pods_project.targets.each do |target|
-        reercodable_dependency = target.dependencies.find { |d| ['ReerCodable'].include?(d.name) }
-        if reercodable_dependency
-          puts "Adding ReerCodable Swift flags to target: #{target.name}"
-          target.build_configurations.each do |config|
-            swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] ||= ['$(inherited)']
-            plugin_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
-            unless swift_flags.join(' ').include?(plugin_flag)
-              swift_flags.concat(plugin_flag.split)
-            end
-            config.build_settings['OTHER_SWIFT_FLAGS'] = swift_flags
-          end
-        end
-      end
-    end
 </code></pre>
 
 <p><strong>⚠️ 重要提示：</strong>若在 Xcode 14+ 遇到 <code>rsync</code> 权限错误，需关闭用户脚本沙盒：</p>
