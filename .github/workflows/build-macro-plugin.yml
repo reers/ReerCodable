@@ -1,0 +1,96 @@
+name: Build Universal Macro Plugin (Manual)
+
+# Manual trigger
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag to build from'
+        required: false
+        default: 'main'
+      version:
+        description: 'Version label for artifact naming (e.g., 1.5.0)'
+        required: false
+        default: '1.5.0'
+
+jobs:
+  build-arm64:
+    name: Build arm64
+    runs-on: macos-15
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+      
+      - name: Build arm64 macro plugin
+        run: |
+          swift build -c release --product ReerCodableMacros
+          cp .build/release/ReerCodableMacros-tool ./ReerCodableMacros-arm64
+          echo "=== arm64 Macro Plugin Info ==="
+          file ./ReerCodableMacros-arm64
+          
+      - name: Upload arm64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macro-plugin-arm64
+          path: ReerCodableMacros-arm64
+
+  build-x86_64:
+    name: Build x86_64
+    runs-on: macos-15-intel
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+      
+      - name: Build x86_64 macro plugin
+        run: |
+          swift build -c release --product ReerCodableMacros
+          cp .build/release/ReerCodableMacros-tool ./ReerCodableMacros-x86_64
+          echo "=== x86_64 Macro Plugin Info ==="
+          file ./ReerCodableMacros-x86_64
+          
+      - name: Upload x86_64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macro-plugin-x86_64
+          path: ReerCodableMacros-x86_64
+
+  create-universal:
+    name: Create Universal Macro Plugin
+    needs: [build-arm64, build-x86_64]
+    runs-on: macos-15
+    steps:
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macro-plugin-arm64
+          path: ./artifacts
+          
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macro-plugin-x86_64
+          path: ./artifacts
+      
+      - name: Create Universal Macro Plugin
+        run: |
+          cd artifacts
+          
+          # Create Universal Macro Plugin
+          lipo -create ReerCodableMacros-arm64 ReerCodableMacros-x86_64 \
+               -output ReerCodableMacros
+          
+          echo "=== Universal Macro Plugin Info ==="
+          lipo -info ReerCodableMacros
+          file ReerCodableMacros
+          ls -lh ReerCodableMacros
+          
+      - name: Upload Universal Macro Plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReerCodableMacros-universal-${{ github.event.inputs.version }}
+          path: artifacts/ReerCodableMacros
+          retention-days: 90
