@@ -30,27 +30,43 @@ Pod::Spec.new do |s|
 
   s.source_files = 'Sources/ReerCodable/**/*'
   
-  s.preserve_paths = ["Package.swift", "Sources/ReerCodableMacros", "Tests"]
+  s.preserve_paths = ["Package.swift", "Sources/ReerCodableMacros", "Tests", "MacroPlugin"]
   
   s.pod_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
   }
   
   s.user_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_ROOT}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
   }
   
-  script = <<-SCRIPT
-    env -i PATH="$PATH" "$SHELL" -l -c "swift build -c release --package-path \\"$PODS_TARGET_SRCROOT\\" --build-path \\"${PODS_BUILD_DIR}/ReerCodable\\""
-  SCRIPT
-  
-  s.script_phase = {
-    :name => 'Build ReerCodable macro plugin',
-    :script => script,
-    :execution_position => :before_compile,
-    :output_files => [
-      '$(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros-tool'
-    ]
-  }
+  # Download prebuilt universal macro plugin from GitHub Release
+  s.prepare_command = <<-CMD
+    set -e
+    
+    PLUGIN_DIR="MacroPlugin"
+    PLUGIN_NAME="ReerCodableMacros"
+    VERSION="#{s.version}"
+    DOWNLOAD_URL="https://github.com/reers/ReerCodable/releases/download/${VERSION}/${PLUGIN_NAME}"
+    
+    mkdir -p "${PLUGIN_DIR}"
+    
+    echo "Downloading prebuilt macro plugin from ${DOWNLOAD_URL}..."
+    
+    if curl -L -f -o "${PLUGIN_DIR}/${PLUGIN_NAME}" "${DOWNLOAD_URL}"; then
+      chmod +x "${PLUGIN_DIR}/${PLUGIN_NAME}"
+      echo "Successfully downloaded prebuilt macro plugin"
+      file "${PLUGIN_DIR}/${PLUGIN_NAME}"
+    else
+      echo "Warning: Failed to download prebuilt macro plugin, will build from source..."
+      
+      # Fallback: build from source
+      swift build -c release --package-path "." --product ReerCodableMacros
+      cp ".build/release/ReerCodableMacros-tool" "${PLUGIN_DIR}/${PLUGIN_NAME}"
+      chmod +x "${PLUGIN_DIR}/${PLUGIN_NAME}"
+      echo "Built macro plugin from source"
+      file "${PLUGIN_DIR}/${PLUGIN_NAME}"
+    fi
+  CMD
 
 end
