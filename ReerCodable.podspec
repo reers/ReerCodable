@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ReerCodable'
-  s.version          = '1.5.0'
+  s.version          = '0.0.2'
   s.summary          = 'Codable extensions using Swift Macro'
 
   s.description      = <<-DESC
@@ -59,7 +59,7 @@ Pod::Spec.new do |s|
     
     echo "Downloading prebuilt macro plugin from ${DOWNLOAD_URL}..."
     
-    if curl -L -f -o "${PLUGIN_DIR}/${PLUGIN_NAME}.zip" "${DOWNLOAD_URL}"; then
+    if curl -L -f --connect-timeout 3 --max-time 60 -o "${PLUGIN_DIR}/${PLUGIN_NAME}.zip" "${DOWNLOAD_URL}"; then
       unzip -o "${PLUGIN_DIR}/${PLUGIN_NAME}.zip" -d "${PLUGIN_DIR}"
       rm -f "${PLUGIN_DIR}/${PLUGIN_NAME}.zip"
       chmod +x "${PLUGIN_DIR}/${PLUGIN_NAME}"
