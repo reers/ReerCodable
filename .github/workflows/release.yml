@@ -65,7 +65,7 @@ jobs:
           name: macro-plugin-x86_64
           path: ./artifacts
       
-      - name: Create Universal Macro Plugin and Artifact Bundle
+      - name: Create Universal Macro Plugin
         run: |
           cd artifacts
           
@@ -77,38 +77,13 @@ jobs:
           lipo -info ReerCodableMacros
           file ReerCodableMacros
           
-          # Create artifact bundle structure
-          mkdir -p ReerCodableMacros.artifactbundle/macos/bin
-          cp ReerCodableMacros ReerCodableMacros.artifactbundle/macos/bin/
-          
-          # Create info.json
-          cat > ReerCodableMacros.artifactbundle/info.json << EOF
-          {
-            "schemaVersion": "1.0",
-            "artifacts": {
-              "ReerCodableMacros": {
-                "version": "${{ github.ref_name }}",
-                "type": "executable",
-                "variants": [
-                  {
-                    "path": "macos/bin/ReerCodableMacros",
-                    "supportedTriples": ["x86_64-apple-macosx", "arm64-apple-macosx"]
-                  }
-                ]
-              }
-            }
-          }
-          EOF
-          
           # Create zip archive
-          zip -r ReerCodableMacros.artifactbundle.zip ReerCodableMacros.artifactbundle
+          zip ReerCodableMacros.zip ReerCodableMacros
           
-          echo "=== Artifact Bundle Contents ==="
-          unzip -l ReerCodableMacros.artifactbundle.zip
+          echo "=== Zip Contents ==="
+          unzip -l ReerCodableMacros.zip
           
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/ReerCodableMacros
-            artifacts/ReerCodableMacros.artifactbundle.zip
+          files: artifacts/ReerCodableMacros.zip
