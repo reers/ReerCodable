@@ -47,13 +47,15 @@ Pod::Spec.new do |s|
     PLUGIN_DIR="MacroPlugin"
     PLUGIN_NAME="ReerCodableMacros"
     VERSION="#{s.version}"
-    DOWNLOAD_URL="https://github.com/reers/ReerCodable/releases/download/${VERSION}/${PLUGIN_NAME}"
+    DOWNLOAD_URL="https://github.com/reers/ReerCodable/releases/download/${VERSION}/${PLUGIN_NAME}.zip"
     
     mkdir -p "${PLUGIN_DIR}"
     
     echo "Downloading prebuilt macro plugin from ${DOWNLOAD_URL}..."
     
-    if curl -L -f -o "${PLUGIN_DIR}/${PLUGIN_NAME}" "${DOWNLOAD_URL}"; then
+    if curl -L -f -o "${PLUGIN_DIR}/${PLUGIN_NAME}.zip" "${DOWNLOAD_URL}"; then
+      unzip -o "${PLUGIN_DIR}/${PLUGIN_NAME}.zip" -d "${PLUGIN_DIR}"
+      rm -f "${PLUGIN_DIR}/${PLUGIN_NAME}.zip"
       chmod +x "${PLUGIN_DIR}/${PLUGIN_NAME}"
       echo "Successfully downloaded prebuilt macro plugin"
       file "${PLUGIN_DIR}/${PLUGIN_NAME}"
