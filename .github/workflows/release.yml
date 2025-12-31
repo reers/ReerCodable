@@ -1,0 +1,89 @@
+name: Build and Release Macro Plugin
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-arm64:
+    name: Build arm64
+    runs-on: macos-15
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      
+      - name: Build arm64 macro plugin
+        run: |
+          swift build -c release --product ReerCodableMacros
+          cp .build/release/ReerCodableMacros-tool ./ReerCodableMacros-arm64
+          file ./ReerCodableMacros-arm64
+          
+      - name: Upload arm64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macro-plugin-arm64
+          path: ReerCodableMacros-arm64
+
+  build-x86_64:
+    name: Build x86_64
+    runs-on: macos-15-intel
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      
+      - name: Build x86_64 macro plugin
+        run: |
+          swift build -c release --product ReerCodableMacros
+          cp .build/release/ReerCodableMacros-tool ./ReerCodableMacros-x86_64
+          file ./ReerCodableMacros-x86_64
+          
+      - name: Upload x86_64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macro-plugin-x86_64
+          path: ReerCodableMacros-x86_64
+
+  create-universal-and-upload:
+    name: Create Universal Macro Plugin and Upload
+    needs: [build-arm64, build-x86_64]
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macro-plugin-arm64
+          path: ./artifacts
+          
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macro-plugin-x86_64
+          path: ./artifacts
+      
+      - name: Create Universal Macro Plugin
+        run: |
+          cd artifacts
+          
+          # Create Universal Macro Plugin
+          lipo -create ReerCodableMacros-arm64 ReerCodableMacros-x86_64 \
+               -output ReerCodableMacros
+          
+          echo "=== Universal Macro Plugin Info ==="
+          lipo -info ReerCodableMacros
+          file ReerCodableMacros
+          
+          # Create zip archive
+          zip ReerCodableMacros.zip ReerCodableMacros
+          
+          echo "=== Zip Contents ==="
+          unzip -l ReerCodableMacros.zip
+          
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/ReerCodableMacros.zip
