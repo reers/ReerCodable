@@ -690,6 +690,69 @@ struct Response {
 }
 ```
 
+#### Subscript Syntax Sugar
+
+`AnyCodable` provides convenient subscript syntax for chained access to nested JSON structures:
+
+```swift
+let json = AnyCodable([
+    "users": [
+        ["name": "Alice", "age": 25],
+        ["name": "Bob", "age": 30]
+    ],
+    "total": 2
+])
+
+// Chained access for nested structures
+let firstName = json["users"][0]["name"].string  // "Alice"
+let secondAge = json["users"][1]["age"].int      // 30
+let total = json["total"].int                    // 2
+
+// Safe access to non-existent paths, returns null instead of crashing
+let invalid = json["users"][5]["name"].isNull    // true
+let missing = json["nonexistent"].isNull         // true
+```
+
+#### Type Conversion Properties
+
+`AnyCodable` provides various type conversion properties for quick value extraction:
+
+| Property | Return Type | Description |
+|----------|-------------|-------------|
+| `.bool` | `Bool?` | Convert to boolean |
+| `.int` | `Int?` | Convert to integer |
+| `.uint` | `UInt?` | Convert to unsigned integer |
+| `.double` | `Double?` | Convert to double |
+| `.string` | `String?` | Convert to string |
+| `.array` | `[Any]?` | Convert to array |
+| `.dict` | `[String: Any]?` | Convert to dictionary |
+| `.dictArray` | `[[String: Any]]?` | Convert to array of dictionaries |
+| `.isNull` | `Bool` | Check if value is null |
+| `.data` | `Data?` | Convert to JSON Data |
+
+```swift
+let json = AnyCodable([
+    "name": "phoenix",
+    "age": 33,
+    "isVIP": true,
+    "score": 99.5,
+    "tags": ["swift", "ios"],
+    "address": ["city": "Beijing", "country": "China"]
+])
+
+// Using type conversion properties
+let name = json["name"].string          // "phoenix"
+let age = json["age"].int               // 33
+let isVIP = json["isVIP"].bool          // true
+let score = json["score"].double        // 99.5
+let tags = json["tags"].array           // ["swift", "ios"]
+let address = json["address"].dict      // ["city": "Beijing", "country": "China"]
+
+// Creating and checking null values
+let nullValue = AnyCodable.null
+print(nullValue.isNull)                 // true
+```
+
 ### 19. Generate Default Instance
 
 ```swift
