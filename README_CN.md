@@ -685,6 +685,69 @@ struct Response {
 }
 ```
 
+#### 语法糖访问
+
+`AnyCodable` 提供了便捷的下标语法糖，支持链式访问嵌套的 JSON 结构：
+
+```swift
+let json = AnyCodable([
+    "users": [
+        ["name": "Alice", "age": 25],
+        ["name": "Bob", "age": 30]
+    ],
+    "total": 2
+])
+
+// 链式访问嵌套结构
+let firstName = json["users"][0]["name"].string  // "Alice"
+let secondAge = json["users"][1]["age"].int      // 30
+let total = json["total"].int                    // 2
+
+// 安全访问不存在的路径，返回 null 而不会崩溃
+let invalid = json["users"][5]["name"].isNull    // true
+let missing = json["nonexistent"].isNull         // true
+```
+
+#### 类型转换属性
+
+`AnyCodable` 提供了多种类型转换属性，方便快速获取对应类型的值：
+
+| 属性 | 返回类型 | 说明 |
+|------|---------|------|
+| `.bool` | `Bool?` | 转换为布尔值 |
+| `.int` | `Int?` | 转换为整数 |
+| `.uint` | `UInt?` | 转换为无符号整数 |
+| `.double` | `Double?` | 转换为双精度浮点数 |
+| `.string` | `String?` | 转换为字符串 |
+| `.array` | `[Any]?` | 转换为数组 |
+| `.dict` | `[String: Any]?` | 转换为字典 |
+| `.dictArray` | `[[String: Any]]?` | 转换为字典数组 |
+| `.isNull` | `Bool` | 检查是否为 null |
+| `.data` | `Data?` | 转换为 JSON Data |
+
+```swift
+let json = AnyCodable([
+    "name": "phoenix",
+    "age": 33,
+    "isVIP": true,
+    "score": 99.5,
+    "tags": ["swift", "ios"],
+    "address": ["city": "Beijing", "country": "China"]
+])
+
+// 使用类型转换属性
+let name = json["name"].string          // "phoenix"
+let age = json["age"].int               // 33
+let isVIP = json["isVIP"].bool          // true
+let score = json["score"].double        // 99.5
+let tags = json["tags"].array           // ["swift", "ios"]
+let address = json["address"].dict      // ["city": "Beijing", "country": "China"]
+
+// 创建和检查 null 值
+let nullValue = AnyCodable.null
+print(nullValue.isNull)                 // true
+```
+
 ### 19. 生成默认实例
 
 ```swift

@@ -107,7 +107,7 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
             case .millisecondsSince1970:
                 return Int64(date.timeIntervalSince1970 * 1000)
             case .iso8601:
-                return DateCodingStrategy.iso8601Formatter.string(from: date)
+                return DateCodingStrategy.formatISO8601(date)
             case .formatted(let dateFormatter):
                 return dateFormatter.string(from: date)
             }

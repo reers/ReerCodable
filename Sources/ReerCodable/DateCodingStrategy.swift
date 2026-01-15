@@ -56,4 +56,40 @@ public enum DateCodingStrategy {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+    
+    // MARK: - High Performance ISO8601 API (iOS 15+, macOS 12+)
+    
+    /// Parse ISO8601 date string using modern Date.ISO8601FormatStyle (better performance)
+    /// Falls back to ISO8601DateFormatter on older OS versions
+    public static func parseISO8601(_ string: String) -> Date? {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
+            // Try standard ISO8601 format first (most common case, best performance)
+            if let date = try? Date(string, strategy: .iso8601) {
+                return date
+            }
+            // Try with fractional seconds
+            if let date = try? Date(
+                string,
+                strategy: Date.ISO8601FormatStyle(includingFractionalSeconds: true)
+            ) {
+                return date
+            }
+            return nil
+        } else {
+            // Fallback for older OS versions
+            return iso8601Formatter.date(from: string)
+                ?? iso8601FractionalSecondsFormatter.date(from: string)
+        }
+    }
+    
+    /// Format date to ISO8601 string using modern Date.ISO8601FormatStyle (better performance)
+    /// Falls back to ISO8601DateFormatter on older OS versions
+    public static func formatISO8601(_ date: Date) -> String {
+        if #available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *) {
+            return date.formatted(.iso8601)
+        } else {
+            // Fallback for older OS versions
+            return iso8601Formatter.string(from: date)
+        }
+    }
 }
