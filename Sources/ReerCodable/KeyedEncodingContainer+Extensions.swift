@@ -110,6 +110,8 @@ extension KeyedEncodingContainer where K == AnyCodingKey {
                 return DateCodingStrategy.formatISO8601(date)
             case .formatted(let dateFormatter):
                 return dateFormatter.string(from: date)
+            case .iso8601WithOptions(let precision, let timeZone):
+                return DateCodingStrategy.formatISO8601(date, precision: precision, timeZone: timeZone)
             }
         }
     }

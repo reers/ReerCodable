@@ -175,7 +175,9 @@ extension KeyedDecodingContainer where K == AnyCodingKey {
                     throw ReerCodableError(text: "Unreachable")
                 }
             }
-        case .iso8601:
+        case .iso8601, .iso8601WithOptions:
+            // Both iso8601 and iso8601WithOptions use the same flexible parsing
+            // that supports various ISO8601 formats (with/without fractional seconds, various time zones)
             return try decodeDateValue(type: type, keys: keys) { (rawValue: String) in
                 guard let date = DateCodingStrategy.parseISO8601(rawValue) else {
                     throw ReerCodableError(text: "Decode date with iso8601 string failed for keys: \(keys)")
