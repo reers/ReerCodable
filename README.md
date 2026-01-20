@@ -405,6 +405,57 @@ class DateModel {
 </tr>
 </table>
 
+#### ISO8601 Options
+
+For more control over ISO8601 encoding format, use `.iso8601WithOptions` to specify precision and timezone:
+
+```swift
+@Codable
+struct Event {
+    // Default: seconds precision, UTC timezone -> "2024-01-15T12:00:00Z"
+    @DateCoding(.iso8601WithOptions())
+    var createdAt: Date
+    
+    // Milliseconds precision (3 digits) -> "2024-01-15T12:00:00.123Z"
+    @DateCoding(.iso8601WithOptions(precision: .milliseconds))
+    var timestamp: Date
+    
+    // Microseconds precision (6 digits) -> "2024-01-15T12:00:00.123456Z"
+    @DateCoding(.iso8601WithOptions(precision: .microseconds))
+    var preciseTime: Date
+    
+    // Local timezone -> "2024-01-15T20:00:00+08:00"
+    @DateCoding(.iso8601WithOptions(timeZone: .local))
+    var localTime: Date
+    
+    // Fixed timezone offset -> "2024-01-15T20:00:00.123+08:00"
+    @DateCoding(.iso8601WithOptions(precision: .milliseconds, timeZone: .offsetHours(8)))
+    var beijingTime: Date
+    
+    // Timezone by identifier -> "2024-01-15T21:00:00+09:00"
+    @DateCoding(.iso8601WithOptions(timeZone: .identifier("Asia/Tokyo")))
+    var tokyoTime: Date
+}
+```
+
+**Available Options:**
+
+| DatePrecision | Description | Example |
+|---------------|-------------|---------|
+| `.seconds` | No fractional seconds (default) | `"12:00:00"` |
+| `.milliseconds` | 3 decimal places | `"12:00:00.123"` |
+| `.microseconds` | 6 decimal places | `"12:00:00.123456"` |
+
+| TimeZoneStyle | Description | Example |
+|---------------|-------------|---------|
+| `.utc` | UTC timezone (default) | `"Z"` |
+| `.local` | Device's local timezone | `"+08:00"` |
+| `.offsetHours(Int)` | Fixed hour offset (-12 to +14) | `"+08:00"` |
+| `.offsetSeconds(Int)` | Fixed seconds offset | `"+05:30"` |
+| `.identifier(String)` | Timezone identifier | `"Asia/Tokyo"` → `"+09:00"` |
+
+> **Note:** When timezone offset is zero, output follows RFC 3339 standard using `"Z"` suffix (consistent with Go, Apple, JavaScript, Java).
+
 ### 12. Custom Encoding/Decoding Logic
 
 Implement custom encoding/decoding logic through `@CustomCoding`. There are two ways to customize encoding/decoding:

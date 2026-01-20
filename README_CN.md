@@ -399,6 +399,57 @@ class DateModel {
 </tr>
 </table>
 
+#### ISO8601 选项
+
+如需更精细地控制 ISO8601 编码格式，可使用 `.iso8601WithOptions` 指定精度和时区：
+
+```swift
+@Codable
+struct Event {
+    // 默认：秒精度，UTC 时区 -> "2024-01-15T12:00:00Z"
+    @DateCoding(.iso8601WithOptions())
+    var createdAt: Date
+    
+    // 毫秒精度（3位小数） -> "2024-01-15T12:00:00.123Z"
+    @DateCoding(.iso8601WithOptions(precision: .milliseconds))
+    var timestamp: Date
+    
+    // 微秒精度（6位小数） -> "2024-01-15T12:00:00.123456Z"
+    @DateCoding(.iso8601WithOptions(precision: .microseconds))
+    var preciseTime: Date
+    
+    // 本地时区 -> "2024-01-15T20:00:00+08:00"
+    @DateCoding(.iso8601WithOptions(timeZone: .local))
+    var localTime: Date
+    
+    // 固定时区偏移 -> "2024-01-15T20:00:00.123+08:00"
+    @DateCoding(.iso8601WithOptions(precision: .milliseconds, timeZone: .offsetHours(8)))
+    var beijingTime: Date
+    
+    // 通过标识符指定时区 -> "2024-01-15T21:00:00+09:00"
+    @DateCoding(.iso8601WithOptions(timeZone: .identifier("Asia/Tokyo")))
+    var tokyoTime: Date
+}
+```
+
+**可用选项：**
+
+| DatePrecision | 说明 | 示例 |
+|---------------|------|------|
+| `.seconds` | 无小数秒（默认） | `"12:00:00"` |
+| `.milliseconds` | 3位小数 | `"12:00:00.123"` |
+| `.microseconds` | 6位小数 | `"12:00:00.123456"` |
+
+| TimeZoneStyle | 说明 | 示例 |
+|---------------|------|------|
+| `.utc` | UTC 时区（默认） | `"Z"` |
+| `.local` | 设备本地时区 | `"+08:00"` |
+| `.offsetHours(Int)` | 固定小时偏移（-12 到 +14） | `"+08:00"` |
+| `.offsetSeconds(Int)` | 固定秒数偏移 | `"+05:30"` |
+| `.identifier(String)` | 时区标识符 | `"Asia/Tokyo"` → `"+09:00"` |
+
+> **注意：** 当时区偏移为 0 时，输出遵循 RFC 3339 标准使用 `"Z"` 后缀（与 Go、Apple、JavaScript、Java 行为一致）。
+
 ### 12. 自定义编解码逻辑
 
 通过 `@CustomCoding` 实现自定义的编解码逻辑. 自定义编解码有两种方式:
