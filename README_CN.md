@@ -47,7 +47,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 通过 `@FlexibleType` 支持 `Bool`, `String`, `Double`, `Int`, `CGFloat` 等基本数据类型互相转换
 - 支持 BigInt `Int128`, `UInt128` (限 macOS 15+, iOS 13+)
 - 支持通过 `AnyCodable` 来实现对 `Any` 的编解码, 如 `var dict = [String: AnyCodable]`
-- 使用 `@Flat` 在编解码时将嵌套属性“拍平”到父级结构
+- 使用 `@FlatCoding` 在编解码时将嵌套属性“拍平”到父级结构
 - 支持通过 `@DefaultInstance` 生成一个 `static let default: Model` 实例, `Model.default`
 - 支持通过 `@Copyable` 生成 `copy()` 方法, 并且支持部分属性值的 update
 - 自动生成默认实例：使用 `@DefaultInstance` 自动创建类型的默认实例, 可通过 Model.default 访问
@@ -917,7 +917,7 @@ struct User3: Equatable {
 }
 ```
 
-### 21. 使用 `@Flat` 扁平化属性
+### 21. 使用 `@FlatCoding` 扁平化属性
 
 将某个嵌套属性在编解码时“拍平”，使其字段与父类型位于同一层级进行编码/解码。
 
@@ -927,7 +927,7 @@ struct User {
     var name: String
     var age: Int = 0
 
-    @Flat
+    @FlatCoding
     var address: Address
 }
 

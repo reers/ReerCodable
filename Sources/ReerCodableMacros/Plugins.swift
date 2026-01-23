@@ -57,7 +57,7 @@ struct ReerCodablePlugin: CompilerPlugin {
         DecodingDefault.self,
         EncodingDefault.self,
         CodingDefault.self,
-        Flat.self,
+        FlatCoding.self,
         Base64Coding.self,
         DateCoding.self,
         CompactDecoding.self,

@@ -350,7 +350,7 @@ struct FlatUser {
     var name: String
     var age: Int = 0
     
-    @Flat
+    @FlatCoding
     var address: FlatAddress
 }
 

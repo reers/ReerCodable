@@ -85,7 +85,7 @@ struct PlistAddress {
 struct PlistFlatModel {
     var name: String
     
-    @Flat
+    @FlatCoding
     var address: PlistAddress
 }
 

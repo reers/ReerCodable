@@ -321,7 +321,8 @@ extension TypeInfo {
                 }
                 
                 // flat
-                if variable.attributes.containsAttribute(named: "Flat") {
+                if variable.attributes.containsAttribute(named: "FlatCoding")
+                    || variable.attributes.containsAttribute(named: "Flat") {
                     property.isFlat = true
                 }
 

@@ -19,7 +19,7 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-/// The `@Flat` macro flattens a property during encoding and decoding.
+/// The `@FlatCoding` macro flattens a property during encoding and decoding.
 ///
 /// When applied to a property:
 /// - Decoding: The property's value is decoded from the same decoder as the enclosing type
@@ -35,7 +35,7 @@
 ///     var name: String
 ///     var age: Int = 0
 ///
-///     @Flat
+///     @FlatCoding
 ///     var address: Address
 /// }
 ///
@@ -59,6 +59,11 @@
 /// - Can only be applied to a stored property.
 /// - Cannot be used together with any other macros on the same property; otherwise an error is thrown.
 @attached(peer)
-public macro Flat() = #externalMacro(module: "ReerCodableMacros", type: "Flat")
+public macro FlatCoding() = #externalMacro(module: "ReerCodableMacros", type: "FlatCoding")
+
+/// Deprecated: Use `@FlatCoding` instead.
+@available(*, deprecated, renamed: "FlatCoding")
+@attached(peer)
+public macro Flat() = #externalMacro(module: "ReerCodableMacros", type: "FlatCoding")
 
 

@@ -52,7 +52,7 @@ Main features include:
 - Support flexible type conversion between basic data types like `Bool`, `String`, `Double`, `Int`, `CGFloat` through `@FlexibleType`
 - Support BigInt `Int128`, `UInt128` on macOS 15+, iOS 13+
 - Support encoding/decoding of `Any` through `AnyCodable`, like `var dict = [String: AnyCodable]`
-- Flatten nested property into the parent structure during coding using `@Flat`
+- Flatten nested property into the parent structure during coding using `@FlatCoding`
 - Auto-generate default instances: 
   Use `@DefaultInstance` to automatically create a default instance of your type, 
   accessible through `Model.default`
@@ -922,7 +922,7 @@ struct User3: Equatable {
 }
 ```
 
-### 21. Flatten Property with `@Flat`
+### 21. Flatten Property with `@FlatCoding`
 
 Flatten a nested property so that its fields are encoded/decoded at the same level as the enclosing type.
 
@@ -932,7 +932,7 @@ struct User {
     var name: String
     var age: Int = 0
 
-    @Flat
+    @FlatCoding
     var address: Address
 }
 
