@@ -724,6 +724,23 @@ struct Settings {
 }
 ```
 
+#### AutoFlexibleType Trait (Swift 6.1+)
+
+如果你希望所有类型自动支持灵活类型转换而无需显式标注 `@FlexibleType`，可以在添加包依赖时启用 `AutoFlexibleType` trait：
+
+```swift
+// 在你的 Package.swift 中
+.package(
+    url: "https://github.com/reers/ReerCodable.git",
+    from: "1.6.0",
+    traits: ["AutoFlexibleType"]
+)
+```
+
+启用此 trait 后，所有 `@Codable` 和 `@Decodable` 类型将自动支持灵活类型转换，就像每个类型都应用了 `@FlexibleType` 一样。这对于依赖后端 API 数据类型不一致的项目非常有用。
+
+> **注意：** 此功能需要 Swift 6.1+ 并且你的 Package.swift 中需要设置 swift-tools-version: 6.1。
+
 ### 18. AnyCodable 支持
 
 通过 `AnyCodable` 实现对 `Any` 类型的编解码：

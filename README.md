@@ -729,6 +729,23 @@ struct Settings {
 }
 ```
 
+#### AutoFlexibleType Trait (Swift 6.1+)
+
+If you prefer all types automatically support flexible type conversion without explicit `@FlexibleType` annotation, you can enable the `AutoFlexibleType` trait when adding the package dependency:
+
+```swift
+// In your Package.swift
+.package(
+    url: "https://github.com/reers/ReerCodable.git",
+    from: "1.6.0",
+    traits: ["AutoFlexibleType"]
+)
+```
+
+When this trait is enabled, all `@Codable` and `@Decodable` types will automatically support flexible type conversion, just like having `@FlexibleType` applied to every type. This is useful for projects that rely on backend APIs with inconsistent data types.
+
+> **Note:** This feature requires Swift 6.1+ and swift-tools-version: 6.1 in your Package.swift.
+
 ### 18. AnyCodable Support
 
 Implement encoding/decoding of `Any` type through `AnyCodable`:
