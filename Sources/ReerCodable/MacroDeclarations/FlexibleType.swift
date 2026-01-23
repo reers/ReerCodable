@@ -61,5 +61,7 @@
 ///     traits: ["AutoFlexibleType"]
 /// )
 /// ```
+///
+/// - Important: After changing traits, you must delete DerivedData/YourProject and restart Xcode for the changes to take effect.
 @attached(peer)
 public macro FlexibleType() = #externalMacro(module: "ReerCodableMacros", type: "FlexibleType")
