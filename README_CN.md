@@ -741,6 +741,8 @@ struct Settings {
 
 > **注意：** 此功能需要 Swift 6.1+ 并且你的 Package.swift 中需要设置 swift-tools-version: 6.1。
 
+> **重要：** 修改 traits 后，必须**删除 DerivedData/YourProject** 并**重启 Xcode** 才能使更改生效。
+
 ### 18. AnyCodable 支持
 
 通过 `AnyCodable` 实现对 `Any` 类型的编解码：

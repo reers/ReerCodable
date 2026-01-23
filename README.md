@@ -746,6 +746,8 @@ When this trait is enabled, all `@Codable` and `@Decodable` types will automatic
 
 > **Note:** This feature requires Swift 6.1+ and swift-tools-version: 6.1 in your Package.swift.
 
+> **Important:** After changing traits, you must **delete DerivedData/YourProject** and **restart Xcode** for the changes to take effect.
+
 ### 18. AnyCodable Support
 
 Implement encoding/decoding of `Any` type through `AnyCodable`:
