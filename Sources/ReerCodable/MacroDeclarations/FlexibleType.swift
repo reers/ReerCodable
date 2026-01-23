@@ -48,5 +48,20 @@
 /// ```
 ///
 /// The supported type conversions are defined in the `TypeConvertible` protocol implementations.
+///
+/// ## AutoFlexibleType Trait (Swift 6.1+)
+///
+/// If you prefer automatic type conversion for all types without explicit annotation,
+/// you can enable the `AutoFlexibleType` trait when adding the package dependency:
+///
+/// ```swift
+/// .package(
+///     url: "https://github.com/reers/ReerCodable.git",
+///     from: "1.6.0",
+///     traits: ["AutoFlexibleType"]
+/// )
+/// ```
+///
+/// - Important: After changing traits, you must delete DerivedData/YourProject and restart Xcode for the changes to take effect.
 @attached(peer)
 public macro FlexibleType() = #externalMacro(module: "ReerCodableMacros", type: "FlexibleType")
