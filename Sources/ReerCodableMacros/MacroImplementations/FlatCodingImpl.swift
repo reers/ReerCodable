@@ -22,20 +22,20 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-public struct Flat: PeerMacro {
+public struct FlatCoding: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let variableDecl = declaration.as(VariableDeclSyntax.self) else {
-            throw MacroError(text: "@Flat macro is only for a stored property.")
+            throw MacroError(text: "@FlatCoding macro is only for a stored property.")
         }
         let attributes = variableDecl.attributes.compactMap { attr in
             attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text
         }
-        if attributes.contains(where: { $0 != "Flat" }) {
-            throw MacroError(text: "@Flat cannot be used together with other macros on the same property.")
+        if attributes.contains(where: { $0 != "FlatCoding" && $0 != "Flat" }) {
+            throw MacroError(text: "@FlatCoding cannot be used together with other macros on the same property.")
         }
         return []
     }
