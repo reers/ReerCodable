@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -20,6 +20,18 @@ let package = Package(
             name: "ReerCodable",
             targets: ["ReerCodable"]
         )
+    ],
+    traits: [
+        // AutoFlexibleType trait: When enabled, all @Codable types will automatically
+        // support flexible type conversion without needing explicit @FlexibleType annotation.
+        // This restores the original automatic type conversion behavior.
+        //
+        // Usage in your Package.swift:
+        // .package(url: "...", traits: ["AutoFlexibleType"])
+        .trait(
+            name: "AutoFlexibleType",
+            description: "Enable automatic type conversion for all @Codable/@Decodable types"
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "600.0.0"),

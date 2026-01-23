@@ -246,6 +246,10 @@ struct TypeInfo {
         if decl.attributes.containsAttribute(named: "FlexibleType") {
             isFlexibleType = true
         }
+        #if AutoFlexibleType
+        // When AutoFlexibleType trait is enabled, all types default to flexible type conversion
+        isFlexibleType = true
+        #endif
         // Check if the class inherits from NSObject
         if let classDecl = decl.as(ClassDeclSyntax.self),
            let inheritedTypes = classDecl.inheritanceClause?.inheritedTypes {
