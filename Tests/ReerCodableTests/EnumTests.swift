@@ -439,8 +439,113 @@ extension TestReerCodable {
         }
     }
 }
+
+
 @Codable
-enum Foo {
-    @CodingCase(match: .string("Test"))
+enum Foo123 {
+    @CodingCase(match: .string("Test123", at: "a.b"))
     case test
+}
+
+extension TestReerCodable {
+    
+    @Test
+    func enumWithPath() throws {
+        let json = """
+        {
+            "a": {
+                "b": "Test123"
+            }
+        }
+        """
+        let model = try Foo123.decoded(from: json.data(using: .utf8)!)
+        
+        switch model {
+        case .test:
+            if json.contains("Test123") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary
+                #expect((dict?["a"] as? [String: Any])?.string("b") == "Test123")
+            } else {
+                Issue.record("Expected Test123")
+            }
+        }
+    }
+}
+
+@Codable
+enum Foo333 {
+    @CodingCase(match: .string("test1", at: "a.b"))
+    case test
+    
+    @CodingCase(match: .string("foo1", at: "f.d"))
+    case foo
+    
+    @CodingCase(match: .string("bar1", at: "x"))
+    case bar
+}
+extension TestReerCodable {
+    @Test(arguments: [
+        """
+        {
+            "a": {
+                "b": "test1"
+            }
+        }
+        """,
+        """
+        {
+            "f": {
+                "d": "foo1"
+            }
+        }
+        """,
+        """
+        {
+            "x": "bar1"
+        }
+        """
+    ])
+    func enumWithPath(json: String) throws {
+        let model = try Foo333.decoded(from: json.data(using: .utf8)!)
+        
+        switch model {
+        case .test:
+            if json.contains("test1") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary?["a"] as? [String: Any]
+                #expect(dict.string("b") == "test1")
+            } else {
+                Issue.record("Expected test1")
+            }
+        case .foo:
+            if json.contains("foo1") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary?["f"] as? [String: Any]
+                #expect(dict.string("d") == "foo1")
+            } else {
+                Issue.record("Expected foo1")
+            }
+        case .bar:
+            if json.contains("bar1") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary
+                #expect(dict.string("x") == "bar1")
+            } else {
+                Issue.record("Expected bar1")
+            }
+        }
+    }
 }

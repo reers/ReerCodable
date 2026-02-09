@@ -674,7 +674,7 @@ extension TypeInfo {
             needRequired = true
         }
         let hasCodingNested = codingContainer != nil
-        var container = isEnum && !hasEnumAssociatedValue
+        var container = isEnum && !hasEnumAssociatedValue && enumCases.contains(where: { $0.keyPathMatches.isEmpty })
             ? "let container = try decoder.singleValueContainer()"
             : "\(hasCodingNested ? "var" : "let") container = try decoder.container(keyedBy: AnyCodingKey.self)"
         if let codingContainer {
@@ -776,7 +776,7 @@ extension TypeInfo {
                 }
                 .joined(separator: "\n")
         }
-        var container = isEnum && !hasEnumAssociatedValue
+        var container = isEnum && !hasEnumAssociatedValue && enumCases.allSatisfy({ $0.keyPathMatches.isEmpty })
             ? "var container = encoder.singleValueContainer()"
             : "var container = encoder.container(keyedBy: AnyCodingKey.self)"
         if codingContainerWorkForEncoding, let codingContainer {
@@ -896,7 +896,8 @@ extension TypeInfo {
     
     /// Return: (assignments, shouldAddDidDecode)
     private func generateEnumDecoderAssignments() -> (String, Bool) {
-        if hasEnumAssociatedValue {
+        if hasEnumAssociatedValue
+           || enumCases.contains(where: { !$0.keyPathMatches.isEmpty }) {
             let hasPathValue = enumCases.contains { !$0.keyPathMatches.isEmpty }
             var index = -1
             let findCase = enumCases.compactMap { theCase in
@@ -1003,7 +1004,7 @@ extension TypeInfo {
     }
     
     private func generateEnumEncoderEncoding() -> String {
-        if hasEnumAssociatedValue {
+        if hasEnumAssociatedValue || enumCases.contains(where: { !$0.keyPathMatches.isEmpty }) {
             let hasPathValue = enumCases.contains { !$0.keyPathMatches.isEmpty }
             let encodeCase = """
                 \(enumCases.compactMap {
