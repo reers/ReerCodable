@@ -86,6 +86,16 @@ enum Phone: Codable {
     case oppo
 }
 
+@Codable
+enum ExplicitMatch: Codable {
+    @CodingCase(match: .string("Test"))
+    case test
+}
+
+struct UserExplicit: Codable {
+    let value: ExplicitMatch
+}
+
 struct User2: Codable {
     let phone: Phone
 }
@@ -112,7 +122,7 @@ extension TestReerCodable {
         if let dict {
             print(dict)
         }
-        #expect(dict.string("phone") == "iPhone")
+        #expect(dict.bool("phone") == true)
     }
     
     @Test(
@@ -135,7 +145,7 @@ extension TestReerCodable {
         if let dict {
             print(dict)
         }
-        #expect(dict.string("phone") == "xiaomi")
+        #expect(dict.int("phone") == 12)
     }
     
     @Test(
@@ -156,7 +166,24 @@ extension TestReerCodable {
         if let dict {
             print(dict)
         }
-        #expect(dict.string("phone") == "oppo")
+        #expect(dict.bool("phone") == false)
+    }
+}
+
+extension TestReerCodable {
+    @Test
+    func enumExplicitMatch() throws {
+        let json = "{\"value\": \"Test\"}"
+        let model = try UserExplicit.decoded(from: json.data(using: .utf8)!)
+        #expect(model.value == .test)
+        
+        // Encode
+        let modelData = try JSONEncoder().encode(model)
+        let dict = modelData.stringAnyDictionary
+        #expect(dict.string("value") == "Test")
+        
+        let invalid = try? UserExplicit.decoded(from: "{\"value\": \"test\"}".data(using: .utf8)!)
+        #expect(invalid == nil)
     }
 }
 
@@ -224,7 +251,7 @@ extension TestReerCodable {
                 #expect(true)
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
-                let index = modelData.stringAnyDictionary?.index(forKey: "youTube")
+                let index = modelData.stringAnyDictionary?.index(forKey: "youtube")
                 #expect(index != nil)
             } else {
                 Issue.record("Expected youtube")
@@ -318,7 +345,7 @@ extension TestReerCodable {
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
                 let dict = modelData.stringAnyDictionary?["type"] as? [String: Any]
-                #expect(dict.string("middle") == "youTube")
+                #expect(dict.string("middle") == "youtube")
             } else {
                 Issue.record("Expected youtube")
             }
@@ -402,7 +429,7 @@ extension TestReerCodable {
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
                 let dict = modelData.stringAnyDictionary
-                #expect((dict?["type"] as! [String: Any]).string("middle") == "tiktok")
+                #expect((dict?["type"] as? [String: Any])?.string("middle") == "tiktok")
                 #expect(dict.string("url") == "https://example.com/video.mp4")
                 #expect(dict.string("tag") == "Art")
             } else {
@@ -411,4 +438,9 @@ extension TestReerCodable {
         default: break
         }
     }
+}
+@Codable
+enum Foo {
+    @CodingCase(match: .string("Test"))
+    case test
 }

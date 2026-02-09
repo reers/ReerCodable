@@ -172,18 +172,7 @@ final class ReerCodableTests: XCTestCase {
                             break
                         }
                     }
-                    let value = try container.decode(type: String.self, enumName: String(describing: Self.self))
-                    switch value {
-                    case "apple":
-                        self = .apple
-                    case "mi":
-                        self = .mi
-                    case "oppo":
-                        self = .oppo
-                    default:
-                        throw ReerCodableError(text: "Cannot initialize \(String(describing: Self.self)) from invalid value \(value)")
-                    }
-                    try self.didDecode(from: decoder)
+                    throw ReerCodableError(text: "No matching case found for \\(String(describing: Self.self)).")
 
                 }
 
@@ -192,11 +181,11 @@ final class ReerCodableTests: XCTestCase {
                     var container = encoder.singleValueContainer()
                     switch self {
                     case .apple:
-                        try container.encode("apple")
+                        try container.encode(true)
                     case .mi:
-                        try container.encode("mi")
+                        try container.encode(12)
                     case .oppo:
-                        try container.encode("oppo")
+                        try container.encode(false)
                     }
                 }
             }
@@ -271,7 +260,7 @@ final class ReerCodableTests: XCTestCase {
                     var container = encoder.container(keyedBy: AnyCodingKey.self)
                     switch self {
                     case .youTube:
-                        try container.encode(keyPath: AnyCodingKey("type.middle", true), value: "youTube")
+                        try container.encode(keyPath: AnyCodingKey("type.middle", true), value: "youtube")
 
                     case let .vimeo(id, duration, _2):
                         try container.encode(keyPath: AnyCodingKey("type", false), value: "vimeo")
