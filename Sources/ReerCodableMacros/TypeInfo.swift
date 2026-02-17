@@ -404,6 +404,35 @@ extension TypeInfo {
         
         return (typeStr, valueStr)
     }
+
+    func isRangeValueString(_ value: String) -> Bool {
+        let trimmed = value.replacingOccurrences(of: " ", with: "")
+        return trimmed.contains("...") || trimmed.contains("..<")
+    }
+    
+    func firstMatchValue(for enumCase: EnumCase) -> String? {
+        let orderedTypes = enumCase.matchOrder.isEmpty
+            ? Array(enumCase.matches.keys)
+            : enumCase.matchOrder
+        for type in orderedTypes {
+            guard let values = enumCase.matches[type] else { continue }
+            for value in values {
+                if !isRangeValueString(value) {
+                    return value
+                }
+            }
+        }
+        return nil
+    }
+    
+    func firstKeyPathMatchValue(for enumCase: EnumCase) -> String? {
+        for match in enumCase.keyPathMatches {
+            if !isRangeValueString(match.value) {
+                return match.value
+            }
+        }
+        return nil
+    }
     /*
      @Codable
      enum Phone {
@@ -645,7 +674,7 @@ extension TypeInfo {
             needRequired = true
         }
         let hasCodingNested = codingContainer != nil
-        var container = isEnum && !hasEnumAssociatedValue
+        var container = isEnum && !hasEnumAssociatedValue && enumCases.contains(where: { $0.keyPathMatches.isEmpty })
             ? "let container = try decoder.singleValueContainer()"
             : "\(hasCodingNested ? "var" : "let") container = try decoder.container(keyedBy: AnyCodingKey.self)"
         if let codingContainer {
@@ -747,7 +776,7 @@ extension TypeInfo {
                 }
                 .joined(separator: "\n")
         }
-        var container = isEnum && !hasEnumAssociatedValue
+        var container = isEnum && !hasEnumAssociatedValue && enumCases.allSatisfy({ $0.keyPathMatches.isEmpty })
             ? "var container = encoder.singleValueContainer()"
             : "var container = encoder.container(keyedBy: AnyCodingKey.self)"
         if codingContainerWorkForEncoding, let codingContainer {
@@ -867,7 +896,8 @@ extension TypeInfo {
     
     /// Return: (assignments, shouldAddDidDecode)
     private func generateEnumDecoderAssignments() -> (String, Bool) {
-        if hasEnumAssociatedValue {
+        if hasEnumAssociatedValue
+           || enumCases.contains(where: { !$0.keyPathMatches.isEmpty }) {
             let hasPathValue = enumCases.contains { !$0.keyPathMatches.isEmpty }
             var index = -1
             let findCase = enumCases.compactMap { theCase in
@@ -881,7 +911,9 @@ extension TypeInfo {
                         """
                 } else {
                     var keys = theCase.matches["String"] ?? []
-                    keys.append("\"\(theCase.caseName)\"")
+                    if keys.isEmpty {
+                        keys.append("\"\(theCase.caseName)\"")
+                    }
                     keys.removeDuplicates()
                     condition = """
                         let \(hasAssociated ? "nestedContainer" : "_") = try? container.nestedContainer(forKeys: \(keys.joined(separator: ", ")))
@@ -940,15 +972,24 @@ extension TypeInfo {
                         }
                         """
                 }
-                let tryRaw = """
+                let rawCases = enumCases.filter { $0.matches.isEmpty && $0.keyPathMatches.isEmpty }
+                let tryRaw: String? = rawCases.isEmpty
+                    ? nil
+                    : """
                     let value = try container.decode(type: \(enumRawType ?? "String").self, enumName: String(describing: Self.self))
                     switch value {
-                    \(enumCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
+                    \(rawCases.compactMap { "case \($0.rawValue): self = .\($0.caseName)" }.joined(separator: "\n"))
                     default: throw ReerCodableError(text: "Cannot initialize \\(String(describing: Self.self)) from invalid value \\(value)")
                     }
                     try self.didDecode(from: decoder)
                     """
-                return (tryDecode.joined(separator: "\n") + "\n" + tryRaw, false)
+                let notMatched = rawCases.isEmpty
+                    ? "throw ReerCodableError(text: \"No matching case found for \\\\(String(describing: Self.self)).\")"
+                    : nil
+                let code = ([tryDecode.joined(separator: "\n"), tryRaw, notMatched]
+                    .compactMap { $0?.isEmpty == false ? $0 : nil })
+                    .joined(separator: "\n")
+                return (code, false)
             } else {
                 return (
                     """
@@ -963,21 +1004,26 @@ extension TypeInfo {
     }
     
     private func generateEnumEncoderEncoding() -> String {
-        if hasEnumAssociatedValue {
+        if hasEnumAssociatedValue || enumCases.contains(where: { !$0.keyPathMatches.isEmpty }) {
             let hasPathValue = enumCases.contains { !$0.keyPathMatches.isEmpty }
             let encodeCase = """
                 \(enumCases.compactMap {
                     let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
                     let hasAssociated = !$0.associated.isEmpty
+                    let matchValue = if hasPathValue {
+                        firstKeyPathMatchValue(for: $0) ?? "\"\($0.caseName)\""
+                    } else {
+                        firstMatchValue(for: $0) ?? "\"\($0.caseName)\""
+                    }
                     let encodeCase = if hasPathValue {
                         """
-                        try container.encode(keyPath: AnyCodingKey(\($0.keyPathMatches.first!.path), \($0.keyPathMatches.first!.path.hasDot)), value: "\($0.caseName)")
+                        try container.encode(keyPath: AnyCodingKey(\($0.keyPathMatches.first!.path), \($0.keyPathMatches.first!.path.hasDot)), value: \(matchValue))
                         """
                         }
                         else {
                         """
-                        var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey("\($0.caseName)"))
+                        var nestedContainer = container.nestedContainer(keyedBy: AnyCodingKey.self, forKey: AnyCodingKey(\(matchValue)))
                         """
                         }
                     return """
@@ -999,7 +1045,10 @@ extension TypeInfo {
         } else {
             return """
                 switch self {
-                \(enumCases.compactMap { "case .\($0.caseName): try container.encode(\($0.rawValue))" }.joined(separator: "\n"))
+                \(enumCases.compactMap {
+                    let encodeValue = firstMatchValue(for: $0) ?? $0.rawValue
+                    return "case .\($0.caseName): try container.encode(\(encodeValue))"
+                }.joined(separator: "\n"))
                 }
                 """
         }

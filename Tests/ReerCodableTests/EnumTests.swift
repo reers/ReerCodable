@@ -86,6 +86,16 @@ enum Phone: Codable {
     case oppo
 }
 
+@Codable
+enum ExplicitMatch: Codable {
+    @CodingCase(match: .string("Test"))
+    case test
+}
+
+struct UserExplicit: Codable {
+    let value: ExplicitMatch
+}
+
 struct User2: Codable {
     let phone: Phone
 }
@@ -112,7 +122,7 @@ extension TestReerCodable {
         if let dict {
             print(dict)
         }
-        #expect(dict.string("phone") == "iPhone")
+        #expect(dict.bool("phone") == true)
     }
     
     @Test(
@@ -135,7 +145,7 @@ extension TestReerCodable {
         if let dict {
             print(dict)
         }
-        #expect(dict.string("phone") == "xiaomi")
+        #expect(dict.int("phone") == 12)
     }
     
     @Test(
@@ -156,7 +166,24 @@ extension TestReerCodable {
         if let dict {
             print(dict)
         }
-        #expect(dict.string("phone") == "oppo")
+        #expect(dict.bool("phone") == false)
+    }
+}
+
+extension TestReerCodable {
+    @Test
+    func enumExplicitMatch() throws {
+        let json = "{\"value\": \"Test\"}"
+        let model = try UserExplicit.decoded(from: json.data(using: .utf8)!)
+        #expect(model.value == .test)
+        
+        // Encode
+        let modelData = try JSONEncoder().encode(model)
+        let dict = modelData.stringAnyDictionary
+        #expect(dict.string("value") == "Test")
+        
+        let invalid = try? UserExplicit.decoded(from: "{\"value\": \"test\"}".data(using: .utf8)!)
+        #expect(invalid == nil)
     }
 }
 
@@ -224,7 +251,7 @@ extension TestReerCodable {
                 #expect(true)
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
-                let index = modelData.stringAnyDictionary?.index(forKey: "youTube")
+                let index = modelData.stringAnyDictionary?.index(forKey: "youtube")
                 #expect(index != nil)
             } else {
                 Issue.record("Expected youtube")
@@ -318,7 +345,7 @@ extension TestReerCodable {
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
                 let dict = modelData.stringAnyDictionary?["type"] as? [String: Any]
-                #expect(dict.string("middle") == "youTube")
+                #expect(dict.string("middle") == "youtube")
             } else {
                 Issue.record("Expected youtube")
             }
@@ -402,13 +429,123 @@ extension TestReerCodable {
                 // Encode
                 let modelData = try JSONEncoder().encode(model)
                 let dict = modelData.stringAnyDictionary
-                #expect((dict?["type"] as! [String: Any]).string("middle") == "tiktok")
+                #expect((dict?["type"] as? [String: Any])?.string("middle") == "tiktok")
                 #expect(dict.string("url") == "https://example.com/video.mp4")
                 #expect(dict.string("tag") == "Art")
             } else {
                 Issue.record("Expected tiktok")
             }
         default: break
+        }
+    }
+}
+
+
+@Codable
+enum Foo123 {
+    @CodingCase(match: .string("Test123", at: "a.b"))
+    case test
+}
+
+extension TestReerCodable {
+    
+    @Test
+    func enumWithPath() throws {
+        let json = """
+        {
+            "a": {
+                "b": "Test123"
+            }
+        }
+        """
+        let model = try Foo123.decoded(from: json.data(using: .utf8)!)
+        
+        switch model {
+        case .test:
+            if json.contains("Test123") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary
+                #expect((dict?["a"] as? [String: Any])?.string("b") == "Test123")
+            } else {
+                Issue.record("Expected Test123")
+            }
+        }
+    }
+}
+
+@Codable
+enum Foo333 {
+    @CodingCase(match: .string("test1", at: "a.b"))
+    case test
+    
+    @CodingCase(match: .string("foo1", at: "f.d"))
+    case foo
+    
+    @CodingCase(match: .string("bar1", at: "x"))
+    case bar
+}
+extension TestReerCodable {
+    @Test(arguments: [
+        """
+        {
+            "a": {
+                "b": "test1"
+            }
+        }
+        """,
+        """
+        {
+            "f": {
+                "d": "foo1"
+            }
+        }
+        """,
+        """
+        {
+            "x": "bar1"
+        }
+        """
+    ])
+    func enumWithPath(json: String) throws {
+        let model = try Foo333.decoded(from: json.data(using: .utf8)!)
+        
+        switch model {
+        case .test:
+            if json.contains("test1") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary?["a"] as? [String: Any]
+                #expect(dict.string("b") == "test1")
+            } else {
+                Issue.record("Expected test1")
+            }
+        case .foo:
+            if json.contains("foo1") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary?["f"] as? [String: Any]
+                #expect(dict.string("d") == "foo1")
+            } else {
+                Issue.record("Expected foo1")
+            }
+        case .bar:
+            if json.contains("bar1") {
+                #expect(true)
+                
+                // Encode
+                let modelData = try JSONEncoder().encode(model)
+                let dict = modelData.stringAnyDictionary
+                #expect(dict.string("x") == "bar1")
+            } else {
+                Issue.record("Expected bar1")
+            }
         }
     }
 }
