@@ -81,7 +81,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.6.0")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.7.0")
     ]
 )
 </code></pre>
@@ -97,7 +97,7 @@ let package = Package(
 <pre><code class="ruby language-ruby">
 Pod::Spec.new do |s|
   s.name             = 'YourPod'
-  s.dependency 'ReerCodable', '1.6.0'
+  s.dependency 'ReerCodable', '1.7.0'
   # Copy the following config to your pod
   s.pod_target_xcconfig = {
     'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros#ReerCodableMacros'
@@ -737,7 +737,7 @@ If you prefer all types automatically support flexible type conversion without e
 // In your Package.swift
 .package(
     url: "https://github.com/reers/ReerCodable.git",
-    from: "1.6.0",
+    from: "1.7.0",
     traits: ["AutoFlexibleType"]
 )
 ```
