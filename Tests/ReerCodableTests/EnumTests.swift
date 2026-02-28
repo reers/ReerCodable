@@ -549,3 +549,214 @@ extension TestReerCodable {
         }
     }
 }
+
+// MARK: - Enum Case Style Tests
+
+@Codable
+@PascalCase
+enum StatusWithStyle {
+    case inProgress
+    case notStarted
+    case completed
+}
+
+@Codable
+@SnakeCase
+enum EventWithStyle {
+    case pageView
+    case buttonClick
+
+    @PascalCase
+    case appLaunch
+}
+
+@Codable
+@PascalCase
+enum MixedMatchEnum {
+    @CodingCase(match: .string("pgview"))
+    @SnakeCase
+    case pageView
+
+    case buttonClick
+}
+
+@Codable
+@PascalCase
+enum RawStringStyled: String {
+    case fooBar = "foo-bar"
+    case bazQux
+}
+
+@Codable
+@SnakeCase
+enum ActionWithAssoc {
+    case doSomething(userId: Int, userName: String)
+    case goBack
+}
+
+@Codable
+@PascalCase
+enum MixedCodingCaseAndStyle {
+    @CodingCase(match: .int(8), .string("apple_phone"))
+    @SnakeCase
+    case iPhone
+
+    case galaxyS
+}
+
+extension TestReerCodable {
+
+    @Test
+    func enumPascalCaseSimple() throws {
+        let json1 = #"{"value": "InProgress"}"#
+        let json2 = #"{"value": "NotStarted"}"#
+        let json3 = #"{"value": "Completed"}"#
+
+        struct Wrapper: Codable { let value: StatusWithStyle }
+
+        let m1 = try Wrapper.decoded(from: json1.data(using: .utf8)!)
+        #expect(m1.value == .inProgress)
+        let m2 = try Wrapper.decoded(from: json2.data(using: .utf8)!)
+        #expect(m2.value == .notStarted)
+        let m3 = try Wrapper.decoded(from: json3.data(using: .utf8)!)
+        #expect(m3.value == .completed)
+
+        let encoded = try JSONEncoder().encode(m1)
+        let dict = encoded.stringAnyDictionary
+        #expect(dict.string("value") == "InProgress")
+
+        let invalid = try? Wrapper.decoded(from: #"{"value": "inProgress"}"#.data(using: .utf8)!)
+        #expect(invalid == nil)
+    }
+
+    @Test
+    func enumSnakeCaseWithOverride() throws {
+        struct Wrapper: Codable { let value: EventWithStyle }
+
+        let j1 = try Wrapper.decoded(from: #"{"value": "page_view"}"#.data(using: .utf8)!)
+        #expect(j1.value == .pageView)
+
+        let j2 = try Wrapper.decoded(from: #"{"value": "button_click"}"#.data(using: .utf8)!)
+        #expect(j2.value == .buttonClick)
+
+        let j3 = try Wrapper.decoded(from: #"{"value": "AppLaunch"}"#.data(using: .utf8)!)
+        #expect(j3.value == .appLaunch)
+
+        let encoded1 = try JSONEncoder().encode(j1)
+        #expect(encoded1.stringAnyDictionary.string("value") == "page_view")
+
+        let encoded3 = try JSONEncoder().encode(j3)
+        #expect(encoded3.stringAnyDictionary.string("value") == "AppLaunch")
+    }
+
+    @Test
+    func enumUnionMatchCodingCaseAndStyle() throws {
+        struct Wrapper: Codable { let value: MixedMatchEnum }
+
+        let fromExplicit = try Wrapper.decoded(from: #"{"value": "pgview"}"#.data(using: .utf8)!)
+        #expect(fromExplicit.value == .pageView)
+
+        let fromSnake = try Wrapper.decoded(from: #"{"value": "page_view"}"#.data(using: .utf8)!)
+        #expect(fromSnake.value == .pageView)
+
+        let fromPascal = try Wrapper.decoded(from: #"{"value": "PageView"}"#.data(using: .utf8)!)
+        #expect(fromPascal.value == .pageView)
+
+        let fromButton = try Wrapper.decoded(from: #"{"value": "ButtonClick"}"#.data(using: .utf8)!)
+        #expect(fromButton.value == .buttonClick)
+
+        let encoded = try JSONEncoder().encode(fromExplicit)
+        #expect(encoded.stringAnyDictionary.string("value") == "pgview")
+
+        let encodedButton = try JSONEncoder().encode(fromButton)
+        #expect(encodedButton.stringAnyDictionary.string("value") == "ButtonClick")
+    }
+
+    @Test
+    func enumExplicitRawValueWithStyle() throws {
+        struct Wrapper: Codable { let value: RawStringStyled }
+
+        let fromRaw = try Wrapper.decoded(from: #"{"value": "foo-bar"}"#.data(using: .utf8)!)
+        #expect(fromRaw.value == .fooBar)
+
+        let fromPascal = try Wrapper.decoded(from: #"{"value": "FooBar"}"#.data(using: .utf8)!)
+        #expect(fromPascal.value == .fooBar)
+
+        let encoded = try JSONEncoder().encode(fromRaw)
+        #expect(encoded.stringAnyDictionary.string("value") == "foo-bar")
+
+        let bazFromPascal = try Wrapper.decoded(from: #"{"value": "BazQux"}"#.data(using: .utf8)!)
+        #expect(bazFromPascal.value == .bazQux)
+
+        let encodedBaz = try JSONEncoder().encode(bazFromPascal)
+        #expect(encodedBaz.stringAnyDictionary.string("value") == "BazQux")
+    }
+
+    @Test
+    func enumAssociatedValueWithStyle() throws {
+        let json = #"{"do_something": {"user_id": 42, "user_name": "John"}}"#
+        let model = try ActionWithAssoc.decoded(from: json.data(using: .utf8)!)
+
+        switch model {
+        case .doSomething(let userId, let userName):
+            #expect(userId == 42)
+            #expect(userName == "John")
+        default:
+            Issue.record("Expected doSomething")
+        }
+
+        let alsoValid = #"{"do_something": {"userId": 42, "userName": "John"}}"#
+        let model2 = try ActionWithAssoc.decoded(from: alsoValid.data(using: .utf8)!)
+        switch model2 {
+        case .doSomething(let userId, let userName):
+            #expect(userId == 42)
+            #expect(userName == "John")
+        default:
+            Issue.record("Expected doSomething")
+        }
+
+        let encoded = try JSONEncoder().encode(model)
+        let dict = encoded.stringAnyDictionary
+        let nested = dict?["do_something"] as? [String: Any]
+        #expect(nested != nil)
+        #expect(nested.int("user_id") == 42)
+        #expect(nested.string("user_name") == "John")
+
+        let goBackJson = #"{"go_back": {}}"#
+        let goBackModel = try ActionWithAssoc.decoded(from: goBackJson.data(using: .utf8)!)
+        switch goBackModel {
+        case .goBack:
+            let goBackEncoded = try JSONEncoder().encode(goBackModel)
+            let goBackDict = goBackEncoded.stringAnyDictionary
+            #expect(goBackDict?["go_back"] != nil)
+        default:
+            Issue.record("Expected goBack")
+        }
+    }
+
+    @Test
+    func enumMixedIntAndStyleUnion() throws {
+        struct Wrapper: Codable { let value: MixedCodingCaseAndStyle }
+
+        let fromInt = try Wrapper.decoded(from: #"{"value": 8}"#.data(using: .utf8)!)
+        #expect(fromInt.value == .iPhone)
+
+        let fromString = try Wrapper.decoded(from: #"{"value": "apple_phone"}"#.data(using: .utf8)!)
+        #expect(fromString.value == .iPhone)
+
+        let fromSnake = try Wrapper.decoded(from: #"{"value": "i_phone"}"#.data(using: .utf8)!)
+        #expect(fromSnake.value == .iPhone)
+
+        let fromPascal = try Wrapper.decoded(from: #"{"value": "IPhone"}"#.data(using: .utf8)!)
+        #expect(fromPascal.value == .iPhone)
+
+        let fromGalaxy = try Wrapper.decoded(from: #"{"value": "GalaxyS"}"#.data(using: .utf8)!)
+        #expect(fromGalaxy.value == .galaxyS)
+
+        let encoded = try JSONEncoder().encode(fromInt)
+        #expect(encoded.stringAnyDictionary.int("value") == 8)
+
+        let encodedGalaxy = try JSONEncoder().encode(fromGalaxy)
+        #expect(encodedGalaxy.stringAnyDictionary.string("value") == "GalaxyS")
+    }
+}

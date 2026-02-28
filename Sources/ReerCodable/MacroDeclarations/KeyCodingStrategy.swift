@@ -22,9 +22,11 @@
 /// Key Coding Strategy Macros
 ///
 /// These macros provide various naming convention transformations for coding keys.
-/// They can be applied at both the type level (struct/class) and property level,
-/// and can be combined with `@CodingKey` for more flexible key customization.
+/// They can be applied at the type level (struct/class/enum), property level, or enum case level,
+/// and can be combined with `@CodingKey` / `@CodingCase` for more flexible key customization.
 /// When used together with `@CodingKey`, the `@CodingKey` takes precedence.
+/// For enums, `@CodingCase(match:)` values take the highest encoding priority, with style-converted
+/// values added as additional decoding alternatives (union/many-to-one).
 ///
 /// 1. Type-level usage (affects all properties):
 /// ```swift
