@@ -651,6 +651,44 @@ enum Phone: Codable {
     }
     ```
 
+- 支持在枚举上使用 `@SnakeCase`、`@PascalCase` 等命名风格宏, 自动转换 case 名称用于编解码. 解码时取并集(多对一), 编码时使用最高优先级的值
+
+```swift
+@Codable
+@PascalCase
+enum Status {
+    case inProgress   // 编码/解码 "InProgress"
+    case notStarted   // 编码/解码 "NotStarted"
+}
+```
+
+可以在单个 case 上覆盖 enum 级别的风格:
+
+```swift
+@Codable
+@PascalCase
+enum Event {
+    @CodingCase(match: .string("pgview"))
+    @SnakeCase
+    case pageView      // 解码: ["pgview", "page_view", "PageView"], 编码: "pgview"
+
+    case buttonClick   // 解码/编码: "ButtonClick"
+}
+```
+
+关联值枚举的 key 也会自动遵循命名风格:
+
+```swift
+@Codable
+@SnakeCase
+enum Action {
+    case doSomething(userId: Int, userName: String)
+    // JSON: {"do_something": {"user_id": 42, "user_name": "John"}}
+}
+```
+
+> **注意**: `@CodingCase` 含有 `at:` 或 `values:` 参数时, 不能与命名风格宏混用.
+
 ### 15. 生命周期回调
 
 支持编解码的生命周期回调：
