@@ -92,8 +92,10 @@ extension CaseStyleAttribute {
             declaration.is(StructDeclSyntax.self)
             || declaration.is(ClassDeclSyntax.self)
             || declaration.is(VariableDeclSyntax.self)
+            || declaration.is(EnumDeclSyntax.self)
+            || declaration.is(EnumCaseDeclSyntax.self)
         else {
-            throw MacroError(text: "@\(style.macroName) macro is only for `struct`, `class` or a property.")
+            throw MacroError(text: "@\(style.macroName) macro is only for `struct`, `class`, `enum`, a property or an enum case.")
         }
         if let structDecl = declaration.as(StructDeclSyntax.self),
            !structDecl.attributes.containsAttribute(named: "Codable")
@@ -108,6 +110,12 @@ extension CaseStyleAttribute {
            && !classDecl.attributes.containsAttribute(named: "InheritedCodable")
            && !classDecl.attributes.containsAttribute(named: "InheritedDecodable") {
             throw MacroError(text: "@\(style.macroName) macro can only be used with @Decodable, @Encodable, @Codable, @InheritedCodable or @InheritedDecodable types.")
+        }
+        if let enumDecl = declaration.as(EnumDeclSyntax.self),
+           !enumDecl.attributes.containsAttribute(named: "Codable")
+           && !enumDecl.attributes.containsAttribute(named: "Decodable")
+           && !enumDecl.attributes.containsAttribute(named: "Encodable") {
+            throw MacroError(text: "@\(style.macroName) macro can only be used with @Decodable, @Encodable or @Codable types.")
         }
         return []
     }

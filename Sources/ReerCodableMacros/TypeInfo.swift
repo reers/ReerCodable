@@ -53,12 +53,14 @@ struct PathValueMatch {
 struct EnumCase {
     var caseName: String
     var rawValue: String
+    var hasExplicitRawValue: Bool = false
     // [Type: Value]
     var matches: [String: [String]] = [:]
     var matchOrder: [String] = []
     var keyPathMatches: [PathValueMatch] = []
     var associatedMatch: [AssociatedMatch] = []
     var associated: [AssociatedValue] = []
+    var caseStyles: [CaseStyle] = []
     
     var initText: String {
         let associated = "\(associated.compactMap { "\($0.label == nil ? $0.variableName : "\($0.variableName): \($0.variableName)")" }.joined(separator: ","))"
@@ -110,12 +112,15 @@ struct TypeInfo {
             var index = 0
             var lastIntRawValue: Int = 0
             try enumDecl.memberBlock.members.forEach {
+                let casesStartCount = enumCases.count
                 try $0.decl.as(EnumCaseDeclSyntax.self)?.elements.forEach { caseElement in
                     let name = caseElement.name.trimmedDescription
                     var raw: String
+                    var hasExplicitRaw = false
                     if let rawValueExpr = caseElement.rawValue?.value {
                         let rawValue = rawValueExpr.trimmedDescription
                         raw = rawValue
+                        hasExplicitRaw = true
                         if let intRaw = rawValueExpr.as(IntegerLiteralExprSyntax.self) {
                             lastIntRawValue = Int(intRaw.trimmedDescription) ?? 0
                         }
@@ -144,7 +149,7 @@ struct TypeInfo {
                         associated.append(.init(label: label, type: type, index: paramIndex, defaultValue: defaultValue))
                         paramIndex += 1
                     }
-                    enumCases.append(.init(caseName: name, rawValue: raw, associated: associated))
+                    enumCases.append(.init(caseName: name, rawValue: raw, hasExplicitRawValue: hasExplicitRaw, associated: associated))
                     index += 1
                 }
                 
@@ -218,6 +223,25 @@ struct TypeInfo {
                         }
                     }
                 }
+                
+                if let caseDecl = $0.decl.as(EnumCaseDeclSyntax.self) {
+                    let caseLevelStyles: [CaseStyle] = caseDecl.attributes.compactMap { attr in
+                        guard let attrId = attr.as(AttributeSyntax.self)?
+                            .attributeName.as(IdentifierTypeSyntax.self)?
+                            .trimmedDescription else { return nil }
+                        for style in CaseStyle.allCases {
+                            if style.macroName == attrId {
+                                return style
+                            }
+                        }
+                        return nil
+                    }
+                    if !caseLevelStyles.isEmpty {
+                        for i in casesStartCount..<enumCases.count {
+                            enumCases[i].caseStyles = caseLevelStyles
+                        }
+                    }
+                }
             }
         }
         try validateEnumCases(enumCases)
@@ -232,6 +256,10 @@ struct TypeInfo {
                 }
             }
             return nil
+        }
+        if isEnum {
+            try validateEnumCaseStyles()
+            enrichEnumCasesWithStyles()
         }
         if let attribute = decl.attributes.firstAttribute(named: "CodingContainer"),
            let arguments = attribute.as(AttributeSyntax.self)?.arguments?.as(LabeledExprListSyntax.self) {
@@ -554,6 +582,87 @@ extension TypeInfo {
         let hasNonString = flated.contains { $0.key != "String" }
         if hasAssociated && hasNonString {
             throw MacroError(text: "Only CaseMatcher with key path and .string() patterns are allowed for enum cases with associated values")
+        }
+    }
+    
+    /// Validates that case style macros are used correctly on enum cases.
+    ///
+    /// Rules enforced:
+    /// 1. Numeric raw type enums (Int, Double, etc.) cannot use case style macros.
+    /// 2. Case style macros cannot coexist with `@CodingCase` using the `at:` parameter in the same enum.
+    /// 3. `@CodingCase` with `values:` parameter on a specific case cannot coexist with any effective case style.
+    func validateEnumCaseStyles() throws {
+        let anyStyles = !caseStyles.isEmpty || enumCases.contains { !$0.caseStyles.isEmpty }
+        guard anyStyles else { return }
+        
+        if let enumRawType, enumRawType != "String" {
+            throw MacroError(text: "Case style macros cannot be used with \(enumRawType) raw type enum. Only String or untyped enums are supported.")
+        }
+        
+        if enumCases.contains(where: { !$0.keyPathMatches.isEmpty }) {
+            throw MacroError(text: "Case style macros cannot be used when @CodingCase with 'at:' parameter is present in the same enum.")
+        }
+        
+        for enumCase in enumCases where !enumCase.associatedMatch.isEmpty {
+            let effectiveStyles = enumCase.caseStyles.uniqueMerged(with: caseStyles)
+            if !effectiveStyles.isEmpty {
+                let styleNames = effectiveStyles.map { "@\($0.macroName)" }.joined(separator: ", ")
+                throw MacroError(text: "@CodingCase with 'values:' parameter on case '\(enumCase.caseName)' cannot coexist with case style \(styleNames).")
+            }
+        }
+    }
+    
+    /// Populates enum case `matches` with style-converted string values for decoding (union / many-to-one).
+    ///
+    /// Values are appended in priority order:
+    /// - P1: Existing `@CodingCase` explicit values (already present from parsing)
+    /// - P2: Explicit rawValue that differs from the case name
+    /// - P3/P4: Case-level then enum-level style-converted names
+    /// - P5: Original case name (fallback, only used when P1–P4 produce nothing)
+    ///
+    /// Encoding uses the first (highest priority) non-range value via `firstMatchValue(for:)`.
+    /// Cases with `at:` or `values:` parameters are skipped (handled separately and validated above).
+    mutating func enrichEnumCasesWithStyles() {
+        for i in enumCases.indices {
+            var ec = enumCases[i]
+            
+            if !ec.keyPathMatches.isEmpty || !ec.associatedMatch.isEmpty {
+                continue
+            }
+            
+            let effectiveStyles = ec.caseStyles.uniqueMerged(with: caseStyles)
+            if effectiveStyles.isEmpty { continue }
+            
+            // P2: Add explicit rawValue when it differs from the case name
+            if ec.hasExplicitRawValue {
+                let quotedCaseName = "\"\(ec.caseName)\""
+                if ec.rawValue != quotedCaseName {
+                    if !ec.matchOrder.contains("String") {
+                        ec.matchOrder.append("String")
+                    }
+                    var values = ec.matches["String"] ?? []
+                    if !values.contains(ec.rawValue) {
+                        values.append(ec.rawValue)
+                    }
+                    ec.matches["String"] = values
+                }
+            }
+            
+            // P3/P4: Add style-converted names (case-level styles first, then enum-level)
+            let converted = KeyConverter.convert(value: ec.caseName, caseStyles: effectiveStyles)
+            for name in converted {
+                let quotedName = "\"\(name)\""
+                if !ec.matchOrder.contains("String") {
+                    ec.matchOrder.append("String")
+                }
+                var values = ec.matches["String"] ?? []
+                if !values.contains(quotedName) {
+                    values.append(quotedName)
+                }
+                ec.matches["String"] = values
+            }
+            
+            enumCases[i] = ec
         }
     }
 }
@@ -929,6 +1038,11 @@ extension TypeInfo {
                         } else {
                             keys = theCase.associatedMatch.first { $0.index == "\(value.index)" }?.keys ?? []
                         }
+                        let assocEffectiveStyles = theCase.caseStyles.uniqueMerged(with: self.caseStyles)
+                        if !assocEffectiveStyles.isEmpty && theCase.associatedMatch.isEmpty {
+                            let convertedKeys = KeyConverter.convert(value: value.variableName, caseStyles: assocEffectiveStyles)
+                            keys.append(contentsOf: convertedKeys.map { "\"\($0)\"" })
+                        }
                         keys.append("\"\(value.variableName)\"")
                         keys.removeDuplicates()
                         let hasDefault = value.defaultValue != nil
@@ -1008,6 +1122,8 @@ extension TypeInfo {
             let hasPathValue = enumCases.contains { !$0.keyPathMatches.isEmpty }
             let encodeCase = """
                 \(enumCases.compactMap {
+                    let effectiveAssocStyles = $0.caseStyles.uniqueMerged(with: self.caseStyles)
+                    let convertAssocKeys = !effectiveAssocStyles.isEmpty && $0.associatedMatch.isEmpty
                     let associated = "\($0.associated.compactMap { value in value.variableName }.joined(separator: ","))"
                     let postfix = $0.associated.isEmpty ? "\(associated)" : "(\(associated))"
                     let hasAssociated = !$0.associated.isEmpty
@@ -1030,8 +1146,11 @@ extension TypeInfo {
                     case\(hasAssociated ? " let" : "") .\($0.caseName)\(postfix):
                         \(encodeCase)
                         \($0.associated.compactMap { value in
-                        """
-                        try \(hasPathValue ? "container" : "nestedContainer").encode(\(value.variableName), forKey: AnyCodingKey("\(value.variableName)"))
+                        let encodingKey = convertAssocKeys
+                            ? KeyConverter.convert(value: value.variableName, caseStyle: effectiveAssocStyles.first!)
+                            : value.variableName
+                        return """
+                        try \(hasPathValue ? "container" : "nestedContainer").encode(\(value.variableName), forKey: AnyCodingKey("\(encodingKey)"))
                         """
                         }.joined(separator: "\n    "))
                     """

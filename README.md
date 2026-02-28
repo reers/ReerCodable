@@ -656,6 +656,44 @@ enum Phone: Codable {
     }
     ```
 
+- Support using naming style macros like `@SnakeCase`, `@PascalCase` on enums to automatically convert case names for encoding/decoding. Decoding accepts a union of all applicable values (many-to-one), encoding uses the highest priority value
+
+```swift
+@Codable
+@PascalCase
+enum Status {
+    case inProgress   // encodes/decodes "InProgress"
+    case notStarted   // encodes/decodes "NotStarted"
+}
+```
+
+Per-case styles can override the enum-level style:
+
+```swift
+@Codable
+@PascalCase
+enum Event {
+    @CodingCase(match: .string("pgview"))
+    @SnakeCase
+    case pageView      // decodes: ["pgview", "page_view", "PageView"], encodes: "pgview"
+
+    case buttonClick   // decodes/encodes: "ButtonClick"
+}
+```
+
+Associated value keys also follow the naming style:
+
+```swift
+@Codable
+@SnakeCase
+enum Action {
+    case doSomething(userId: Int, userName: String)
+    // JSON: {"do_something": {"user_id": 42, "user_name": "John"}}
+}
+```
+
+> **Note**: `@CodingCase` with `at:` or `values:` parameter cannot be used together with naming style macros.
+
 ### 15. Lifecycle Callbacks
 
 Support encoding/decoding lifecycle callbacks:
