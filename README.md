@@ -93,15 +93,48 @@ let package = Package(
 <details>
 <summary>CocoaPods</summary>
 </br>
-<p>Since CocoaPods doesn't directly support Swift Macro, the macro implementation can be compiled into binary for use. The integration method is as follows, requiring <code>s.pod_target_xcconfig</code> to load the binary plugin of macro implementation:</p>
+<p>Since CocoaPods doesn't directly support Swift Macro, the macro implementation is compiled into a prebuilt binary plugin. ReerCodable automatically downloads the plugin during build. There are two integration scenarios:</p>
+
+<h4>1. Use in Main App Only</h4>
+<p>If you only use <code>@Codable</code> in your main app (not inside other Pods), simply add to your Podfile:</p>
+<pre><code class="ruby language-ruby">
+pod 'ReerCodable', '1.7.1'
+</code></pre>
+
+<h4>2. Use in a Pod Component</h4>
+<p>If your Pod needs to use <code>@Codable</code> and other ReerCodable macros, you <strong>must</strong> add <code>pod_target_xcconfig</code> to load the macro plugin binary, because CocoaPods does not propagate build settings from dependencies to dependent Pods:</p>
 <pre><code class="ruby language-ruby">
 Pod::Spec.new do |s|
   s.name             = 'YourPod'
   s.dependency 'ReerCodable', '1.7.1'
-  # Copy the following config to your pod
+  # Required: load the ReerCodable macro plugin
   s.pod_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_BUILD_DIR}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
   }
+end
+</code></pre>
+
+<h4>3. Recommended: Auto-configure via Podfile (for multiple Pods)</h4>
+<p>If you have many Pods depending on ReerCodable, add this <code>post_install</code> hook to your Podfile to automatically inject the macro plugin configuration into all dependent Pods:</p>
+<pre><code class="ruby language-ruby">
+post_install do |installer|
+  macro_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_BUILD_DIR}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
+  reer_codable_dependents = Set.new
+  installer.pod_targets.each do |pod_target|
+    next if pod_target.name == 'ReerCodable'
+    has_dep = pod_target.dependent_targets.any? { |dep| dep.name == 'ReerCodable' }
+    reer_codable_dependents.add(pod_target.name) if has_dep
+  end
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      if reer_codable_dependents.include?(target.name)
+        flags = config.build_settings['OTHER_SWIFT_FLAGS'] || '$(inherited)'
+        unless flags.include?('ReerCodableMacros')
+          config.build_settings['OTHER_SWIFT_FLAGS'] = "#{flags} #{macro_flag}"
+        end
+      end
+    end
+  end
 end
 </code></pre>
 

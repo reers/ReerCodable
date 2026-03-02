@@ -87,15 +87,48 @@ let package = Package(
 <details>
 <summary>CocoaPods</summary>
 </br>
-<p>由于 CocoaPods 不支持直接使用 Swift Macro, 可以将宏实现编译为二进制提供使用, 接入方式如下, 需要设置<code>s.pod_target_xcconfig</code>来加载宏实现的二进制插件:</p>
+<p>由于 CocoaPods 不直接支持 Swift Macro，宏实现会编译为预构建的二进制插件，ReerCodable 在构建时自动下载。有以下几种接入场景：</p>
+
+<h4>1. 仅在主工程中使用</h4>
+<p>如果只在主 App 中使用 <code>@Codable</code>（不在其他 Pod 组件中使用），只需在 Podfile 中添加：</p>
+<pre><code class="ruby language-ruby">
+pod 'ReerCodable', '1.7.1'
+</code></pre>
+
+<h4>2. 在 Pod 组件中使用</h4>
+<p>如果你的 Pod 需要使用 <code>@Codable</code> 等 ReerCodable 宏，<strong>必须</strong>在你的 podspec 中添加 <code>pod_target_xcconfig</code> 来加载宏插件二进制。这是因为 CocoaPods 不会将依赖 Pod 的构建配置自动传递给依赖方：</p>
 <pre><code class="ruby language-ruby">
 Pod::Spec.new do |s|
   s.name             = 'YourPod'
   s.dependency 'ReerCodable', '1.7.1'
-  # 复制以下 config 到你的 pod
+  # 必须添加：加载 ReerCodable 宏插件
   s.pod_target_xcconfig = {
-    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend $(PODS_BUILD_DIR)/ReerCodable/release/ReerCodableMacros#ReerCodableMacros'
+    'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_BUILD_DIR}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
   }
+end
+</code></pre>
+
+<h4>3. 推荐：通过 Podfile 自动配置（适用于多个 Pod 组件）</h4>
+<p>如果你有多个 Pod 依赖 ReerCodable，可以在 Podfile 中添加如下 <code>post_install</code> hook，自动为所有依赖 ReerCodable 的 Pod 注入宏插件配置：</p>
+<pre><code class="ruby language-ruby">
+post_install do |installer|
+  macro_flag = '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_BUILD_DIR}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
+  reer_codable_dependents = Set.new
+  installer.pod_targets.each do |pod_target|
+    next if pod_target.name == 'ReerCodable'
+    has_dep = pod_target.dependent_targets.any? { |dep| dep.name == 'ReerCodable' }
+    reer_codable_dependents.add(pod_target.name) if has_dep
+  end
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      if reer_codable_dependents.include?(target.name)
+        flags = config.build_settings['OTHER_SWIFT_FLAGS'] || '$(inherited)'
+        unless flags.include?('ReerCodableMacros')
+          config.build_settings['OTHER_SWIFT_FLAGS'] = "#{flags} #{macro_flag}"
+        end
+      end
+    end
+  end
 end
 </code></pre>
 
