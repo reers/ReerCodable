@@ -40,7 +40,7 @@ Main features include:
 - Customize nested containers during Coding using `@CodingContainer`
 - Support specified `CodingKey` for Encode, like `EncodingKey("encode_key")`
 - Allow using default values when decoding fails to avoid `keyNotFound` errors
-- Allow using `@CodingIgnored` to ignore specific properties during encoding/decoding
+- Allow using `@CodingIgnored`, `@EncodingIgnored`, and `@DecodingIgnored` to ignore specific properties during coding
 - Support automatic conversion between base64 strings and `Data` `[UInt8]` types using `@Base64Coding`
 - Through `@CompactDecoding`, ignore `null` values when Decoding `Array`, `Dictionary`, `Set` instead of throwing errors
 - Support various encoding/decoding of `Date` through `@DateCoding`
@@ -333,15 +333,21 @@ struct Preferences {
 
 ### 8. Ignore Properties
 
-Use `@CodingIgnored` to ignore specific properties during encoding/decoding. During decoding, non-`Optional` properties must have a default value to satisfy Swift initialization requirements. `ReerCodable` automatically generates default values for basic data types and collection types. For other custom types, users need to provide default values.
+Use `@CodingIgnored` to ignore properties during both encoding and decoding, `@EncodingIgnored` to ignore properties only during encoding, and `@DecodingIgnored` to ignore properties only during decoding. When decoding is ignored, non-`Optional` properties must have a default value to satisfy Swift initialization requirements. `ReerCodable` automatically generates default values for basic data types and collection types. For other custom types, users need to provide default values.
 
 ```swift
 @Codable
 struct User {
     var name: String
-    
+
     @CodingIgnored
-    var ignore: Set<String>
+    var transient: Set<String>
+
+    @EncodingIgnored
+    var serverToken: String
+
+    @DecodingIgnored
+    var localDraft: String = "draft"
 }
 ```
 

@@ -27,7 +27,8 @@ struct PropertyInfo {
     var name: String
     var type: String
     var isOptional = false
-    var isIgnored = false
+    var ignoreEncoding = false
+    var ignoreDecoding = false
     var keys: [String] = []
     var encodingKey: String?
     var treatDotAsNestedWhenEncoding: Bool = true

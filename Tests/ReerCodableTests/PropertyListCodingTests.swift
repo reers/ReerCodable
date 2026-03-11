@@ -21,6 +21,17 @@ struct PlistPerson {
     var ignored: String = "should be ignored"
 }
 
+@Codable
+struct PlistSingleSideIgnoredPerson {
+    var name: String
+
+    @EncodingIgnored
+    var serverToken: String
+
+    @DecodingIgnored
+    var localNote: String = "local default"
+}
+
 // Model with @Base64Coding
 @Codable
 struct PlistDataModel {
@@ -194,6 +205,33 @@ struct PropertyListCodingTests {
         #expect(encodedDict?.int("age") == 30) // EncodingKey changes the key
         #expect(encodedDict?.double("score") == 95.5)
         #expect(encodedDict?["ignored"] == nil) // Should be ignored
+    }
+
+    @Test
+    func singleSideIgnored() throws {
+        let dict: [String: Any] = [
+            "name": "Phoenix",
+            "serverToken": "plist-token",
+            "localNote": "remote-note"
+        ]
+        let plistData = try PropertyListSerialization.data(fromPropertyList: dict, format: .binary, options: 0)
+
+        let model = try PropertyListDecoder().decode(PlistSingleSideIgnoredPerson.self, from: plistData)
+        #expect(model.name == "Phoenix")
+        #expect(model.serverToken == "plist-token")
+        #expect(model.localNote == "local default")
+
+        let encodedData = try PropertyListEncoder().encode(
+            PlistSingleSideIgnoredPerson(
+                name: model.name,
+                serverToken: model.serverToken,
+                localNote: "client-note"
+            )
+        )
+        let encodedDict = try PropertyListSerialization.propertyList(from: encodedData, format: nil) as? [String: Any]
+        #expect(encodedDict?.string("name") == "Phoenix")
+        #expect(encodedDict?.string("localNote") == "client-note")
+        #expect(encodedDict?["serverToken"] == nil)
     }
     
     @Test

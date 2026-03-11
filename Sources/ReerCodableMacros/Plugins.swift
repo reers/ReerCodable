@@ -54,6 +54,8 @@ struct ReerCodablePlugin: CompilerPlugin {
         CodingKey.self,
         EncodingKey.self,
         CodingIgnored.self,
+        EncodingIgnored.self,
+        DecodingIgnored.self,
         DecodingDefault.self,
         EncodingDefault.self,
         CodingDefault.self,
