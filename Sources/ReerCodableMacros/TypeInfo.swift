@@ -336,7 +336,14 @@ extension TypeInfo {
                 property.caseStyles = propertyCaseStyles.uniqueMerged(with: caseStyles)
                 // ignore coding
                 if variable.attributes.firstAttribute(named: "CodingIgnored") != nil {
-                    property.isIgnored = true
+                    property.ignoreEncoding = true
+                    property.ignoreDecoding = true
+                }
+                if variable.attributes.firstAttribute(named: "EncodingIgnored") != nil {
+                    property.ignoreEncoding = true
+                }
+                if variable.attributes.firstAttribute(named: "DecodingIgnored") != nil {
+                    property.ignoreDecoding = true
                 }
                 // base64 coding
                 if variable.attributes.containsAttribute(named: "Base64Coding") {
@@ -681,7 +688,7 @@ extension TypeInfo {
         } else {
             assignments = try properties
                 .compactMap { property in
-                    if property.isIgnored {
+                    if property.ignoreDecoding {
                         if property.isOptional { return nil }
                         if let initExpr = property.initExpr {
                             return "self.\(property.name) = \(initExpr)"
@@ -824,7 +831,7 @@ extension TypeInfo {
         } else {
             encoding = properties
                 .compactMap { property in
-                    if property.isIgnored { return nil }
+                    if property.ignoreEncoding { return nil }
                     let valueExpr = property.encodingValueExpr
                     let resolvedValueExpr = property.resolvedEncodingValueExpr
                     let needsOptionalHandling = property.needsOptionalEncodingHandling
@@ -914,7 +921,7 @@ extension TypeInfo {
             text += ": \(property.type)"
             if let initExpr = property.initExpr {
                 text += "= \(initExpr)"
-            } else if property.isIgnored, let defaultValue = property.defaultValue {
+                        } else if property.ignoreDecoding, let defaultValue = property.defaultValue {
                 text += "= \(defaultValue)"
             } else if property.isOptional {
                 text += "= nil"

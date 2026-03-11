@@ -38,3 +38,20 @@
 /// ```
 @attached(peer)
 public macro CodingIgnored() = #externalMacro(module: "ReerCodableMacros", type: "CodingIgnored")
+
+/// The `@EncodingIgnored` macro marks a property to be ignored during encoding only.
+///
+/// When applied to a property in a type marked with `@Codable`, this property will be:
+/// - Skipped during encoding (not written to the encoded data)
+/// - Still participate in decoding as usual
+@attached(peer)
+public macro EncodingIgnored() = #externalMacro(module: "ReerCodableMacros", type: "EncodingIgnored")
+
+/// The `@DecodingIgnored` macro marks a property to be ignored during decoding only.
+///
+/// When applied to a property in a type marked with `@Codable`, this property will be:
+/// - Skipped during decoding (not read from the encoded data)
+/// - Still participate in encoding as usual
+/// - Initialized with its default value or nil if optional
+@attached(peer)
+public macro DecodingIgnored() = #externalMacro(module: "ReerCodableMacros", type: "DecodingIgnored")

@@ -22,47 +22,109 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
+private enum IgnoreCodingMode: Equatable {
+    case both
+    case encoding
+    case decoding
+
+    var macroName: String {
+        switch self {
+        case .both:
+            return "CodingIgnored"
+        case .encoding:
+            return "EncodingIgnored"
+        case .decoding:
+            return "DecodingIgnored"
+        }
+    }
+
+    var diagnosticPrefix: String {
+        "@\(macroName) macro"
+    }
+}
+
+private func validateIgnoredProperty(
+    declaration: some DeclSyntaxProtocol,
+    mode: IgnoreCodingMode
+) throws {
+    guard
+        let variable = declaration.as(VariableDeclSyntax.self),
+        let name = variable.name
+    else {
+        throw MacroError(text: "\(mode.diagnosticPrefix) is only for property.")
+    }
+
+    let ignoreMacros = ["CodingIgnored", "EncodingIgnored", "DecodingIgnored"]
+    let usedIgnoreMacros = ignoreMacros.filter { variable.attributes.containsAttribute(named: $0) }
+    if usedIgnoreMacros.count > 1 {
+        throw MacroError(
+            text: "\(mode.diagnosticPrefix) cannot be used together with @\(usedIgnoreMacros.filter { $0 != mode.macroName }.joined(separator: ", @"))."
+        )
+    }
+
+    if mode == .encoding, variable.attributes.containsAttribute(named: "EncodingKey") {
+        throw MacroError(text: "@EncodingIgnored macro cannot be used together with @EncodingKey.")
+    }
+
+    if mode != .encoding {
+        if variable.isOptional {
+            return
+        }
+        if variable.initExpr != nil {
+            return
+        }
+        if let type = variable.type,
+           canGenerateDefaultValue(for: type) {
+            return
+        }
+        throw MacroError(text: "The ignored property `\(name)` should have a default value, or be set as an optional type.")
+    }
+}
+
 public struct CodingIgnored: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard
-            let variable = declaration.as(VariableDeclSyntax.self),
-            let name = variable.name
-        else {
-            throw MacroError(text: "@CodingIgnored macro is only for property.")
-        }
-        
-        if variable.attributes.firstAttribute(named: "CodingIgnored") != nil {
-            if variable.isOptional {
-                return []
-            }
-            if variable.initExpr != nil {
-                return []
-            }
-            if let type = variable.type,
-               canGenerateDefaultValue(for: type) {
-                return []
-            }
-            throw MacroError(text: "The ignored property `\(name)` should have a default value, or be set as an optional type.")
-        }
+        try validateIgnoredProperty(declaration: declaration, mode: .both)
         return []
     }
-    
-    static func canGenerateDefaultValue(for type: String) -> Bool {
-        let trimmed = type.trimmingCharacters(in: .whitespaces)
-        let basicType = [
-            "Int", "Int8", "Int16", "Int32", "Int64", "Int128",
-            "UInt", "UInt8", "UInt16", "UInt32", "UInt64", "UInt128",
-            "Bool", "String", "Float", "Double"
-        ].contains(trimmed)
-        if basicType
-           || (trimmed.hasPrefix("[") && trimmed.hasSuffix("]"))
-           || trimmed.hasPrefix("Set<") {
-            return true
-        }
-        return false
+}
+
+public struct EncodingIgnored: PeerMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingPeersOf declaration: some DeclSyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        try validateIgnoredProperty(declaration: declaration, mode: .encoding)
+        return []
     }
+}
+
+public struct DecodingIgnored: PeerMacro {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingPeersOf declaration: some DeclSyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        try validateIgnoredProperty(declaration: declaration, mode: .decoding)
+        return []
+    }
+}
+
+func canGenerateDefaultValue(for type: String) -> Bool {
+    let trimmed = type.trimmingCharacters(in: .whitespaces)
+    let basicType = [
+        "Int", "Int8", "Int16", "Int32", "Int64", "Int128",
+        "UInt", "UInt8", "UInt16", "UInt32", "UInt64", "UInt128",
+        "Bool", "String", "Float", "Double"
+    ].contains(trimmed)
+    if basicType
+       || (trimmed.hasPrefix("[") && trimmed.hasSuffix("]"))
+       || trimmed.hasPrefix("Set<") {
+        return true
+    }
+    return false
 }

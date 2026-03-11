@@ -121,6 +121,29 @@ let jsonData = """
 }
 """.data(using: .utf8)!
 
+@Codable
+struct SingleSideIgnoredUser {
+    var id: Int
+
+    @EncodingIgnored
+    var serverToken: String
+
+    @DecodingIgnored
+    var localDraft: String = "draft"
+
+    @CodingIgnored
+    var transient: [String] = []
+}
+
+let singleSideIgnoredJSON = """
+{
+    "id": 7,
+    "serverToken": "token-from-server",
+    "localDraft": "server-draft",
+    "transient": ["server"]
+}
+""".data(using: .utf8)!
+
 
 struct TestReerCodable {
 
@@ -171,6 +194,29 @@ struct TestReerCodable {
         let anyDict = dict?["anyDict"] as? [String: Any]
         #expect(anyDict?.int("key1") == 1)
         #expect(anyDict?.string("key2") == "2")
+    }
+
+    @Test
+    func singleSideIgnored() throws {
+        let model = try JSONDecoder().decode(SingleSideIgnoredUser.self, from: singleSideIgnoredJSON)
+        #expect(model.id == 7)
+        #expect(model.serverToken == "token-from-server")
+        #expect(model.localDraft == "draft")
+        #expect(model.transient == [])
+
+        let encoded = try JSONEncoder().encode(
+            SingleSideIgnoredUser(
+                id: model.id,
+                serverToken: model.serverToken,
+                localDraft: "client-draft",
+                transient: ["client"]
+            )
+        )
+        let dict = encoded.stringAnyDictionary
+        #expect(dict.int("id") == 7)
+        #expect(dict.string("localDraft") == "client-draft")
+        #expect(dict?["serverToken"] == nil)
+        #expect(dict?["transient"] == nil)
     }
 }
 
