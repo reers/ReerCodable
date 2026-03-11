@@ -75,7 +75,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.7.1")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.7.2")
     ]
 )
 </code></pre>
@@ -92,7 +92,7 @@ let package = Package(
 <h4>1. 仅在主工程中使用</h4>
 <p>如果只在主 App 中使用 <code>@Codable</code>（不在其他 Pod 组件中使用），只需在 Podfile 中添加：</p>
 <pre><code class="ruby language-ruby">
-pod 'ReerCodable', '1.7.1'
+pod 'ReerCodable', '1.7.2'
 </code></pre>
 
 <h4>2. 在 Pod 组件中使用</h4>
@@ -100,7 +100,7 @@ pod 'ReerCodable', '1.7.1'
 <pre><code class="ruby language-ruby">
 Pod::Spec.new do |s|
   s.name             = 'YourPod'
-  s.dependency 'ReerCodable', '1.7.1'
+  s.dependency 'ReerCodable', '1.7.2'
   # 必须添加：加载 ReerCodable 宏插件
   s.pod_target_xcconfig = {
     'OTHER_SWIFT_FLAGS' => '-Xfrontend -load-plugin-executable -Xfrontend ${PODS_BUILD_DIR}/ReerCodable/MacroPlugin/ReerCodableMacros#ReerCodableMacros'
@@ -809,7 +809,7 @@ struct Settings {
 // 在你的 Package.swift 中
 .package(
     url: "https://github.com/reers/ReerCodable.git",
-    from: "1.7.1",
+    from: "1.7.2",
     traits: ["AutoFlexibleType"]
 )
 ```
