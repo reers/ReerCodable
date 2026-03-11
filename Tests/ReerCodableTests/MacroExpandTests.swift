@@ -16,6 +16,8 @@ let testMacros: [String: Macro.Type] = [
     "CodingKey": CodingKey.self,
     "EncodingKey": EncodingKey.self,
     "CodingIgnored": CodingIgnored.self,
+    "EncodingIgnored": EncodingIgnored.self,
+    "DecodingIgnored": DecodingIgnored.self,
     "Base64Coding": Base64Coding.self,
     "DateCoding": DateCoding.self,
     "CompactDecoding": CompactDecoding.self,
@@ -645,6 +647,153 @@ final class ReerCodableTests: XCTestCase {
                 DiagnosticSpec(
                     message: "@Base64Coding macro is only for `Data` or `[UInt8]`.",
                     line: 7,
+                    column: 5
+                )
+            ],
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testSingleSideIgnoredMacros() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacroExpansion(
+            """
+            @Codable
+            struct User {
+                var id: Int
+
+                @EncodingIgnored
+                var serverToken: String
+
+                @DecodingIgnored
+                var localNote: String = "draft"
+            }
+            """,
+            expandedSource: """
+            struct User {
+                var id: Int
+                var serverToken: String
+                var localNote: String = "draft"
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    self.serverToken = try container.decode(String.self, forKey: AnyCodingKey("serverToken", false))
+                    self.localNote = "draft"
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                    try container.encode(value: self.localNote, key: AnyCodingKey("localNote", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int,
+                    serverToken: String,
+                    localNote: String = "draft"
+                ) {
+                    self.id = id
+                    self.serverToken = serverToken
+                    self.localNote = localNote
+                }
+            }
+
+            extension User: Codable, ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            struct User {
+                @EncodingIgnored
+                @EncodingKey("token")
+                var token: String
+            }
+            """,
+            expandedSource: """
+            struct User {
+                var token: String
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.token = try container.decode(String.self, forKey: AnyCodingKey("token", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+
+                }
+
+                init(
+                    token: String
+                ) {
+                    self.token = token
+                }
+            }
+
+            extension User: Codable, ReerCodableDelegate {
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@EncodingIgnored macro cannot be used together with @EncodingKey.",
+                    line: 3,
+                    column: 5
+                )
+            ],
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            struct User {
+                @DecodingIgnored
+                var token: URL
+            }
+            """,
+            expandedSource: """
+            struct User {
+                var token: URL
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.token = URL(string: "/")!
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.token, key: AnyCodingKey("token", false), treatDotAsNested: true)
+                }
+
+                init(
+                    token: URL = URL(string: "/")!
+                ) {
+                    self.token = token
+                }
+            }
+
+            extension User: Codable, ReerCodableDelegate {
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "The ignored property `token` should have a default value, or be set as an optional type.",
+                    line: 3,
                     column: 5
                 )
             ],

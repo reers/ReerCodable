@@ -35,7 +35,7 @@ ReerCodable 框架提供了一系列自定义宏，用于生成动态的 Codable
 - 通过使用 `@CodingContainer` 自定义 Coding 时的嵌套容器 
 - 支持 Encode 时指定的 `CodingKey`, 如 `EncodingKey("encode_key")`
 - 允许解码失败时使用默认值, 从而避免 `keyNotFound` 错误发生
-- 允许使用 `@CodingIgnored` 在编解码过程中忽略特定属性
+- 允许使用 `@CodingIgnored`、`@EncodingIgnored`、`@DecodingIgnored` 在编解码过程中按需忽略特定属性
 - 支持使用 `@Base64Coding` 自动对 base64 字符串和 `Data` `[UInt8]` 类型进行转换
 - 在 Decode `Array`, `Dictionary`, `Set` 时, 通过 `@CompactDecoding` 可以忽略 `null` 值, 而不是抛出错误
 - 支持通过 `@DateCoding` 实现对 `Date` 的各种编解码
@@ -327,15 +327,21 @@ struct Preferences {
 
 ### 8. 忽略属性
 
-使用 `@CodingIgnored` 在编解码过程中忽略特定属性. 在解码过程中对于非 `Optional` 属性要有一个默认值才能满足 Swift 初始化的要求, `ReerCodable` 对基本数据类型和集合类型会自动生成默认值, 如果是其他自定义类型, 则需用用户提供默认值.
+使用 `@CodingIgnored` 可以同时在编码和解码时忽略属性, `@EncodingIgnored` 只在编码时忽略, `@DecodingIgnored` 只在解码时忽略. 当属性会被解码侧忽略时, 对于非 `Optional` 属性要有一个默认值才能满足 Swift 初始化的要求, `ReerCodable` 对基本数据类型和集合类型会自动生成默认值, 如果是其他自定义类型, 则需由用户提供默认值.
 
 ```swift
 @Codable
 struct User {
     var name: String
-    
+
     @CodingIgnored
-    var ignore: Set<String>
+    var transient: Set<String>
+
+    @EncodingIgnored
+    var serverToken: String
+
+    @DecodingIgnored
+    var localDraft: String = "draft"
 }
 ```
 
