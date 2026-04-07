@@ -229,14 +229,13 @@ class Person4 {
     var parent: Person4?
 }
  
-let json4: [String: Any] = [
-    "name": "Jack",
-    "parent": ["name": "Jim"]
-]
-
 extension TestReerCodable {
     @Test
     func recursive() throws {
+        let json4: [String: Any] = [
+            "name": "Jack",
+            "parent": ["name": "Jim"]
+        ]
         // Decode
         let model = try Person4.decoded(from: json4)
         #expect(model.name == "Jack")
@@ -354,15 +353,14 @@ struct Car {
     var name: String = ""
     var price: Double = 0.0
 }
-let json5: [[String: Any]] = [
-    ["name": "Benz", "price": 98.6],
-    ["name": "Bently", "price": 305.7],
-    ["name": "Audi", "price": 64.7]
-]
-
 extension TestReerCodable {
     @Test
     func modelArray() throws {
+        let json5: [[String: Any]] = [
+            ["name": "Benz", "price": 98.6],
+            ["name": "Bently", "price": 305.7],
+            ["name": "Audi", "price": 64.7]
+        ]
         let models = try [Car].decoded(from: json5)
         #expect(models[2].name == "Audi")
         #expect(models[1].price == 305.7)
