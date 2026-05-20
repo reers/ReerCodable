@@ -63,7 +63,7 @@ iOS 13.0+, macOS 10.15+, tvOS 13.0+, visionOS 1.0+, watchOS 6.0+
 
 Swift 5.10+
 
-swift-syntax 600.0.0+
+swift-syntax 603.0.0+
 
 # 安装
 <details>
