@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ReerCodable'
-  s.version          = '1.7.2'
+  s.version          = '1.7.3'
   s.summary          = 'Codable extensions using Swift Macro'
 
   s.description      = <<-DESC
