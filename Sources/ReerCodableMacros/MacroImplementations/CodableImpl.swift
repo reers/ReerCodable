@@ -40,13 +40,25 @@ private func parameterMatchesType(
     return String(identifier) == baseName
 }
 
-private func normalizedInheritedTypeName(_ type: TypeSyntax) -> String {
-    type.trimmedDescription
+private func normalizedInheritedTypeNames(_ type: TypeSyntax) -> [String] {
+    let normalized = type.trimmedDescription
         .split(whereSeparator: \.isWhitespace)
         .filter { token in
             token != "nonisolated" && !token.hasPrefix("@")
         }
         .joined(separator: " ")
+
+    return normalized
+        .split(separator: "&")
+        .map { component in
+            component
+                .split(whereSeparator: \.isWhitespace)
+                .joined(separator: " ")
+                .split(separator: ".")
+                .last
+                .map(String.init) ?? ""
+        }
+        .filter { !$0.isEmpty }
 }
 
 private func hasInheritedType(
@@ -54,7 +66,9 @@ private func hasInheritedType(
     matching predicate: (String) -> Bool
 ) -> Bool {
     guard let inheritedTypes = declaration.inheritanceClause?.inheritedTypes else { return false }
-    return inheritedTypes.contains { predicate(normalizedInheritedTypeName($0.type)) }
+    return inheritedTypes.contains { inheritedType in
+        normalizedInheritedTypeNames(inheritedType.type).contains(where: predicate)
+    }
 }
 
 private func hasNonisolatedModifier(_ declaration: some DeclGroupSyntax) -> Bool {
