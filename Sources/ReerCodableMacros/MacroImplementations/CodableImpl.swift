@@ -40,6 +40,70 @@ private func parameterMatchesType(
     return String(identifier) == baseName
 }
 
+private func normalizedInheritedTypeNames(_ type: TypeSyntax) -> [String] {
+    let normalized = type.trimmedDescription
+        .split(whereSeparator: \.isWhitespace)
+        .filter { token in
+            token != "nonisolated" && !token.hasPrefix("@")
+        }
+        .joined(separator: " ")
+
+    return normalized
+        .split(separator: "&")
+        .map { component in
+            component
+                .split(whereSeparator: \.isWhitespace)
+                .joined(separator: " ")
+                .split(separator: ".")
+                .last
+                .map(String.init) ?? ""
+        }
+        .filter { !$0.isEmpty }
+}
+
+private func hasInheritedType(
+    in declaration: some DeclGroupSyntax,
+    matching predicate: (String) -> Bool
+) -> Bool {
+    guard let inheritedTypes = declaration.inheritanceClause?.inheritedTypes else { return false }
+    return inheritedTypes.contains { inheritedType in
+        normalizedInheritedTypeNames(inheritedType.type).contains(where: predicate)
+    }
+}
+
+private func hasNonisolatedModifier(_ declaration: some DeclGroupSyntax) -> Bool {
+    let modifiers: DeclModifierListSyntax?
+    if let structDecl = declaration.as(StructDeclSyntax.self) {
+        modifiers = structDecl.modifiers
+    } else if let classDecl = declaration.as(ClassDeclSyntax.self) {
+        modifiers = classDecl.modifiers
+    } else if let enumDecl = declaration.as(EnumDeclSyntax.self) {
+        modifiers = enumDecl.modifiers
+    } else {
+        modifiers = nil
+    }
+    return modifiers?.contains(where: { $0.name.text == "nonisolated" }) == true
+}
+
+private func extensionIsolationModifier(for declaration: some DeclGroupSyntax) -> String {
+    hasNonisolatedModifier(declaration) ? "nonisolated " : ""
+}
+
+private func makeConformanceExtension(
+    for type: some TypeSyntaxProtocol,
+    declaration: some DeclGroupSyntax,
+    conformances: [String]
+) -> ExtensionDeclSyntax? {
+    guard !conformances.isEmpty else { return nil }
+    let isolationModifier = extensionIsolationModifier(for: declaration)
+    let conformanceList = conformances.joined(separator: ", ")
+    let extensionDecl: DeclSyntax =
+        """
+        \(raw: isolationModifier)extension \(type.trimmed): \(raw: conformanceList) {}
+        """
+    return extensionDecl.cast(ExtensionDeclSyntax.self)
+}
+
 extension RECodable: ExtensionMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
@@ -56,22 +120,16 @@ extension RECodable: ExtensionMacro {
             throw MacroError(text: "@Codable macro is only for `struct`, `class` or `enum`.")
         }
         
-        var codableExisted = false
-        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
-           inheritedType.contains(where: { $0.type.trimmedDescription == "Codable" }) {
-            codableExisted = true
+        let codableExisted = hasInheritedType(in: declaration) { $0 == "Codable" }
+        let delegateExisted = hasInheritedType(in: declaration) { $0 == "ReerCodableDelegate" }
+        let conformances = [
+            codableExisted ? nil : "Codable",
+            delegateExisted ? nil : "ReerCodableDelegate"
+        ].compactMap(\.self)
+        guard let extensionDecl = makeConformanceExtension(for: type, declaration: declaration, conformances: conformances) else {
+            return []
         }
-        var delegateExisted = false
-        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
-           inheritedType.contains(where: { $0.type.trimmedDescription == "ReerCodableDelegate" }) {
-            delegateExisted = true
-        }
-        if codableExisted && delegateExisted { return [] }
-        let extensionDecl: DeclSyntax =
-            """
-            extension \(type.trimmed):\(raw: codableExisted ? "" : "Codable,") ReerCodableDelegate {}
-            """
-        return [extensionDecl.cast(ExtensionDeclSyntax.self)]
+        return [extensionDecl]
     }
 }
 
@@ -166,24 +224,18 @@ extension REDecodable: ExtensionMacro {
             throw MacroError(text: "@Decodable macro is only for `struct`, `class` or `enum`.")
         }
 
-        var decodableExisted = false
-        if let inheritedTypeClause = declaration.inheritanceClause {
-            decodableExisted = inheritedTypeClause.inheritedTypes.contains { inheritedType in
-                let typeName = inheritedType.type.trimmedDescription
-                return typeName == "Decodable" || typeName == "Codable"
-            }
+        let decodableExisted = hasInheritedType(in: declaration) {
+            $0 == "Decodable" || $0 == "Codable"
         }
-        var delegateExisted = false
-        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
-           inheritedType.contains(where: { $0.type.trimmedDescription == "ReerCodableDelegate" }) {
-            delegateExisted = true
+        let delegateExisted = hasInheritedType(in: declaration) { $0 == "ReerCodableDelegate" }
+        let conformances = [
+            decodableExisted ? nil : "Decodable",
+            delegateExisted ? nil : "ReerCodableDelegate"
+        ].compactMap(\.self)
+        guard let extensionDecl = makeConformanceExtension(for: type, declaration: declaration, conformances: conformances) else {
+            return []
         }
-        if decodableExisted && delegateExisted { return [] }
-        let extensionDecl: DeclSyntax =
-            """
-            extension \(type.trimmed): \(raw: decodableExisted ? "" : "Decodable, ")ReerCodableDelegate {}
-            """
-        return [extensionDecl.cast(ExtensionDeclSyntax.self)]
+        return [extensionDecl]
     }
 }
 
@@ -271,24 +323,18 @@ extension REEncodable: ExtensionMacro {
             throw MacroError(text: "@Encodable macro is only for `struct`, `class` or `enum`.")
         }
 
-        var encodableExisted = false
-        if let inheritedTypeClause = declaration.inheritanceClause {
-            encodableExisted = inheritedTypeClause.inheritedTypes.contains { inheritedType in
-                let typeName = inheritedType.type.trimmedDescription
-                return typeName == "Encodable" || typeName == "Codable"
-            }
+        let encodableExisted = hasInheritedType(in: declaration) {
+            $0 == "Encodable" || $0 == "Codable"
         }
-        var delegateExisted = false
-        if let inheritedType = declaration.inheritanceClause?.inheritedTypes,
-           inheritedType.contains(where: { $0.type.trimmedDescription == "ReerCodableDelegate" }) {
-            delegateExisted = true
+        let delegateExisted = hasInheritedType(in: declaration) { $0 == "ReerCodableDelegate" }
+        let conformances = [
+            encodableExisted ? nil : "Encodable",
+            delegateExisted ? nil : "ReerCodableDelegate"
+        ].compactMap(\.self)
+        guard let extensionDecl = makeConformanceExtension(for: type, declaration: declaration, conformances: conformances) else {
+            return []
         }
-        if encodableExisted && delegateExisted { return [] }
-        let extensionDecl: DeclSyntax =
-            """
-            extension \(type.trimmed): \(raw: encodableExisted ? "" : "Encodable, ")ReerCodableDelegate {}
-            """
-        return [extensionDecl.cast(ExtensionDeclSyntax.self)]
+        return [extensionDecl]
     }
 }
 

@@ -47,5 +47,14 @@ let package = Package(
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ]
         ),
+        .testTarget(
+            name: "ReerCodableMainActorIsolationTests",
+            dependencies: [
+                "ReerCodable",
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-default-isolation", "MainActor"])
+            ]
+        ),
     ],
 )

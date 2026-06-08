@@ -12,6 +12,8 @@ import ReerCodableMacros
 
 let testMacros: [String: Macro.Type] = [
     "Codable": RECodable.self,
+    "Decodable": REDecodable.self,
+    "Encodable": REEncodable.self,
     "InheritedCodable": InheritedCodable.self,
     "CodingKey": CodingKey.self,
     "EncodingKey": EncodingKey.self,
@@ -92,6 +94,489 @@ final class ReerCodableTests: XCTestCase {
             }
 
             extension NetResponse: Codable, ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testNonisolatedTypeGeneratesNonisolatedConformanceExtension() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacroExpansion(
+            """
+            @Codable
+            nonisolated struct User {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            nonisolated struct User {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            nonisolated extension User: Codable, ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Decodable
+            nonisolated struct Incoming {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            nonisolated struct Incoming {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            nonisolated extension Incoming: Decodable, ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Encodable
+            nonisolated struct Outgoing {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            nonisolated struct Outgoing {
+                let id: Int
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            nonisolated extension Outgoing: Encodable, ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            nonisolated final class Session {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            nonisolated final class Session {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            nonisolated extension Session: Codable, ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            nonisolated struct DelegateBacked: ReerCodableDelegate {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            nonisolated struct DelegateBacked: ReerCodableDelegate {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            nonisolated extension DelegateBacked: Codable {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            nonisolated struct NonisolatedCodableBacked: nonisolated Codable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            nonisolated struct NonisolatedCodableBacked: nonisolated Codable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            nonisolated extension NonisolatedCodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            struct CompositionCodableBacked: Codable & Sendable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            struct CompositionCodableBacked: Codable & Sendable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            extension CompositionCodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            struct CommaSeparatedCodableBacked: Codable, Sendable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            struct CommaSeparatedCodableBacked: Codable, Sendable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            extension CommaSeparatedCodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            nonisolated struct NonisolatedCompositionCodableBacked: nonisolated Codable & Sendable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            nonisolated struct NonisolatedCompositionCodableBacked: nonisolated Codable & Sendable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            nonisolated extension NonisolatedCompositionCodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Decodable
+            struct CompositionDecodableBacked: Decodable & Sendable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            struct CompositionDecodableBacked: Decodable & Sendable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            extension CompositionDecodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Decodable
+            struct CommaSeparatedDecodableBacked: Decodable, Sendable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            struct CommaSeparatedDecodableBacked: Decodable, Sendable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            extension CommaSeparatedDecodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Encodable
+            struct CommaSeparatedEncodableBacked: Encodable, Sendable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            struct CommaSeparatedEncodableBacked: Encodable, Sendable {
+                let id: Int
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            extension CommaSeparatedEncodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            struct PreconcurrencyCodableBacked: @preconcurrency Codable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            struct PreconcurrencyCodableBacked: @preconcurrency Codable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            extension PreconcurrencyCodableBacked: ReerCodableDelegate {
+            }
+            """,
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            @MainActor
+            struct MainActorCodableBacked: @MainActor Codable {
+                let id: Int
+            }
+            """,
+            expandedSource: """
+            @MainActor
+            struct MainActorCodableBacked: @MainActor Codable {
+                let id: Int
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                }
+
+                init(
+                    id: Int
+                ) {
+                    self.id = id
+                }
+            }
+
+            extension MainActorCodableBacked: ReerCodableDelegate {
             }
             """,
             macros: testMacros,
