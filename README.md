@@ -81,7 +81,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.7.5")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.8.0")
     ]
 )
 </code></pre>
@@ -93,7 +93,8 @@ let package = Package(
 <details>
 <summary>CocoaPods</summary>
 </br>
-<p>Since CocoaPods doesn't directly support Swift Macro, the macro implementation is compiled into a prebuilt binary plugin. ReerCodable automatically downloads the plugin during build. There are two integration scenarios:</p>
+<p>CocoaPods support has been discontinued. <strong><a href="https://github.com/reers/ReerCodable/releases/tag/1.7.5">1.7.5</a> is the last CocoaPods release.</strong> Please migrate to Swift Package Manager for newer versions.</p>
+<p>If you must stay on CocoaPods, pin <code>1.7.5</code>. Since CocoaPods doesn't directly support Swift Macro, ReerCodable <code>1.7.5</code> downloads a prebuilt binary plugin during build. There are two integration scenarios:</p>
 
 <h4>1. Use in Main App Only</h4>
 <p>If you only use <code>@Codable</code> in your main app (not inside other Pods), simply add to your Podfile:</p>
@@ -814,7 +815,7 @@ If you prefer all types automatically support flexible type conversion without e
 // In your Package.swift
 .package(
     url: "https://github.com/reers/ReerCodable.git",
-    from: "1.7.5",
+    from: "1.8.0",
     traits: ["AutoFlexibleType"]
 )
 ```

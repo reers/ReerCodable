@@ -75,7 +75,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.7.5")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.8.0")
     ]
 )
 </code></pre>
@@ -87,7 +87,8 @@ let package = Package(
 <details>
 <summary>CocoaPods</summary>
 </br>
-<p>由于 CocoaPods 不直接支持 Swift Macro，宏实现会编译为预构建的二进制插件，ReerCodable 在构建时自动下载。有以下几种接入场景：</p>
+<p>已停止维护 CocoaPods 集成。<strong><a href="https://github.com/reers/ReerCodable/releases/tag/1.7.5">1.7.5</a> 是最后一个 CocoaPods 版本。</strong> 新版本请迁移到 Swift Package Manager。</p>
+<p>若仍需使用 CocoaPods，请固定 <code>1.7.5</code>。由于 CocoaPods 不直接支持 Swift Macro，ReerCodable <code>1.7.5</code> 会在构建时下载预构建的二进制插件。有以下几种接入场景：</p>
 
 <h4>1. 仅在主工程中使用</h4>
 <p>如果只在主 App 中使用 <code>@Codable</code>（不在其他 Pod 组件中使用），只需在 Podfile 中添加：</p>
@@ -809,7 +810,7 @@ struct Settings {
 // 在你的 Package.swift 中
 .package(
     url: "https://github.com/reers/ReerCodable.git",
-    from: "1.7.5",
+    from: "1.8.0",
     traits: ["AutoFlexibleType"]
 )
 ```
