@@ -994,9 +994,9 @@ final class ReerCodableTests: XCTestCase {
                         strategy: .secondsSince1970
                     )
                     self.array = try container.compactDecodeArray(type: [String].self, keys: [AnyCodingKey("array.xxx", true), AnyCodingKey("ARRAY", false)])
-                    self.custom = try { decoder in
+                    self.custom = try decoder.customDecode(using: { decoder in
                                 return 222222
-                            }(decoder)
+                            })
                     self.customBy = try IntTransformer.self.decode(by: decoder, keys: ["CUSTOM-BY"])
                     try self.didDecode(from: decoder)
                 }
@@ -1009,9 +1009,9 @@ final class ReerCodableTests: XCTestCase {
                     try container.encode(value: self.height, key: AnyCodingKey("HEIGHT", false), treatDotAsNested: true)
                     try container.encodeDate(value: self.date, key: AnyCodingKey("DATE", false), treatDotAsNested: true, strategy: .secondsSince1970)
                     try container.encode(value: self.array, key: AnyCodingKey("array.xxx", true), treatDotAsNested: true)
-                    let _ = try { encoder, value  in
+                    try encoder.customEncode(self.custom, using: { encoder, value  in
                                 print(333333)
-                            }(encoder, self.custom)
+                            })
                     try IntTransformer.self.encode(by: encoder, key: "CUSTOM-BY", value: self.customBy)
                 }
 
@@ -1282,6 +1282,106 @@ final class ReerCodableTests: XCTestCase {
                     column: 5
                 )
             ],
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testCustomCodingEmptyEncodeAndFallback() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacroExpansion(
+            """
+            @Codable
+            struct AlbumSummary {
+                var id: Int
+
+                @CustomCoding<String>(
+                    decode: { decoder in
+                        if let name: String = try? decoder.value(forKeys: "artist.name"), !name.isEmpty {
+                            return name
+                        }
+                        return ""
+                    },
+                    encode: { encoder, value in
+                        try encoder.set(value, forKey: "artistName")
+                    }
+                )
+                var artistName: String = ""
+
+                @CustomCoding<Bool>(
+                    decode: { decoder in
+                        let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                        let key = AnyCodingKey("pc")
+                        return container.contains(key) && (try? container.decodeNil(forKey: key)) == false
+                    },
+                    encode: { _, _ in }
+                )
+                var isCloud: Bool = false
+
+                @CustomCoding<Bool>(
+                    decode: { decoder in
+                        return true
+                    }
+                )
+                @EncodingIgnored
+                var noCopyright: Bool = false
+            }
+            """,
+            expandedSource: """
+            struct AlbumSummary {
+                var id: Int
+                var artistName: String = ""
+                var isCloud: Bool = false
+                var noCopyright: Bool = false
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.id = try container.decode(Int.self, forKey: AnyCodingKey("id", false))
+                    self.artistName = (try? decoder.customDecode(using: { decoder in
+                                if let name: String = try? decoder.value(forKeys: "artist.name"), !name.isEmpty {
+                                    return name
+                                }
+                                return ""
+                            })) ?? ("")
+                    self.isCloud = (try? decoder.customDecode(using: { decoder in
+                                let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                                let key = AnyCodingKey("pc")
+                                return container.contains(key) && (try? container.decodeNil(forKey: key)) == false
+                            })) ?? (false)
+                    self.noCopyright = (try? decoder.customDecode(using: { decoder in
+                                return true
+                            })) ?? (false)
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.id, key: AnyCodingKey("id", false), treatDotAsNested: true)
+                    try encoder.customEncode(self.artistName, using: { encoder, value in
+                                try encoder.set(value, forKey: "artistName")
+                            })
+                }
+
+                init(
+                    id: Int,
+                    artistName: String = "",
+                    isCloud: Bool = false,
+                    noCopyright: Bool = false
+                ) {
+                    self.id = id
+                    self.artistName = artistName
+                    self.isCloud = isCloud
+                    self.noCopyright = noCopyright
+                }
+            }
+
+            extension AlbumSummary: Codable, ReerCodableDelegate {
+            }
+            """,
             macros: testMacros,
             indentationWidth: .spaces(4)
         )

@@ -34,6 +34,9 @@
 /// )
 /// var customValue: Int
 /// ```
+///
+/// Closures do not have to throw. An empty `encode` closure skips encoding that property.
+/// Combine with `@EncodingIgnored` or `@DecodingIgnored` for decode-only / encode-only custom logic.
 @attached(peer)
 public macro CustomCoding<Value>(
     decode: ((_ decoder: any Decoder) throws -> Value)? = nil,

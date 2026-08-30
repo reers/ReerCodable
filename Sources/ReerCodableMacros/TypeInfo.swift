@@ -368,15 +368,22 @@ extension TypeInfo {
                 if let customCoding = variable.attributes.firstAttribute(named: "CustomCoding"),
                    let attribute = customCoding.as(AttributeSyntax.self),
                    let arguments = attribute.arguments?.as(LabeledExprListSyntax.self) {
-                    property.customDecoder = arguments
-                        .first(where: { $0.label?.identifier?.name == "decode" })?
-                        .expression.trimmedDescription
-                    
-                    property.customEncoder = arguments
-                        .first(where: { $0.label?.identifier?.name == "encode" })?
-                        .expression.trimmedDescription
-                    
-                    if property.customDecoder == nil, property.customEncoder == nil {
+                    let decodeArg = arguments.first(where: { $0.label?.identifier?.name == "decode" })
+                    let encodeArg = arguments.first(where: { $0.label?.identifier?.name == "encode" })
+
+                    if let decodeArg {
+                        property.customDecoder = decodeArg.expression.trimmedDescription
+                    }
+
+                    if let encodeArg {
+                        if encodeArg.expression.isEmptyClosure {
+                            property.ignoreEncoding = true
+                        } else {
+                            property.customEncoder = encodeArg.expression.trimmedDescription
+                        }
+                    }
+
+                    if decodeArg == nil, encodeArg == nil {
                         property.customByType = arguments.trimmedDescription
                     }
                 }
@@ -743,7 +750,7 @@ extension TypeInfo {
                     // custom decode
                     else if let customDecoder = property.customDecoder {
                         body = """
-                            \(customDecoder)(decoder)
+                            decoder.customDecode(using: \(customDecoder))
                             """
                     }
                     // custom decode by type
@@ -869,7 +876,7 @@ extension TypeInfo {
                     // custom encode
                     else if let customEncoder = property.customEncoder {
                         return """
-                        let _ = try \(customEncoder)(encoder, \(valueExpr))
+                        try encoder.customEncode(\(valueExpr), using: \(customEncoder))
                         """
                     }
                     // custom encode by type
@@ -1222,6 +1229,29 @@ extension Array where Element: Hashable {
                 $0.append($1)
             }
         }
+    }
+}
+
+private extension ExprSyntax {
+    var isEmptyClosure: Bool {
+        var expr = self
+        while true {
+            if let tuple = expr.as(TupleExprSyntax.self),
+               tuple.elements.count == 1,
+               let inner = tuple.elements.first?.expression {
+                expr = inner
+                continue
+            }
+            if let asExpr = expr.as(AsExprSyntax.self) {
+                expr = asExpr.expression
+                continue
+            }
+            break
+        }
+        guard let closure = expr.as(ClosureExprSyntax.self) else {
+            return false
+        }
+        return closure.statements.isEmpty
     }
 }
 

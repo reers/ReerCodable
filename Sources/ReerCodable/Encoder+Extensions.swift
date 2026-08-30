@@ -74,4 +74,13 @@ public extension Encoder {
             treatDotAsNested: treatDotAsNested
         )
     }
+
+    /// Invokes a `@CustomCoding` encode closure.
+    ///
+    /// The method is declared as `throws` so generated `try` stays valid
+    /// even when the user closure itself does not throw.
+    @inlinable
+    func customEncode<Value>(_ value: Value, using encode: (any Encoder, Value) throws -> Void) throws {
+        try encode(self, value)
+    }
 }

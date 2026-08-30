@@ -88,4 +88,76 @@ extension TestReerCodable {
         #expect(dict.int("TEST~~Case") == 3)
         #expect(dict.string("testGeneric") == "prefix-helloworld")
     }
+
+    @Test
+    func customCodingNonThrowingAndSkipEncode() throws {
+        let json = """
+        {
+            "id": 1,
+            "artist": { "name": "Jay" },
+            "noCopyrightRcmd": { "type": 1 },
+            "pc": { "id": 9 }
+        }
+        """.data(using: .utf8)!
+
+        let model = try JSONDecoder().decode(CustomCodingWarningModel.self, from: json)
+        #expect(model.id == 1)
+        #expect(model.artistName == "Jay")
+        #expect(model.noCopyright == true)
+        #expect(model.isCloud == true)
+
+        let encoded = try JSONEncoder().encode(model)
+        let dict = encoded.stringAnyDictionary
+        #expect(dict.string("artistName") == "Jay")
+        #expect(dict?["noCopyright"] == nil)
+        #expect(dict?["isCloud"] == nil)
+        #expect(dict?["noCopyrightRcmd"] == nil)
+        #expect(dict?["pc"] == nil)
+
+        let missingKeys = try JSONDecoder().decode(
+            CustomCodingWarningModel.self,
+            from: #"{"id": 2}"#.data(using: .utf8)!
+        )
+        #expect(missingKeys.artistName == "")
+        #expect(missingKeys.noCopyright == false)
+        #expect(missingKeys.isCloud == false)
+    }
+}
+
+@Codable
+struct CustomCodingWarningModel {
+    var id: Int
+
+    @CustomCoding<String>(
+        decode: { decoder in
+            if let name: String = try? decoder.value(forKeys: "artist.name"), !name.isEmpty {
+                return name
+            }
+            return ""
+        },
+        encode: { encoder, value in
+            try encoder.set(value, forKey: "artistName")
+        }
+    )
+    var artistName: String = ""
+
+    @CustomCoding<Bool>(
+        decode: { decoder in
+            let container = try decoder.container(keyedBy: AnyCodingKey.self)
+            let key = AnyCodingKey("noCopyrightRcmd")
+            return container.contains(key) && (try? container.decodeNil(forKey: key)) == false
+        }
+    )
+    @EncodingIgnored
+    var noCopyright: Bool = false
+
+    @CustomCoding<Bool>(
+        decode: { decoder in
+            let container = try decoder.container(keyedBy: AnyCodingKey.self)
+            let key = AnyCodingKey("pc")
+            return container.contains(key) && (try? container.decodeNil(forKey: key)) == false
+        },
+        encode: { _, _ in }
+    )
+    var isCloud: Bool = false
 }

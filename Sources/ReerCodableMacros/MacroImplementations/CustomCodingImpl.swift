@@ -34,8 +34,6 @@ public struct CustomCoding: PeerMacro {
         if variable.attributes.count > 1 {
             let incompatibleMacros = [
                 "CodingIgnored",
-                "EncodingIgnored",
-                "DecodingIgnored",
                 "Base64Coding",
                 "DateCoding",
                 "CompactDecoding",
