@@ -81,7 +81,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.8.0")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.8.1")
     ]
 )
 </code></pre>
@@ -815,7 +815,7 @@ If you prefer all types automatically support flexible type conversion without e
 // In your Package.swift
 .package(
     url: "https://github.com/reers/ReerCodable.git",
-    from: "1.8.0",
+    from: "1.8.1",
     traits: ["AutoFlexibleType"]
 )
 ```

@@ -75,7 +75,7 @@ let package = Package(
     name: "YOUR_PROJECT_NAME",
     targets: [],
     dependencies: [
-        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.8.0")
+        .package(url: "https://github.com/reers/ReerCodable.git", from: "1.8.1")
     ]
 )
 </code></pre>
@@ -810,7 +810,7 @@ struct Settings {
 // 在你的 Package.swift 中
 .package(
     url: "https://github.com/reers/ReerCodable.git",
-    from: "1.8.0",
+    from: "1.8.1",
     traits: ["AutoFlexibleType"]
 )
 ```
