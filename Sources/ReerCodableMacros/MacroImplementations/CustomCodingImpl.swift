@@ -48,6 +48,18 @@ public struct CustomCoding: PeerMacro {
                 throw MacroError(text: "@CustomCoding macro cannot be used together with @\(conflictingMacros.joined(separator: ", @")).")
             }
         }
+        if let arguments = node.arguments?.as(LabeledExprListSyntax.self) {
+            let decodeArg = arguments.first { $0.label?.identifier?.name == "decode" }
+            let encodeArg = arguments.first { $0.label?.identifier?.name == "encode" }
+            if decodeArg != nil, variable.attributes.containsAttribute(named: "DecodingIgnored") {
+                throw MacroError(text: "@CustomCoding decode cannot be used together with @DecodingIgnored.")
+            }
+            if let encodeArg,
+               !encodeArg.expression.isEmptyClosure,
+               variable.attributes.containsAttribute(named: "EncodingIgnored") {
+                throw MacroError(text: "@CustomCoding encode cannot be used together with @EncodingIgnored.")
+            }
+        }
         return []
     }
 }

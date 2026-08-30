@@ -46,3 +46,26 @@ extension AttributeListSyntax {
         }.count
     }
 }
+
+extension ExprSyntax {
+    var isEmptyClosure: Bool {
+        var expr = self
+        while true {
+            if let tuple = expr.as(TupleExprSyntax.self),
+               tuple.elements.count == 1,
+               let inner = tuple.elements.first?.expression {
+                expr = inner
+                continue
+            }
+            if let asExpr = expr.as(AsExprSyntax.self) {
+                expr = asExpr.expression
+                continue
+            }
+            break
+        }
+        guard let closure = expr.as(ClosureExprSyntax.self) else {
+            return false
+        }
+        return closure.statements.isEmpty
+    }
+}

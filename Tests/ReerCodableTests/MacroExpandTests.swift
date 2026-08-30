@@ -1389,4 +1389,107 @@ final class ReerCodableTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
     }
+
+    func testCustomCodingSameSideIgnoredDiagnostics() throws {
+        #if canImport(ReerCodableMacros)
+        assertMacroExpansion(
+            """
+            @Codable
+            struct User {
+                @CustomCoding<Bool>(
+                    decode: { _ in true }
+                )
+                @DecodingIgnored
+                var enabled: Bool = false
+            }
+            """,
+            expandedSource: """
+            struct User {
+                var enabled: Bool = false
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.enabled = false
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+                    try container.encode(value: self.enabled, key: AnyCodingKey("enabled", false), treatDotAsNested: true)
+                }
+
+                init(
+                    enabled: Bool = false
+                ) {
+                    self.enabled = enabled
+                }
+            }
+
+            extension User: Codable, ReerCodableDelegate {
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@CustomCoding decode cannot be used together with @DecodingIgnored.",
+                    line: 3,
+                    column: 5
+                )
+            ],
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        assertMacroExpansion(
+            """
+            @Codable
+            struct User {
+                @CustomCoding<Bool>(
+                    encode: { _, _ in
+                        print("encode")
+                    }
+                )
+                @EncodingIgnored
+                var enabled: Bool = false
+            }
+            """,
+            expandedSource: """
+            struct User {
+                var enabled: Bool = false
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: AnyCodingKey.self)
+                    self.enabled = (try? container.decode(Bool.self, forKey: AnyCodingKey("enabled", false))) ?? (false)
+                    try self.didDecode(from: decoder)
+                }
+
+                func encode(to encoder: any Encoder) throws {
+                    try self.willEncode(to: encoder)
+                    var container = encoder.container(keyedBy: AnyCodingKey.self)
+
+                }
+
+                init(
+                    enabled: Bool = false
+                ) {
+                    self.enabled = enabled
+                }
+            }
+
+            extension User: Codable, ReerCodableDelegate {
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@CustomCoding encode cannot be used together with @EncodingIgnored.",
+                    line: 3,
+                    column: 5
+                )
+            ],
+            macros: testMacros,
+            indentationWidth: .spaces(4)
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
 }
