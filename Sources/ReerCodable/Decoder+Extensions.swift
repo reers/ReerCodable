@@ -76,4 +76,13 @@ public extension Decoder {
         let container = try container(keyedBy: AnyCodingKey.self)
         return try container.decode(type: Value.self, keys: keys.map { .init($0, $0.contains(".")) })
     }
+
+    /// Invokes a `@CustomCoding` decode closure.
+    ///
+    /// The method is declared as `throws` so generated `try` / `try?` stays valid
+    /// even when the user closure itself does not throw (for example it only uses `try?`).
+    @inlinable
+    func customDecode<Value>(using decode: (any Decoder) throws -> Value) throws -> Value {
+        try decode(self)
+    }
 }
